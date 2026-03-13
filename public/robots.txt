@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api
+Disallow: /account
+Disallow: /checkout
+
+# Crawl delay
+Crawl-delay: 1
+
+# Sitemap
+Sitemap: https://shaikhjee.com/sitemap.xml
