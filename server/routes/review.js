@@ -6,11 +6,12 @@ import {
   updateReview,
   deleteReview,
   markHelpful,
-  getAllReviews // Import the new function
+  getAllReviews
 } from '../controllers/reviewController.js';
 import { isAuthenticatedUser, authorizeRoles } from '../middleware/auth.js';
 import { body } from 'express-validator';
 import { handleValidationErrors } from '../middleware/validation.js';
+import { reviewLimiter } from '../middleware/rateLimiter.js';
 
 // Review validation rules
 const createReviewValidation = [
@@ -29,19 +30,19 @@ const createReviewValidation = [
 // Get all reviews for a product (public)
 router.get('/product/:productId', getProductReviews);
 
-// Create a review (authenticated)
-router.post('/create', isAuthenticatedUser, createReviewValidation, handleValidationErrors, createReview);
+// Create a review (authenticated, rate limited)
+router.post('/create', isAuthenticatedUser, reviewLimiter, createReviewValidation, handleValidationErrors, createReview);
 
-// Update a review (authenticated, owner only)
-router.put('/:reviewId', isAuthenticatedUser, createReviewValidation, handleValidationErrors, updateReview);
+// Update a review (authenticated, owner only, rate limited)
+router.put('/:reviewId', isAuthenticatedUser, reviewLimiter, createReviewValidation, handleValidationErrors, updateReview);
 
 // Delete a review (authenticated, owner or admin)
 router.delete('/:reviewId', isAuthenticatedUser, deleteReview);
 
-// Mark review as helpful (public)
-router.put('/:reviewId/helpful', markHelpful);
+// Mark review as helpful (public, rate limited)
+router.put('/:reviewId/helpful', reviewLimiter, markHelpful);
 
 // Admin Routes
-router.get('/admin/all', isAuthenticatedUser, authorizeRoles('admin'), getAllReviews); // New route for admin to get all reviews
+router.get('/admin/all', isAuthenticatedUser, authorizeRoles('admin'), getAllReviews);
 
 export default router;

@@ -4,6 +4,7 @@ import { useApp } from '@/contexts/AppContext';
 import { useRouter } from 'next/navigation';
 import { CheckCircle2, ChevronRight, CreditCard, ShieldCheck, Truck, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
+import { AuthGuard } from '@/components/RoleGuard';
 
 const CheckoutPage = () => {
     const { cart, cartTotal, createOrder, user, addresses } = useApp();
@@ -46,16 +47,19 @@ const CheckoutPage = () => {
 
     if (cart.length === 0) {
         return (
-            <div className="container mx-auto px-4 py-32 text-center">
-                <ShoppingBag size={64} className="mx-auto text-muted-foreground mb-6" />
-                <h2 className="text-3xl font-bold mb-4">Your cart is empty</h2>
-                <Link href="/shop" className="text-primary font-bold hover:underline">Return to Shop</Link>
-            </div>
+            <AuthGuard>
+                <div className="container mx-auto px-4 py-32 text-center">
+                    <ShoppingBag size={64} className="mx-auto text-muted-foreground mb-6" />
+                    <h2 className="text-3xl font-bold mb-4">Your cart is empty</h2>
+                    <Link href="/shop" className="text-primary font-bold hover:underline">Return to Shop</Link>
+                </div>
+            </AuthGuard>
         );
     }
 
     return (
-        <div className="min-h-screen bg-muted/20 py-12">
+        <AuthGuard>
+            <div className="min-h-screen bg-muted/20 py-12">
             <div className="container mx-auto px-4 lg:px-8">
                 {/* Progress Bar */}
                 <div className="max-w-3xl mx-auto mb-12">
@@ -253,7 +257,8 @@ const CheckoutPage = () => {
                     </div>
                 </div>
             </div>
-        </div>
+            </div>
+        </AuthGuard>
     );
 };
 

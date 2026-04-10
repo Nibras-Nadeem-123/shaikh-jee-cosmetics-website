@@ -1,16 +1,16 @@
 import Product from '../models/Product.js';
 import { catchAsyncErrors, ErrorHandler } from '../middleware/errorHandler.js';
-import { clearCache } from '../config/redis.js';
+import { clearCache, getCache, setCache } from '../config/redis.js';
 
 // Get all products (supports Shop filtering with pagination)
 export const getProducts = catchAsyncErrors(async (req, res) => {
   const { category, subcategory, minPrice, maxPrice, sort, search, page = 1, limit = 12 } = req.query;
-  
+
   let query = {};
 
   if (category) query.category = new RegExp(category, 'i');
   if (subcategory) query.subcategory = new RegExp(subcategory, 'i');
-  
+
   // Use full-text search if search query provided
   if (search) {
     query.$text = { $search: search };
@@ -22,7 +22,7 @@ export const getProducts = catchAsyncErrors(async (req, res) => {
   };
 
   let apiQuery = Product.find(query);
-  
+
   // If full-text search was used, add text search score
   if (search) {
     apiQuery = apiQuery.select({ score: { $meta: 'textScore' } }).sort({ score: { $meta: 'textScore' } });
@@ -47,25 +47,48 @@ export const getProducts = catchAsyncErrors(async (req, res) => {
   const totalProducts = await Product.countDocuments(query);
   const totalPages = Math.ceil(totalProducts / limitNum);
 
-  res.status(200).json({ 
-    success: true, 
+  res.status(200).json({
+    success: true,
     count: products.length,
     totalProducts,
     totalPages,
     currentPage: pageNum,
-    products 
+    products
   });
 });
 
-// Get single product details (Product Detail UI)
-export const getSingleProduct = catchAsyncErrors(async (req, res) => {
-  const product = await Product.findOne({ slug: req.params.slug });
-  
-  if (!product) {
-    throw new ErrorHandler('Product not found', 404);
+// Get single product details with Redis caching
+export const getSingleProduct = catchAsyncErrors(async (req, res, next) => {
+  const { slug } = req.params;
+
+  // Try to get from cache first
+  const cacheKey = `product:${slug}`;
+  const cached = await getCache(cacheKey);
+
+  if (cached) {
+    return res.status(200).json({
+      success: true,
+      cached: true,
+      product: cached
+    });
   }
-  
-  res.status(200).json({ success: true, product });
+
+  // Fetch from database
+  const product = await Product.findOne({ slug });
+
+  if (!product) {
+    const error = new ErrorHandler('Product not found', 404);
+    return next(error);
+  }
+
+  // Cache the product for 10 minutes
+  await setCache(cacheKey, product, 600);
+
+  res.status(200).json({
+    success: true,
+    cached: false,
+    product
+  });
 });
 
 // Admin: Create new product

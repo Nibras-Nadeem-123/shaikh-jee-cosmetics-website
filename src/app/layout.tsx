@@ -1,15 +1,18 @@
-import type { Metadata } from "next";
-import { GeistSans } from "geist/font/sans";
-import { GeistMono } from "geist/font/mono";
+import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { AppProvider } from "@/contexts/AppContext";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ToastProvider, ToastContainer } from "@/hooks/useToast";
 import { MobileNav } from "@/components/MobileNav";
+import { PWAInstall } from "@/components/PWAInstall";
 
-const geistSans = GeistSans;
-const geistMono = GeistMono;
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Shaikh Jee Cosmetics | Premium Beauty & Skincare",
@@ -18,6 +21,15 @@ export const metadata: Metadata = {
   authors: [{ name: "Shaikh Jee Cosmetics" }],
   creator: "Shaikh Jee Cosmetics",
   publisher: "Shaikh Jee Cosmetics",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Shaikh Jee",
+  },
+  formatDetection: {
+    telephone: false,
+  },
   robots: {
     index: true,
     follow: true,
@@ -59,11 +71,11 @@ export const metadata: Metadata = {
   },
 };
 
-export const viewport = {
-  width: 1200,
-  height: 630,
+export const viewport: Viewport = {
+  width: "device-width",
   initialScale: 1,
   maximumScale: 5,
+  themeColor: "#D4AF87",
 };
 
 export default function RootLayout({
@@ -74,7 +86,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${inter.variable} antialiased`}
       >
         <ToastProvider>
           <AppProvider >
@@ -82,6 +94,7 @@ export default function RootLayout({
               {children}
               <Footer />
               <MobileNav />
+              <PWAInstall />
             </AppProvider>
             <ToastContainer />
           </ToastProvider>

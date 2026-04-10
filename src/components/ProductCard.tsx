@@ -98,7 +98,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, }) => {
                             <Star
                                 key={i}
                                 size={14}
-                                className={i < Math.floor(product.rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
+                                className={i < Math.floor(product.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
                             />
                         ))}
                     </div>
@@ -118,7 +118,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, }) => {
                     <div className="flex gap-1 mt-2">
                         {product.shades.slice(0, 5).map((shade) => (
                             <div
-                                key={shade.id}
+                                key={shade._id}
                                 className="w-5 h-5 rounded-full border border-gray-300"
                                 style={{ backgroundColor: shade.color }}
                                 title={shade.name}

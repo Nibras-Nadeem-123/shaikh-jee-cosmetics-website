@@ -1,67 +1,112 @@
 import { createClient } from 'redis';
 
-// Create Redis client
-const redisClient = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379',
-  password: process.env.REDIS_PASSWORD // Added password for authentication
-});
+// Create Redis client lazily
+let _redisClient = null;
+let redisConnected = false;
 
-redisClient.on('error', (err) => {
-  console.log('Redis Client Error:', err);
-});
+export const getRedisClient = () => {
+  if (!_redisClient) {
+    _redisClient = createClient({
+      url: process.env.REDIS_URL || 'redis://localhost:6379',
+      password: process.env.REDIS_PASSWORD,
+      socket: {
+        reconnectStrategy: 3000,
+        connectTimeout: 5000
+      }
+    });
 
-redisClient.on('connect', () => {
-  console.log('Connected to Redis');
-});
+    _redisClient.on('error', (err) => {
+      redisConnected = false;
+    });
 
-// Connect to Redis
-if (!redisClient.isOpen) {
-  redisClient.connect().catch(console.error);
-}
+    _redisClient.on('connect', () => {
+      redisConnected = true;
+    });
+
+    _redisClient.on('end', () => {
+      redisConnected = false;
+    });
+  }
+  return _redisClient;
+};
+
+// Lazy connection - don't block server startup
+export const connectRedis = async () => {
+  const client = getRedisClient();
+  try {
+    if (!client.isOpen) {
+      await client.connect();
+    }
+  } catch (error) {
+    redisConnected = false;
+  }
+};
+
+export const isRedisConnected = () => redisConnected;
 
 // Cache middleware for GET requests
 export const cacheMiddleware = (duration = 3600) => {
   return async (req, res, next) => {
-    // Only cache GET requests
-    if (req.method !== 'GET') {
+    if (req.method !== 'GET' || !redisConnected) {
       return next();
     }
 
     try {
+      const client = getRedisClient();
       const cacheKey = `${req.originalUrl}`;
-      const cachedData = await redisClient.get(cacheKey);
+      const cachedData = await client.get(cacheKey);
 
       if (cachedData) {
         return res.json(JSON.parse(cachedData));
       }
 
-      // Store original res.json
       const originalJson = res.json.bind(res);
 
-      // Override res.json to cache response
       res.json = function (data) {
-        // Cache the response for the specified duration
-        redisClient.setEx(cacheKey, duration, JSON.stringify(data)).catch(console.error);
+        client.setEx(cacheKey, duration, JSON.stringify(data)).catch(() => {});
         return originalJson(data);
       };
 
       next();
     } catch (error) {
-      console.error('Cache middleware error:', error);
       next();
     }
   };
 };
 
-// Clear cache for specific pattern
-export const clearCache = async (pattern) => {
+// Simple cache get/set helpers
+export const getCache = async (key) => {
+  if (!redisConnected) return null;
   try {
-    const keys = await redisClient.keys(pattern);
+    const client = getRedisClient();
+    const data = await client.get(key);
+    return data ? JSON.parse(data) : null;
+  } catch (error) {
+    return null;
+  }
+};
+
+export const setCache = async (key, value, duration = 3600) => {
+  if (!redisConnected) return false;
+  try {
+    const client = getRedisClient();
+    await client.setEx(key, duration, JSON.stringify(value));
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
+
+export const clearCache = async (pattern) => {
+  if (!redisConnected) return;
+  try {
+    const client = getRedisClient();
+    const keys = await client.keys(pattern);
     if (keys.length > 0) {
-      await redisClient.del(keys);
+      await client.del(keys);
     }
   } catch (error) {
-    console.error('Clear cache error:', error);
+    // Silent fail
   }
 };
 
@@ -86,10 +131,11 @@ export const getSession = async (key) => {
 
 export const deleteSession = async (key) => {
   try {
-    await redisClient.del(key);
+    const client = getRedisClient();
+    await client.del(key);
   } catch (error) {
     console.error('Session deletion error:', error);
   }
 };
 
-export default redisClient;
+export default getRedisClient;

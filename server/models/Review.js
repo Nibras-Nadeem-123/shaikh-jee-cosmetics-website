@@ -35,6 +35,14 @@ const reviewSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  images: [{
+    type: String,
+    trim: true
+  }],
+  verified: {
+    type: Boolean,
+    default: false // Verified purchase
+  },
   createdAt: {
     type: Date,
     default: Date.now

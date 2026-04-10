@@ -5,7 +5,7 @@ import { isAuthenticatedUser } from '../middleware/auth.js';
 import { body } from 'express-validator';
 import * as validationMiddleware from '../middleware/validation.js';
 
-const { createMockPayment, handleMockConfirmation } = paymentController;
+const { createMockPayment, handleMockConfirmation, handleRazorpayWebhook } = paymentController;
 const { handleValidationErrors } = validationMiddleware;
 
 // Validation rules for mock payment
@@ -21,7 +21,19 @@ const mockPaymentValidation = [
 // Initiate a mock payment request
 router.post('/mock-payment', isAuthenticatedUser, mockPaymentValidation, handleValidationErrors, createMockPayment);
 
-// Handle the mock confirmation (though for a simple mock, this might not be actively used)
+// Handle the mock confirmation
 router.post('/mock-confirm', handleMockConfirmation);
+
+// Razorpay webhook - separate route to avoid middleware conflicts
+router.post('/razorpay-webhook', express.raw({ type: 'application/json' }), (req, res, next) => {
+  // Manually parse the body for webhook
+  try {
+    req.body = JSON.parse(req.body.toString());
+    handleRazorpayWebhook(req, res, next);
+  } catch (error) {
+    console.error('Webhook parse error:', error);
+    res.status(400).json({ success: false, message: 'Invalid webhook payload' });
+  }
+});
 
 export default router;

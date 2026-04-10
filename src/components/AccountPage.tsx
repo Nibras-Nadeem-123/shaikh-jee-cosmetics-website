@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { User, Package, Heart, MapPin, LogOut, ChevronRight, Settings, Bell, CreditCard, ShieldCheck, X, Plus, Check } from 'lucide-react';
+import { User, Package, Heart, MapPin, LogOut, ChevronRight, Settings, Bell, CreditCard, ShieldCheck, X, Plus, Check, Gift } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { ProductCard } from '../components/ProductCard';
 import Image from 'next/image';
@@ -8,6 +8,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Address } from '../types';
 import { useToast } from '@/hooks/useToast';
+import { LoyaltyWidget } from './LoyaltyWidget';
+import { OrderTracking } from './OrderTracking';
 
 import { LoadingSpinner } from './LoadingSpinner';
 
@@ -554,6 +556,15 @@ export const AccountPage = () => {
                   </div>
 
                   <div className="space-y-10">
+                    {/* Loyalty Points Widget */}
+                    <div className="bg-white rounded-[2.5rem] p-10 border border-primary/5 shadow-sm">
+                      <div className="flex items-center gap-3 border-b border-border pb-4 mb-4">
+                        <Gift className="text-primary" size={24} />
+                        <h2 className="text-2xl font-bold tracking-tight">Loyalty Rewards</h2>
+                      </div>
+                      <LoyaltyWidget />
+                    </div>
+
                     {/* Security Widget */}
                     <div className="bg-white rounded-[2.5rem] p-10 border border-primary/5 shadow-sm space-y-6">
                       <div className="flex items-center gap-3 border-b border-border pb-4">

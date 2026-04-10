@@ -41,14 +41,14 @@ const CartPage = () => {
     <div className="min-h-screen bg-muted/30">
       <div className="container mx-auto px-4 lg:px-8 py-12">
         <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-12">
-            <div className="space-y-1">
-                <h1 className="text-4xl font-bold text-foreground tracking-tight">Shopping Cart</h1>
-                <p className="text-muted-foreground italic">{cart.length} items in your basket</p>
-            </div>
-            <Link href="/shop" className="text-primary font-bold flex items-center gap-2 hover:underline transition-all">
-                <ArrowLeft size={18} />
-                Back to Shop
-            </Link>
+          <div className="space-y-1">
+            <h1 className="text-4xl font-bold text-foreground tracking-tight">Shopping Cart</h1>
+            <p className="text-muted-foreground italic">{cart.length} items in your basket</p>
+          </div>
+          <Link href="/shop" className="text-primary font-bold flex items-center gap-2 hover:underline transition-all">
+            <ArrowLeft size={18} />
+            Back to Shop
+          </Link>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-12">
@@ -58,7 +58,7 @@ const CartPage = () => {
               <div className="divide-y divide-border">
                 {cart.map((item) => (
                   <div
-                    key={`${item.product.id}-${item.selectedShade?.id || 'default'}`}
+                    key={`${item.product._id}-${item.selectedShade?._id || 'default'}`}
                     className="p-8 group hover:bg-secondary/10 transition-colors"
                   >
                     <div className="flex flex-col sm:flex-row gap-8">
@@ -78,59 +78,59 @@ const CartPage = () => {
                       {/* Info */}
                       <div className="flex-1 flex flex-col justify-between py-1">
                         <div>
-                            <div className="flex justify-between items-start mb-2">
-                                <Link
-                                    href={`/product/${item.product.slug}`}
-                                    className="text-xl font-bold text-foreground hover:text-primary transition-colors pr-8"
-                                >
-                                    {item.product.name}
-                                </Link>
-                                <button
-                                    onClick={() => {
-                                      removeFromCart(item.product.id, item.selectedShade?.id);
-                                      showToast("Item removed from cart", "info");
-                                    }}
-                                    className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full transition-all"
-                                    title="Remove item"
-                                >
-                                    <Trash2 size={20} />
-                                </button>
-                            </div>
-                            <p className="text-sm font-bold text-primary uppercase tracking-widest mb-3">{item.product.category}</p>
+                          <div className="flex justify-between items-start mb-2">
+                            <Link
+                              href={`/product/${item.product.slug}`}
+                              className="text-xl font-bold text-foreground hover:text-primary transition-colors pr-8"
+                            >
+                              {item.product.name}
+                            </Link>
+                            <button
+                              onClick={() => {
+                                removeFromCart(item.product._id, item.selectedShade?._id);
+                                showToast("Item removed from cart", "info");
+                              }}
+                              className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full transition-all"
+                              title="Remove item"
+                            >
+                              <Trash2 size={20} />
+                            </button>
+                          </div>
+                          <p className="text-sm font-bold text-primary uppercase tracking-widest mb-3">{item.product.category}</p>
 
-                            {item.selectedShade && (
-                                <div className="flex items-center gap-2 mb-4 bg-muted w-fit px-3 py-1 rounded-full border border-border">
-                                    <div
-                                        className="w-3 h-3 rounded-full shadow-inner shadow-black/20"
-                                        style={{ backgroundColor: item.selectedShade.color }}
-                                    />
-                                    <span className="text-xs font-medium text-foreground">{item.selectedShade.name}</span>
-                                </div>
-                            )}
+                          {item.selectedShade && (
+                            <div className="flex items-center gap-2 mb-4 bg-muted w-fit px-3 py-1 rounded-full border border-border">
+                              <div
+                                className="w-3 h-3 rounded-full shadow-inner shadow-black/20"
+                                style={{ backgroundColor: item.selectedShade.color }}
+                              />
+                              <span className="text-xs font-medium text-foreground">{item.selectedShade.name}</span>
+                            </div>
+                          )}
                         </div>
 
                         <div className="flex flex-wrap items-end justify-between gap-4 mt-4">
-                            {/* Quantity Controls */}
-                            <div className="flex items-center bg-muted rounded-full p-1 border border-border shadow-sm">
-                                <button
-                                    onClick={() => updateCartQuantity(item.product.id, item.quantity - 1, item.selectedShade?.id)}
-                                    className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white transition-all text-foreground active:scale-95"
-                                >
-                                    -
-                                </button>
-                                <span className="w-12 text-center font-bold text-foreground">{item.quantity}</span>
-                                <button
-                                    onClick={() => updateCartQuantity(item.product.id, item.quantity + 1, item.selectedShade?.id)}
-                                    className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white transition-all text-foreground active:scale-95"
-                                >
-                                    +
-                                </button>
-                            </div>
+                          {/* Quantity Controls */}
+                          <div className="flex items-center bg-muted rounded-full p-1 border border-border shadow-sm">
+                            <button
+                              onClick={() => updateCartQuantity(item.product._id, item.quantity - 1, item.selectedShade?._id)}
+                              className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white transition-all text-foreground active:scale-95"
+                            >
+                              -
+                            </button>
+                            <span className="w-12 text-center font-bold text-foreground">{item.quantity}</span>
+                            <button
+                              onClick={() => updateCartQuantity(item.product._id, item.quantity + 1, item.selectedShade?._id)}
+                              className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white transition-all text-foreground active:scale-95"
+                            >
+                              +
+                            </button>
+                          </div>
 
-                            <div className="text-right">
-                                <p className="text-2xl font-bold text-foreground tracking-tight">₹{item.product.price * item.quantity}</p>
-                                <p className="text-xs text-muted-foreground font-medium">₹{item.product.price} / item</p>
-                            </div>
+                          <div className="text-right">
+                            <p className="text-2xl font-bold text-foreground tracking-tight">₹{item.product.price * item.quantity}</p>
+                            <p className="text-xs text-muted-foreground font-medium">₹{item.product.price} / item</p>
+                          </div>
                         </div>
                       </div>
                     </div>

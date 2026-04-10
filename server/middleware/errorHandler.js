@@ -37,7 +37,7 @@ export const errorMiddleware = (err, req, res) => {
   }
 
   if (err.name === 'TokenExpiredError') {
-    const message = 'Token expired';
+    const message = 'Token expired. Please login again';
     err = new ErrorHandler(message, 401);
   }
 
@@ -49,7 +49,16 @@ export const errorMiddleware = (err, req, res) => {
     err = new ErrorHandler(message, 400);
   }
 
-  // Response
+  // Check if it's an API route - always return JSON for API
+  if (req.path.startsWith('/api/')) {
+    return res.status(err.statusCode).json({
+      success: false,
+      message: err.message,
+      statusCode: err.statusCode
+    });
+  }
+
+  // For non-API routes, still return JSON (better for modern frontends)
   res.status(err.statusCode).json({
     success: false,
     message: err.message,

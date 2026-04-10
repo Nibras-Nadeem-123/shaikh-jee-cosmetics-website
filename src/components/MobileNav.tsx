@@ -2,8 +2,9 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, ShoppingBag, Heart, User, ShoppingCart } from 'lucide-react';
+import { Home, ShoppingBag, Heart, User, ShoppingCart, Moon } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
+import { DarkModeToggle } from './DarkModeToggle';
 
 export const MobileNav = () => {
   const pathname = usePathname();
@@ -74,6 +75,11 @@ export const MobileNav = () => {
           </div>
           <span className="text-[10px] font-bold uppercase tracking-widest mt-1">Cart</span>
         </Link>
+
+        {/* Dark Mode Toggle for Mobile */}
+        <div className="flex flex-col items-center justify-center px-2 py-1 min-w-[64px]">
+          <DarkModeToggle />
+        </div>
       </div>
 
       <style jsx global>{`

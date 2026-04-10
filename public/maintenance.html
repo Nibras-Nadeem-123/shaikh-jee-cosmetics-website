@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shaikh Jee Cosmetics - Maintenance</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        
+        .container {
+            text-align: center;
+            color: white;
+            max-width: 600px;
+        }
+        
+        .logo {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            font-size: 42px;
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+        
+        p {
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 32px;
+            opacity: 0.9;
+        }
+        
+        .icon {
+            font-size: 80px;
+            margin-bottom: 24px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+        
+        .progress-bar {
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+            margin: 0 auto 24px;
+            overflow: hidden;
+        }
+        
+        .progress {
+            width: 60%;
+            height: 100%;
+            background: white;
+            border-radius: 2px;
+            animation: loading 2s ease-in-out infinite;
+        }
+        
+        @keyframes loading {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(200%); }
+        }
+        
+        .contact {
+            margin-top: 40px;
+            padding-top: 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        .contact a {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .contact a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">🔧</div>
+        <h1>We'll Be Back Soon!</h1>
+        <p>
+            Shaikh Jee Cosmetics is currently undergoing scheduled maintenance to serve you better. 
+            We expect to be back within a few hours.
+        </p>
+        <div class="progress-bar">
+            <div class="progress"></div>
+        </div>
+        <p style="font-size: 14px;">
+            Thank you for your patience. Your beauty journey with us will resume shortly.
+        </p>
+        <div class="contact">
+            <p>Need urgent assistance?</p>
+            <p>
+                <a href="mailto:support@shaikhjee.com">support@shaikhjee.com</a>
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        // Auto-refresh every 2 minutes to check if site is back
+        setTimeout(() => {
+            window.location.reload();
+        }, 120000);
+    </script>
+</body>
+</html>

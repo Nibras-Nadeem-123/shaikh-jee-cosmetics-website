@@ -3,6 +3,7 @@ import React from 'react';
 import { Instagram, Facebook, Twitter, Mail, Phone, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { NewsletterSignup } from './NewsletterSignup';
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -15,19 +16,7 @@ export const Footer = () => {
           <div className="max-w-3xl mx-auto text-center">
             <h3 className="text-3xl font-bold text-foreground mb-3 tracking-tight">Join Our Beauty Community</h3>
             <p className="text-muted-foreground mb-8 text-lg">Get exclusive offers, beauty tips, and new product updates exactly as you like.</p>
-            <form className="flex flex-col sm:flex-row gap-3 max-w-lg mx-auto">
-              <input
-                type="email"
-                placeholder="Enter your email address"
-                className="flex-1 px-6 py-4 bg-muted border border-transparent rounded-full focus:outline-none focus:bg-white focus:border-primary transition-all text-sm"
-              />
-              <button
-                type="submit"
-                className="px-10 py-4 bg-primary text-white font-bold rounded-full hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 active:scale-95"
-              >
-                Subscribe
-              </button>
-            </form>
+            <NewsletterSignup variant="footer" />
           </div>
         </div>
       </div>

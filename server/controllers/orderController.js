@@ -1,6 +1,8 @@
 import Order from '../models/Order.js';
 import Product from '../models/Product.js'; // Assuming Product model is needed.
 import { catchAsyncErrors, ErrorHandler } from '../middleware/errorHandler.js';
+import { sendOrderConfirmationEmail } from '../utils/emailService.js';
+import User from '../models/User.js';
 
 // Create new order (Checkout Flow)
 export const newOrder = catchAsyncErrors(async (req, res) => {
@@ -15,6 +17,26 @@ export const newOrder = catchAsyncErrors(async (req, res) => {
     totalPrice,
     user: req.user._id
   });
+
+  // Populate user details for email
+  const populatedOrder = await Order.findById(order._id).populate('user', 'name email');
+
+  // Send order confirmation email
+  try {
+    await sendOrderConfirmationEmail({
+      userName: populatedOrder.user.name,
+      userEmail: populatedOrder.user.email,
+      orderNumber: populatedOrder.orderNumber,
+      totalPrice: populatedOrder.totalPrice,
+      paymentMethod: populatedOrder.paymentMethod,
+      orderItems: populatedOrder.orderItems,
+      shippingAddress: populatedOrder.shippingAddress,
+      createdAt: populatedOrder.createdAt
+    });
+    console.log(`Order confirmation email sent to ${populatedOrder.user.email}`);
+  } catch (error) {
+    console.error('Order confirmation email error:', error);
+  }
 
   res.status(201).json({ success: true, order });
 });

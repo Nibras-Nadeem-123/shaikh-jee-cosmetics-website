@@ -1,11 +1,12 @@
 import { AdminDashboard } from '@/components/AdminDashboard'
+import { AdminGuard } from '@/components/RoleGuard'
 import React from 'react'
 
 const page = () => {
   return (
-      <div>
-          <AdminDashboard />
-    </div>
+    <AdminGuard>
+      <AdminDashboard />
+    </AdminGuard>
   )
 }
 

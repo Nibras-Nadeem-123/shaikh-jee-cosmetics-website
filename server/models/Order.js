@@ -1,6 +1,11 @@
 import mongoose from 'mongoose';
 
 const orderSchema = new mongoose.Schema({
+  orderNumber: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
   shippingAddress: {
     name: { type: String, required: true },
     addressLine1: { type: String, required: true },
@@ -68,6 +73,17 @@ const orderSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
+});
+
+// Pre-save hook to generate order number
+orderSchema.pre('save', async function(next) {
+  if (!this.orderNumber) {
+    // Generate unique order number
+    const timestamp = Date.now().toString(36);
+    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+    this.orderNumber = `ORD-${timestamp}-${random}`;
+  }
+  next();
 });
 
 export default mongoose.model('Order', orderSchema);

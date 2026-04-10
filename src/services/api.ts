@@ -183,7 +183,7 @@ export const apiService = {
 
   getReviewsByProductId: async (productId: string) => {
     try {
-        const response = await fetch(`${API_URL}/reviews/product/${productId}`);
+        const response = await fetch(`${API_URL}/reviews/product/${encodeURIComponent(productId)}`);
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.message || 'Failed to fetch reviews');
@@ -194,6 +194,224 @@ export const apiService = {
             throw new Error('Unable to connect to server. Please check if backend is running.');
         }
         throw error;
+    }
+  },
+
+  // Reviews
+  createReview: async (data: { productId: string; rating: number; comment: string; userName?: string }, token?: string) => {
+    try {
+      const response = await fetch(`${API_URL}/reviews/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create review');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server. Please check if backend is running.');
+      }
+      throw error;
+    }
+  },
+
+  // Wishlist
+  getWishlist: async (token: string) => {
+    try {
+      const response = await fetch(`${API_URL}/wishlist`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to fetch wishlist');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server. Please check if backend is running.');
+      }
+      throw error;
+    }
+  },
+
+  addToWishlistApi: async (productId: string, token: string) => {
+    try {
+      const response = await fetch(`${API_URL}/wishlist/add`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ productId }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to add to wishlist');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server. Please check if backend is running.');
+      }
+      throw error;
+    }
+  },
+
+  removeFromWishlistApi: async (productId: string, token: string) => {
+    try {
+      const response = await fetch(`${API_URL}/wishlist/remove`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ productId }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to remove from wishlist');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server. Please check if backend is running.');
+      }
+      throw error;
+    }
+  },
+
+  checkWishlist: async (productId: string, token: string) => {
+    try {
+      const response = await fetch(`${API_URL}/wishlist/check/${productId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to check wishlist');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server. Please check if backend is running.');
+      }
+      throw error;
+    }
+  },
+
+  // Discount
+  validateDiscountCode: async (data: { code: string; orderAmount: number }) => {
+    try {
+      const response = await fetch(`${API_URL}/discount/validate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to validate discount code');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server. Please check if backend is running.');
+      }
+      throw error;
+    }
+  },
+
+  // Payment
+  createPaymentOrder: async (data: { amount: number; currency?: string }, token: string) => {
+    try {
+      const response = await fetch(`${API_URL}/payment/order`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create payment order');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server. Please check if backend is running.');
+      }
+      throw error;
+    }
+  },
+
+  verifyPayment: async (data: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }, token: string) => {
+    try {
+      const response = await fetch(`${API_URL}/payment/verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to verify payment');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server. Please check if backend is running.');
+      }
+      throw error;
+    }
+  },
+
+  // Orders
+  getOrderById: async (orderId: string, token: string) => {
+    try {
+      const response = await fetch(`${API_URL}/orders/${orderId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to fetch order');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server. Please check if backend is running.');
+      }
+      throw error;
+    }
+  },
+
+  // Admin
+  updateOrderStatus: async (orderId: string, status: string, token: string) => {
+    try {
+      const response = await fetch(`${API_URL}/orders/admin/${orderId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update order status');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server. Please check if backend is running.');
+      }
+      throw error;
     }
   }
 };

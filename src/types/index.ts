@@ -83,9 +83,14 @@ export interface Order {
 export interface Review {
   _id: string;
   productId: string;
-  userId: string;
+  userId: string | { _id: string; name: string };
   userName: string;
   rating: number;
   comment: string;
   createdAt: Date | string;
+  verified?: boolean;
+  helpful?: number;
+  user?: { _id: string; name: string };
+  images?: string[];
+  updatedAt?: Date | string;
 }

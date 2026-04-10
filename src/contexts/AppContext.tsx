@@ -15,9 +15,10 @@ interface AppContextType {
   cartTotal: number;
   cartCount: number;
   wishlist: Product[];
-  addToWishlist: (product: Product) => void;
-  removeFromWishlist: (productId: string) => void;
+  addToWishlist: (product: Product) => Promise<void>;
+  removeFromWishlist: (productId: string) => Promise<void>;
   isInWishlist: (productId: string) => boolean;
+  syncWishlist: () => Promise<void>;
   user: User | null;
   signup: (name: string, email: string, password: string) => Promise<boolean>;
   login: (email: string, password: string) => Promise<User | null>;
@@ -44,23 +45,52 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Sync wishlist with database when user logs in
+  const syncWishlist = async () => {
+    if (!token) {
+      // If no token, keep localStorage wishlist
+      return;
+    }
+
+    try {
+      const data = await apiService.getWishlist(token);
+      if (data.products) {
+        setWishlist(data.products);
+      }
+    } catch (error) {
+      console.error('Failed to sync wishlist:', error);
+    }
+  };
+
   useEffect(() => {
     const savedToken = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
     const savedCart = localStorage.getItem('cart');
 
+    console.log('Saved token:', savedToken);
+    console.log('Saved user:', savedUser);
+    console.log('Saved cart:', savedCart);
+
     if (savedToken) {
-      setTimeout(() => setToken(savedToken), 0); // Avoid synchronous setState
+      setToken(savedToken);
     }
     if (savedUser) {
-      setTimeout(() => setUser(JSON.parse(savedUser)), 0);
+      setUser(JSON.parse(savedUser));
     }
     if (savedCart) {
-      setTimeout(() => setCart(JSON.parse(savedCart)), 0);
+      setCart(JSON.parse(savedCart));
     }
 
-    setTimeout(() => setLoading(false), 0); // Avoid synchronous setState
+    setLoading(false);
+    console.log('Loading state set to false');
   }, []);
+
+  // Sync wishlist when token becomes available
+  useEffect(() => {
+    if (token && !loading) {
+      syncWishlist();
+    }
+  }, [token, loading]);
 
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cart));
@@ -143,6 +173,34 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const cartTotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
+  const addToWishlist = async (product: Product) => {
+    if (token) {
+      try {
+        await apiService.addToWishlistApi(product._id, token);
+        setWishlist(prev => [...prev.filter(p => p._id !== product._id), product]);
+      } catch (error) {
+        console.error('Failed to add to wishlist:', error);
+        throw error;
+      }
+    } else {
+      setWishlist(prev => [...prev.filter(p => p._id !== product._id), product]);
+    }
+  };
+
+  const removeFromWishlist = async (productId: string) => {
+    if (token) {
+      try {
+        await apiService.removeFromWishlistApi(productId, token);
+        setWishlist(prev => prev.filter(p => p._id !== productId));
+      } catch (error) {
+        console.error('Failed to remove from wishlist:', error);
+        throw error;
+      }
+    } else {
+      setWishlist(prev => prev.filter(p => p._id !== productId));
+    }
+  };
+
   const value = {
     cart,
     addToCart,
@@ -152,9 +210,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     cartTotal,
     cartCount,
     wishlist,
-    addToWishlist: (p: Product) => setWishlist(prev => [...prev.filter(x => x._id !== p._id), p]),
-    removeFromWishlist: (id: string) => setWishlist(prev => prev.filter(p => p._id !== id)),
+    addToWishlist,
+    removeFromWishlist,
     isInWishlist: (id: string) => wishlist.some(p => p._id === id),
+    syncWishlist,
     user,
     signup,
     login,
