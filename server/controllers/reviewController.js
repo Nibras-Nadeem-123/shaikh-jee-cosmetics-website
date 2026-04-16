@@ -4,51 +4,39 @@ import { catchAsyncErrors, ErrorHandler } from '../middleware/errorHandler.js';
 import { clearCache } from '../config/redis.js';
 import mongoose from 'mongoose'; // Hoisted from inside function
 
-// Get all reviews for a product
+// Corrected function declaration
 export const getProductReviews = catchAsyncErrors(async (req, res, next) => {
-  const { productId } = req.params;
-  const { page = 1, limit = 10, sort = '-createdAt' } = req.query;
-
-  if (!productId) {
-    return next(new ErrorHandler('Product ID is required', 400));
+  const { productId, page = 1, limit = 10, sort = '-createdAt' } = req.query; // Validate productId
+  if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
+    return next(new ErrorHandler('Invalid product ID', 400));
   }
 
-  // Try to convert to ObjectId, but fall back to string if invalid
-  let productQuery;
-  if (mongoose.Types.ObjectId.isValid(productId)) {
-    productQuery = { productId: new mongoose.Types.ObjectId(productId) };
-  } else {
-    // If not a valid ObjectId, try matching as string
-    productQuery = { productId };
-  }
+  let query = { productId };
 
   const pageNum = Math.max(1, parseInt(page) || 1);
   const limitNum = Math.max(1, Math.min(50, parseInt(limit) || 10));
   const skip = (pageNum - 1) * limitNum;
 
-  const reviews = await Review.find(productQuery)
+  const reviews = await Review.find(query)
     .populate('userId', 'name')
     .sort(sort)
     .skip(skip)
     .limit(limitNum);
 
-  const totalReviews = await Review.countDocuments(productQuery);
+  const totalReviews = await Review.countDocuments(query);
   const totalPages = Math.ceil(totalReviews / limitNum);
 
   // Calculate average rating
-  let ratingStats = [];
-  if (mongoose.Types.ObjectId.isValid(productId)) {
-    ratingStats = await Review.aggregate([
-      { $match: { productId: new mongoose.Types.ObjectId(productId) } },
-      {
-        $group: {
-          _id: null,
-          averageRating: { $avg: '$rating' },
-          totalReviews: { $sum: 1 }
-        }
+  const ratingStats = await Review.aggregate([
+    { $match: { productId: new mongoose.Types.ObjectId(productId) } },
+    {
+      $group: {
+        _id: null,
+        averageRating: { $avg: '$rating' },
+        totalReviews: { $sum: 1 }
       }
-    ]);
-  }
+    }
+  ]);
 
   res.status(200).json({
     success: true,
@@ -61,40 +49,27 @@ export const getProductReviews = catchAsyncErrors(async (req, res, next) => {
 });
 
 // Create a new review
-export const createReview = catchAsyncErrors(async (req, res, next) => {
+export const createReview = catchAsyncErrors(async (req, res) => {
   const { productId, rating, comment } = req.body;
 
-  // Convert productId to ObjectId
-  const productObjectId = new mongoose.Types.ObjectId(productId);
-
   // Check if product exists
-  const product = await Product.findById(productObjectId);
+  const product = await Product.findById(productId);
   if (!product) {
-    return next(new ErrorHandler('Product not found', 404));
+    throw new ErrorHandler('Product not found', 404);
   }
 
   // Check if user already reviewed this product
-  let existingReview = await Review.findOne({
-    productId: productObjectId,
+  const existingReview = await Review.findOne({
+    productId,
     userId: req.user._id
   });
 
   if (existingReview) {
-    // Update the existing review instead of throwing an error
-    existingReview.rating = rating;
-    existingReview.comment = comment;
-    existingReview.updatedAt = new Date();
-    await existingReview.save();
-
-    return res.status(200).json({
-      success: true,
-      message: 'Review updated successfully',
-      review: existingReview
-    });
+    throw new ErrorHandler('You have already reviewed this product', 400);
   }
 
   const review = new Review({
-    productId: productObjectId,
+    productId,
     userId: req.user._id,
     userName: req.user.name,
     rating,
@@ -104,9 +79,28 @@ export const createReview = catchAsyncErrors(async (req, res, next) => {
 
   await review.save();
 
+  
+  // Update product rating
+  // Corrected to use mongoose.Types.ObjectId directly after hoisting mongoose import
+  const ratings = await Review.aggregate([
+    { $match: { productId: new mongoose.Types.ObjectId(productId) } },
+    { $group: { _id: null, avgRating: { $avg: '$rating' }, count: { $sum: 1 } } }
+  ]);
+
+  if (ratings.length > 0) {
+    await Product.findByIdAndUpdate(productId, {
+      rating: ratings[0].avgRating,
+      reviewCount: ratings[0].count
+    });
+  }
+
+  // Clear cache
+  await clearCache(`/api/reviews*`);
+  await clearCache(`/api/products*`);
+
   res.status(201).json({
     success: true,
-    message: 'Review created successfully',
+    message: 'Review submitted successfully',
     review
   });
 });

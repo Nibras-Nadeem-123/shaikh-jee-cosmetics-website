@@ -10,9 +10,9 @@ import { Address } from '../types';
 import { useToast } from '@/hooks/useToast';
 import { LoyaltyWidget } from './LoyaltyWidget';
 import { OrderTracking } from './OrderTracking';
+import LoadingSpinner from './LoadingSpinner';
 
-import { LoadingSpinner } from './LoadingSpinner';
-
+ 
 export const AccountPage = () => {
   const { user, logout, orders, wishlist, addresses, addAddress, updateAddress, deleteAddress } = useApp();
   const { showToast } = useToast();
@@ -45,7 +45,7 @@ export const AccountPage = () => {
 
   if (!user) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex items-center justify-center h-screen">
         <LoadingSpinner size="lg" />
       </div>
     );
@@ -118,23 +118,23 @@ export const AccountPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-muted/20 pb-20">
+    <div className="min-h-screen pb-20 bg-muted/20">
       {/* Account Header Banner */}
-      <div className="bg-primary pt-12 pb-24">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center gap-8 text-white">
+      <div className="pt-12 pb-24 bg-primary">
+        <div className="container px-4 mx-auto lg:px-8">
+          <div className="flex flex-col items-center gap-8 text-white md:flex-row">
             <div className="relative group">
-              <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center p-1 border-4 border-white/20 shadow-2xl relative overflow-hidden">
+              <div className="relative flex items-center justify-center w-32 h-32 p-1 overflow-hidden bg-white border-4 rounded-full shadow-2xl border-white/20">
                 <User size={64} className="text-primary" />
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                <div className="absolute inset-0 flex items-center justify-center transition-opacity opacity-0 cursor-pointer bg-black/40 group-hover:opacity-100">
                   <span className="text-[10px] font-bold uppercase tracking-widest">Update</span>
                 </div>
               </div>
             </div>
-            <div className="text-center md:text-left space-y-2">
+            <div className="space-y-2 text-center md:text-left">
               <h1 className="text-4xl font-bold tracking-tight">Bonjour, {user?.name?.split(' ')[0] || 'Guest'}!</h1>
-              <p className="opacity-80 italic">Managing your signature beauty choices since 2026</p>
-              <div className="flex flex-wrap justify-center md:justify-start gap-4 pt-2">
+              <p className="italic opacity-80">Managing your signature beauty choices since 2026</p>
+              <div className="flex flex-wrap justify-center gap-4 pt-2 md:justify-start">
                 <div className="bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest border border-white/10">
                   Member Tier: Gold
                 </div>
@@ -147,10 +147,10 @@ export const AccountPage = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 lg:px-8 -mt-12">
-        <div className="grid lg:grid-cols-4 gap-12">
+      <div className="container px-4 mx-auto -mt-12 lg:px-8">
+        <div className="grid gap-12 lg:grid-cols-4">
           {/* Navigation Sidebar */}
-          <aside className="lg:col-span-1 space-y-6">
+          <aside className="space-y-6 lg:col-span-1">
             <div className="bg-white rounded-[2.5rem] p-6 shadow-xl shadow-primary/5 border border-primary/10 overflow-hidden sticky top-28">
               <nav className="space-y-1">
                 {tabs.map((tab) => (
@@ -164,17 +164,17 @@ export const AccountPage = () => {
                   >
                     <div className="flex items-center gap-3">
                       <tab.icon size={20} />
-                      <span className="font-bold text-sm tracking-tight">{tab.label}</span>
+                      <span className="text-sm font-bold tracking-tight">{tab.label}</span>
                     </div>
-                    {activeTab !== tab.id && <ChevronRight size={14} className="opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />}
+                    {activeTab !== tab.id && <ChevronRight size={14} className="transition-all -translate-x-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-0" />}
                   </button>
                 ))}
 
-                <div className="my-4 border-t border-border mx-4" />
+                <div className="mx-4 my-4 border-t border-border" />
 
                 <button
                   onClick={() => logout()}
-                  className="w-full flex items-center gap-3 px-6 py-4 rounded-2xl text-destructive font-bold hover:bg-destructive/5 transition-all text-sm"
+                  className="flex items-center w-full gap-3 px-6 py-4 text-sm font-bold transition-all rounded-2xl text-destructive hover:bg-destructive/5"
                 >
                   <LogOut size={20} />
                   <span>Sign Out</span>
@@ -184,33 +184,33 @@ export const AccountPage = () => {
 
             {/* Support Widget */}
             <div className="bg-secondary rounded-[2.5rem] p-8 space-y-4 border border-accent/30">
-              <h4 className="font-bold text-primary tracking-tight">Need Beauty Advice?</h4>
-              <p className="text-xs text-foreground/70 leading-relaxed italic">Our consultants are available 24/7 to help you choose the right products for your skin type.</p>
-              <button className="w-full py-3 bg-white text-primary font-bold rounded-full text-xs shadow-sm hover:shadow-md transition-all uppercase tracking-widest border border-primary/10">Chat with Expert</button>
+              <h4 className="font-bold tracking-tight text-primary">Need Beauty Advice?</h4>
+              <p className="text-xs italic leading-relaxed text-foreground/70">Our consultants are available 24/7 to help you choose the right products for your skin type.</p>
+              <button className="w-full py-3 text-xs font-bold tracking-widest uppercase transition-all bg-white border rounded-full shadow-sm text-primary hover:shadow-md border-primary/10">Chat with Expert</button>
             </div>
           </aside>
 
           {/* Main Content Area */}
-          <main className="lg:col-span-3 min-h-150 animate-in fade-in slide-in-from-right duration-500">
+          <main className="duration-500 lg:col-span-3 min-h-150 animate-in fade-in slide-in-from-right">
             {/* Orders Section */}
             {activeTab === 'orders' && (
               <div className="bg-white rounded-[2.5rem] p-10 border border-primary/5 shadow-sm space-y-8">
-                <div className="flex justify-between items-end border-b border-border pb-6">
+                <div className="flex items-end justify-between pb-6 border-b border-border">
                   <div className="space-y-1">
-                    <h2 className="text-3xl font-bold text-foreground tracking-tight">Purchase Chronicles</h2>
-                    <p className="text-muted-foreground text-sm">Review and track your beauty orders</p>
+                    <h2 className="text-3xl font-bold tracking-tight text-foreground">Purchase Chronicles</h2>
+                    <p className="text-sm text-muted-foreground">Review and track your beauty orders</p>
                   </div>
                 </div>
 
                 {orders.length === 0 ? (
-                  <div className="text-center py-20 space-y-6">
-                    <div className="w-20 h-20 bg-secondary rounded-full flex items-center justify-center mx-auto text-primary opacity-50">
+                  <div className="py-20 space-y-6 text-center">
+                    <div className="flex items-center justify-center w-20 h-20 mx-auto rounded-full opacity-50 bg-secondary text-primary">
                       <Package size={40} />
                     </div>
-                    <p className="text-muted-foreground italic">Thy beauty vault is currently empty of orders.</p>
+                    <p className="italic text-muted-foreground">Thy beauty vault is currently empty of orders.</p>
                     <Link
                       href="/shop"
-                      className="inline-block px-10 py-4 bg-primary text-white font-bold rounded-full hover:bg-primary/90 transition-all shadow-lg shadow-primary/10"
+                      className="inline-block px-10 py-4 font-bold text-white transition-all rounded-full shadow-lg bg-primary hover:bg-primary/90 shadow-primary/10"
                     >
                       Browse Boutique
                     </Link>
@@ -218,22 +218,22 @@ export const AccountPage = () => {
                 ) : (
                   <div className="space-y-6">
                     {orders.map((order) => (
-                      <div key={order.id} className="border border-border rounded-4xl overflow-hidden group hover:border-primary/30 transition-all hover:shadow-xl hover:shadow-primary/5">
-                        <div className="bg-muted/30 p-6 flex flex-wrap justify-between items-center gap-4">
+                      <div key={order.id} className="overflow-hidden transition-all border border-border rounded-4xl group hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5">
+                        <div className="flex flex-wrap items-center justify-between gap-4 p-6 bg-muted/30">
                           <div className="flex gap-8">
                             <div>
                               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Order Ref</p>
-                              <p className="font-bold text-foreground tracking-tight">#{order.id}</p>
+                              <p className="font-bold tracking-tight text-foreground">#{order.id}</p>
                             </div>
                             <div>
                               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Dating From</p>
-                              <p className="font-bold text-foreground tracking-tight">
+                              <p className="font-bold tracking-tight text-foreground">
                                 {new Date(order.createdAt).toLocaleDateString('en-GB')}
                               </p>
                             </div>
                             <div>
                               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Total Value</p>
-                              <p className="font-extrabold text-primary tracking-tight">₹{order.total}</p>
+                              <p className="font-extrabold tracking-tight text-primary">₹{order.total}</p>
                             </div>
                           </div>
                           <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-tighter border ${getStatusColor(order.status)}`}>
@@ -243,8 +243,8 @@ export const AccountPage = () => {
 
                         <div className="p-8 space-y-6">
                           {order.items.map((item, idx) => (
-                            <div key={idx} className="flex gap-6 items-center">
-                              <div className="w-20 h-20 relative rounded-2xl overflow-hidden shadow-sm shrink-0 bg-muted">
+                            <div key={idx} className="flex items-center gap-6">
+                              <div className="relative w-20 h-20 overflow-hidden shadow-sm rounded-2xl shrink-0 bg-muted">
                                 <Image
                                   src={item.product.images?.[0] || item.product.image || ""}
                                   alt={item.product.name}
@@ -254,20 +254,20 @@ export const AccountPage = () => {
                               </div>
                               <div className="flex-1 space-y-1">
                                 <h4 className="font-bold text-foreground">{item.product.name}</h4>
-                                <div className="flex gap-4 text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                                <div className="flex gap-4 text-xs font-bold tracking-widest uppercase text-muted-foreground">
                                   <span>Quantity: {item.quantity}</span>
                                   <span>•</span>
                                   <span>Category: {item.product.category}</span>
                                 </div>
                               </div>
-                              <Link href={`/product/${item.product.slug}`} className="p-3 bg-muted rounded-full text-foreground hover:bg-primary hover:text-white transition-all">
+                              <Link href={`/product/${item.product.slug}`} className="p-3 transition-all rounded-full bg-muted text-foreground hover:bg-primary hover:text-white">
                                 <ChevronRight size={18} />
                               </Link>
                             </div>
                           ))}
                         </div>
 
-                        <div className="p-6 bg-white border-t border-border flex justify-end gap-4 shadow-inner">
+                        <div className="flex justify-end gap-4 p-6 bg-white border-t shadow-inner border-border">
                           <button className="px-6 py-2.5 border-2 border-border text-xs font-bold uppercase rounded-full hover:bg-muted transition-all">Invoice</button>
                           <button className="px-8 py-2.5 bg-foreground text-white text-xs font-bold uppercase rounded-full hover:bg-black transition-all">Re-order Luxe</button>
                         </div>
@@ -281,31 +281,31 @@ export const AccountPage = () => {
             {/* Wishlist Section */}
             {activeTab === 'wishlist' && (
               <div className="bg-white rounded-[2.5rem] p-10 border border-primary/5 shadow-sm space-y-10">
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-6 border-b border-border pb-8">
+                <div className="flex flex-col items-center justify-between gap-6 pb-8 border-b sm:flex-row border-border">
                   <div className="space-y-1 text-center sm:text-left">
-                    <h2 className="text-3xl font-bold text-foreground tracking-tight">Wishlist Gallery</h2>
-                    <p className="text-muted-foreground text-sm">Your favorite selections ready for acquisition</p>
+                    <h2 className="text-3xl font-bold tracking-tight text-foreground">Wishlist Gallery</h2>
+                    <p className="text-sm text-muted-foreground">Your favorite selections ready for acquisition</p>
                   </div>
-                  <button className="px-8 py-4 bg-secondary text-primary font-bold rounded-full text-xs uppercase tracking-widest shadow-sm hover:shadow-md transition-all">
+                  <button className="px-8 py-4 text-xs font-bold tracking-widest uppercase transition-all rounded-full shadow-sm bg-secondary text-primary hover:shadow-md">
                     Add All to Cart
                   </button>
                 </div>
 
                 {wishlist.length === 0 ? (
-                  <div className="text-center py-20">
-                    <div className="w-24 h-24 bg-secondary rounded-full flex items-center justify-center mx-auto text-primary opacity-50 mb-8 animate-pulse">
+                  <div className="py-20 text-center">
+                    <div className="flex items-center justify-center w-24 h-24 mx-auto mb-8 rounded-full opacity-50 bg-secondary text-primary animate-pulse">
                       <Heart size={48} />
                     </div>
-                    <p className="text-lg text-muted-foreground italic mb-10 text-balance px-4">Your heart has not claimed any treasures yet.</p>
+                    <p className="px-4 mb-10 text-lg italic text-muted-foreground text-balance">Your heart has not claimed any treasures yet.</p>
                     <Link
                       href="/shop"
-                      className="inline-flex px-12 py-5 bg-primary text-white font-bold rounded-full hover:bg-primary/90 transition-all shadow-xl shadow-primary/20"
+                      className="inline-flex px-12 py-5 font-bold text-white transition-all rounded-full shadow-xl bg-primary hover:bg-primary/90 shadow-primary/20"
                     >
                       Start Designing Your Routine
                     </Link>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+                  <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3">
                     {wishlist.map((product) => (
                       <ProductCard key={product._id} product={product} />
                     ))}
@@ -317,10 +317,10 @@ export const AccountPage = () => {
             {/* Addresses Section */}
             {activeTab === 'addresses' && (
               <div className="bg-white rounded-[2.5rem] p-10 border border-primary/5 shadow-sm space-y-10">
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-6 border-b border-border pb-8">
+                <div className="flex flex-col items-center justify-between gap-6 pb-8 border-b sm:flex-row border-border">
                   <div className="space-y-1 text-center sm:text-left">
-                    <h2 className="text-3xl font-bold text-foreground tracking-tight">Delivery Destinations</h2>
-                    <p className="text-muted-foreground text-sm">Manage your global shipping locations</p>
+                    <h2 className="text-3xl font-bold tracking-tight text-foreground">Delivery Destinations</h2>
+                    <p className="text-sm text-muted-foreground">Manage your global shipping locations</p>
                   </div>
                   <button
                     onClick={() => {
@@ -337,7 +337,7 @@ export const AccountPage = () => {
                       });
                       setShowAddressForm(!showAddressForm);
                     }}
-                    className="px-8 py-4 bg-primary text-white font-bold rounded-full text-xs uppercase tracking-widest shadow-lg shadow-primary/20 flex items-center gap-2 hover:scale-105 transition-all"
+                    className="flex items-center gap-2 px-8 py-4 text-xs font-bold tracking-widest text-white uppercase transition-all rounded-full shadow-lg bg-primary shadow-primary/20 hover:scale-105"
                   >
                     {showAddressForm && editingAddress === null ? <X size={16} /> : <Plus size={16} />}
                     {showAddressForm && editingAddress === null ? 'Cancel' : 'Add New Abode'}
@@ -346,7 +346,7 @@ export const AccountPage = () => {
 
                 {/* Address Form Modal/Inline */}
                 {showAddressForm && (
-                  <form onSubmit={handleAddressSubmit} className="mb-8 bg-secondary/30 p-8 rounded-2xl border border-primary/20 animate-in fade-in slide-in-from-top duration-300">
+                  <form onSubmit={handleAddressSubmit} className="p-8 mb-8 duration-300 border bg-secondary/30 rounded-2xl border-primary/20 animate-in fade-in slide-in-from-top">
                     <div className="flex items-center justify-between mb-6">
                       <h3 className="text-lg font-bold text-foreground">
                         {editingAddress ? 'Update Destination' : 'Add New Destination'}
@@ -357,89 +357,89 @@ export const AccountPage = () => {
                           setShowAddressForm(false);
                           setEditingAddress(null);
                         }}
-                        className="p-2 text-muted-foreground hover:text-destructive transition-all"
+                        className="p-2 transition-all text-muted-foreground hover:text-destructive"
                       >
                         <X size={20} />
                       </button>
                     </div>
-                    <div className="grid md:grid-cols-2 gap-6">
+                    <div className="grid gap-6 md:grid-cols-2">
                       <div className="space-y-2 md:col-span-2">
-                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-1">Full Name</label>
+                        <label className="px-1 text-xs font-bold tracking-widest uppercase text-muted-foreground">Full Name</label>
                         <input
                           type="text"
                           required
                           value={addressForm.name}
                           onChange={(e) => setAddressForm({ ...addressForm, name: e.target.value })}
                           placeholder="John Doe"
-                          className="w-full px-6 py-4 bg-white border border-border rounded-2xl focus:outline-none focus:border-primary transition-all font-medium"
+                          className="w-full px-6 py-4 font-medium transition-all bg-white border border-border rounded-2xl focus:outline-none focus:border-primary"
                         />
                       </div>
                       <div className="space-y-2 md:col-span-2">
-                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-1">Street Address</label>
+                        <label className="px-1 text-xs font-bold tracking-widest uppercase text-muted-foreground">Street Address</label>
                         <input
                           type="text"
                           required
                           value={addressForm.addressLine1}
                           onChange={(e) => setAddressForm({ ...addressForm, addressLine1: e.target.value })}
                           placeholder="123 Main Street"
-                          className="w-full px-6 py-4 bg-white border border-border rounded-2xl focus:outline-none focus:border-primary transition-all font-medium"
+                          className="w-full px-6 py-4 font-medium transition-all bg-white border border-border rounded-2xl focus:outline-none focus:border-primary"
                         />
                       </div>
                       <div className="space-y-2 md:col-span-2">
-                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-1">Apartment/Suite (Optional)</label>
+                        <label className="px-1 text-xs font-bold tracking-widest uppercase text-muted-foreground">Apartment/Suite (Optional)</label>
                         <input
                           type="text"
                           value={addressForm.addressLine2}
                           onChange={(e) => setAddressForm({ ...addressForm, addressLine2: e.target.value })}
                           placeholder="Apt 4B"
-                          className="w-full px-6 py-4 bg-white border border-border rounded-2xl focus:outline-none focus:border-primary transition-all font-medium"
+                          className="w-full px-6 py-4 font-medium transition-all bg-white border border-border rounded-2xl focus:outline-none focus:border-primary"
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-1">City</label>
+                        <label className="px-1 text-xs font-bold tracking-widest uppercase text-muted-foreground">City</label>
                         <input
                           type="text"
                           required
                           value={addressForm.city}
                           onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
                           placeholder="Mumbai"
-                          className="w-full px-6 py-4 bg-white border border-border rounded-2xl focus:outline-none focus:border-primary transition-all font-medium"
+                          className="w-full px-6 py-4 font-medium transition-all bg-white border border-border rounded-2xl focus:outline-none focus:border-primary"
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-1">State</label>
+                        <label className="px-1 text-xs font-bold tracking-widest uppercase text-muted-foreground">State</label>
                         <input
                           type="text"
                           required
                           value={addressForm.state}
                           onChange={(e) => setAddressForm({ ...addressForm, state: e.target.value })}
                           placeholder="Maharashtra"
-                          className="w-full px-6 py-4 bg-white border border-border rounded-2xl focus:outline-none focus:border-primary transition-all font-medium"
+                          className="w-full px-6 py-4 font-medium transition-all bg-white border border-border rounded-2xl focus:outline-none focus:border-primary"
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-1">Postal Code</label>
+                        <label className="px-1 text-xs font-bold tracking-widest uppercase text-muted-foreground">Postal Code</label>
                         <input
                           type="text"
                           required
                           value={addressForm.pincode}
                           onChange={(e) => setAddressForm({ ...addressForm, pincode: e.target.value })}
                           placeholder="400001"
-                          className="w-full px-6 py-4 bg-white border border-border rounded-2xl focus:outline-none focus:border-primary transition-all font-medium"
+                          className="w-full px-6 py-4 font-medium transition-all bg-white border border-border rounded-2xl focus:outline-none focus:border-primary"
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-1">Phone Line</label>
+                        <label className="px-1 text-xs font-bold tracking-widest uppercase text-muted-foreground">Phone Line</label>
                         <input
                           type="tel"
                           required
                           value={addressForm.phone}
                           onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })}
                           placeholder="+91 9876543210"
-                          className="w-full px-6 py-4 bg-white border border-border rounded-2xl focus:outline-none focus:border-primary transition-all font-medium"
+                          className="w-full px-6 py-4 font-medium transition-all bg-white border border-border rounded-2xl focus:outline-none focus:border-primary"
                         />
                       </div>
-                      <div className="md:col-span-2 flex items-center gap-3 pt-2">
+                      <div className="flex items-center gap-3 pt-2 md:col-span-2">
                         <input
                           type="checkbox"
                           id="isDefault"
@@ -459,13 +459,13 @@ export const AccountPage = () => {
                           setShowAddressForm(false);
                           setEditingAddress(null);
                         }}
-                        className="flex-1 py-4 border-2 border-border text-foreground font-bold rounded-full hover:bg-muted transition-all"
+                        className="flex-1 py-4 font-bold transition-all border-2 rounded-full border-border text-foreground hover:bg-muted"
                       >
                         Cancel
                       </button>
                       <button
                         type="submit"
-                        className="flex-2 py-4 bg-primary text-white font-bold rounded-full hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
+                        className="flex items-center justify-center gap-2 py-4 font-bold text-white transition-all rounded-full shadow-lg flex-2 bg-primary hover:bg-primary/90 shadow-primary/20"
                       >
                         <Check size={18} />
                         {editingAddress ? 'Update Address' : 'Save Address'}
@@ -475,17 +475,17 @@ export const AccountPage = () => {
                 )}
 
                 {addresses.length === 0 ? (
-                  <div className="text-center py-20 px-8 bg-muted/20 rounded-4xl border-2 border-dashed border-border">
-                    <p className="text-muted-foreground italic">No destinations saved in your registry yet.</p>
+                  <div className="px-8 py-20 text-center border-2 border-dashed bg-muted/20 rounded-4xl border-border">
+                    <p className="italic text-muted-foreground">No destinations saved in your registry yet.</p>
                   </div>
                 ) : (
-                  <div className="grid md:grid-cols-2 gap-8">
+                  <div className="grid gap-8 md:grid-cols-2">
                     {addresses.map((addr) => (
                       <div key={addr.id} className="bg-white border-2 border-border rounded-[2.5rem] p-8 space-y-6 relative group hover:border-primary/50 transition-all hover:shadow-xl hover:shadow-primary/5">
-                        <div className="flex justify-between items-start">
+                        <div className="flex items-start justify-between">
                           <div className="space-y-1">
                             <div className="flex items-center gap-3">
-                              <h3 className="font-bold text-foreground text-lg">{addr.name}</h3>
+                              <h3 className="text-lg font-bold text-foreground">{addr.name}</h3>
                               {addr.isDefault && (
                                 <span className="px-3 py-1 bg-secondary text-primary text-[10px] font-bold uppercase rounded-full tracking-widest border border-primary/10">Default</span>
                               )}
@@ -511,14 +511,14 @@ export const AccountPage = () => {
                         </div>
 
                         <div className="space-y-2">
-                          <p className="text-foreground/80 leading-relaxed font-medium">
+                          <p className="font-medium leading-relaxed text-foreground/80">
                             {addr.addressLine1}
                             {addr.addressLine2 && `, ${addr.addressLine2}`}
                             <br />
                             {addr.city}, {addr.state} - <span className="font-bold text-foreground">{addr.pincode}</span>
                           </p>
-                          <div className="flex items-center gap-2 text-muted-foreground text-xs font-bold pt-2">
-                            <span className="p-1 px-2 bg-muted rounded">PHONE: {addr.phone}</span>
+                          <div className="flex items-center gap-2 pt-2 text-xs font-bold text-muted-foreground">
+                            <span className="p-1 px-2 rounded bg-muted">PHONE: {addr.phone}</span>
                           </div>
                         </div>
                       </div>
@@ -530,35 +530,35 @@ export const AccountPage = () => {
 
             {/* Profile Section */}
             {activeTab === 'profile' && (
-              <div className="space-y-10 animate-in fade-in slide-in-from-bottom duration-500">
-                <div className="grid md:grid-cols-2 gap-10">
+              <div className="space-y-10 duration-500 animate-in fade-in slide-in-from-bottom">
+                <div className="grid gap-10 md:grid-cols-2">
                   {/* Identity Form */}
                   <div className="bg-white rounded-[2.5rem] p-10 border border-primary/5 shadow-sm space-y-8">
-                    <div className="flex items-center gap-3 border-b border-border pb-6">
+                    <div className="flex items-center gap-3 pb-6 border-b border-border">
                       <User className="text-primary" size={24} />
                       <h2 className="text-2xl font-bold tracking-tight">Identity Details</h2>
                     </div>
                     <form className="space-y-6">
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-1">Legal Name</label>
-                        <input type="text" defaultValue={user.name} className="w-full px-6 py-4 bg-muted border border-transparent rounded-2xl focus:outline-none focus:bg-white focus:border-primary transition-all font-medium" />
+                        <label className="px-1 text-xs font-bold tracking-widest uppercase text-muted-foreground">Legal Name</label>
+                        <input type="text" defaultValue={user.name} className="w-full px-6 py-4 font-medium transition-all border border-transparent bg-muted rounded-2xl focus:outline-none focus:bg-white focus:border-primary" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-1">Email Registry</label>
-                        <input type="email" defaultValue={user.email} className="w-full px-6 py-4 bg-muted border border-transparent rounded-2xl focus:outline-none focus:bg-white focus:border-primary transition-all font-medium" />
+                        <label className="px-1 text-xs font-bold tracking-widest uppercase text-muted-foreground">Email Registry</label>
+                        <input type="email" defaultValue={user.email} className="w-full px-6 py-4 font-medium transition-all border border-transparent bg-muted rounded-2xl focus:outline-none focus:bg-white focus:border-primary" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-1">Communication Line</label>
-                        <input type="tel" defaultValue={user.phone} className="w-full px-6 py-4 bg-muted border border-transparent rounded-2xl focus:outline-none focus:bg-white focus:border-primary transition-all font-medium" />
+                        <label className="px-1 text-xs font-bold tracking-widest uppercase text-muted-foreground">Communication Line</label>
+                        <input type="tel" defaultValue={user.phone} className="w-full px-6 py-4 font-medium transition-all border border-transparent bg-muted rounded-2xl focus:outline-none focus:bg-white focus:border-primary" />
                       </div>
-                      <button type="submit" className="w-full py-5 bg-foreground text-white font-bold rounded-full hover:bg-black transition-all shadow-xl shadow-black/10">Save Persona Updates</button>
+                      <button type="submit" className="w-full py-5 font-bold text-white transition-all rounded-full shadow-xl bg-foreground hover:bg-black shadow-black/10">Save Persona Updates</button>
                     </form>
                   </div>
 
                   <div className="space-y-10">
                     {/* Loyalty Points Widget */}
                     <div className="bg-white rounded-[2.5rem] p-10 border border-primary/5 shadow-sm">
-                      <div className="flex items-center gap-3 border-b border-border pb-4 mb-4">
+                      <div className="flex items-center gap-3 pb-4 mb-4 border-b border-border">
                         <Gift className="text-primary" size={24} />
                         <h2 className="text-2xl font-bold tracking-tight">Loyalty Rewards</h2>
                       </div>
@@ -567,25 +567,25 @@ export const AccountPage = () => {
 
                     {/* Security Widget */}
                     <div className="bg-white rounded-[2.5rem] p-10 border border-primary/5 shadow-sm space-y-6">
-                      <div className="flex items-center gap-3 border-b border-border pb-4">
+                      <div className="flex items-center gap-3 pb-4 border-b border-border">
                         <ShieldCheck className="text-primary" size={24} />
                         <h2 className="text-2xl font-bold tracking-tight">Security</h2>
                       </div>
-                      <p className="text-sm text-muted-foreground italic">Maintain your vault security by updating your passphrase regularly.</p>
-                      <button className="w-full py-4 border-2 border-border text-foreground font-bold rounded-full text-xs uppercase tracking-widest hover:bg-muted transition-all">Reset Password</button>
+                      <p className="text-sm italic text-muted-foreground">Maintain your vault security by updating your passphrase regularly.</p>
+                      <button className="w-full py-4 text-xs font-bold tracking-widest uppercase transition-all border-2 rounded-full border-border text-foreground hover:bg-muted">Reset Password</button>
                     </div>
 
                     {/* Preferences Widget */}
                     <div className="bg-secondary p-1 rounded-[2.5rem] border border-primary/10 overflow-hidden shadow-sm">
                       <div className="bg-white rounded-[2.3rem] p-8 space-y-6">
-                        <div className="flex items-center gap-3 border-b border-border pb-4">
+                        <div className="flex items-center gap-3 pb-4 border-b border-border">
                           <Bell className="text-primary" size={24} />
                           <h2 className="text-xl font-bold tracking-tight">Alert Preferences</h2>
                         </div>
                         <div className="space-y-4">
                           {['Sale Announcements', 'New Signature Arrivals', 'Luxe Rewards Updates'].map((pref) => (
-                            <label key={pref} className="flex items-center justify-between group cursor-pointer">
-                              <span className="text-sm font-medium text-foreground/80 group-hover:text-primary transition-colors">{pref}</span>
+                            <label key={pref} className="flex items-center justify-between cursor-pointer group">
+                              <span className="text-sm font-medium transition-colors text-foreground/80 group-hover:text-primary">{pref}</span>
                               <div className="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" className="sr-only peer" defaultChecked />
                                 <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
@@ -599,19 +599,19 @@ export const AccountPage = () => {
                 </div>
 
                 {/* Account Activity / Stats Summary */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
                   {[
                     { icon: CreditCard, val: "₹15,400", label: "Lifetime Lush" },
                     { icon: Heart, val: "24", label: "Desired Items" },
                     { icon: Package, val: "12", label: "Orders Fulfilled" },
                     { icon: ShieldCheck, val: "Level 4", label: "Security Tier" }
                   ].map((stat, i) => (
-                    <div key={i} className="bg-white p-8 rounded-4xl border border-primary/5 shadow-sm text-center space-y-3 group hover:bg-primary transition-all duration-500">
-                      <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center mx-auto text-primary group-hover:bg-white/20 group-hover:text-white transition-all">
+                    <div key={i} className="p-8 space-y-3 text-center transition-all duration-500 bg-white border shadow-sm rounded-4xl border-primary/5 group hover:bg-primary">
+                      <div className="flex items-center justify-center w-10 h-10 mx-auto transition-all rounded-full bg-secondary text-primary group-hover:bg-white/20 group-hover:text-white">
                         <stat.icon size={20} />
                       </div>
                       <div>
-                        <p className="text-2xl font-bold text-foreground group-hover:text-white tracking-tight">{stat.val}</p>
+                        <p className="text-2xl font-bold tracking-tight text-foreground group-hover:text-white">{stat.val}</p>
                         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest group-hover:text-white/70">{stat.label}</p>
                       </div>
                     </div>

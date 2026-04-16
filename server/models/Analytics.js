@@ -46,6 +46,4 @@ const analyticsSchema = new mongoose.Schema({
   timestamps: true
 });
 
-analyticsSchema.index({ date: 1 });
-
 export default mongoose.model('Analytics', analyticsSchema);

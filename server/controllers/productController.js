@@ -74,9 +74,11 @@ export const getSingleProduct = catchAsyncErrors(async (req, res, next) => {
   }
 
   // Fetch from database
+  console.log(`Searching for product with slug: ${slug}`);
   const product = await Product.findOne({ slug });
 
   if (!product) {
+    console.error(`Product not found for slug: ${slug}`); // Log the slug for debugging
     const error = new ErrorHandler('Product not found', 404);
     return next(error);
   }

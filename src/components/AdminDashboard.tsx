@@ -23,6 +23,7 @@ import { apiService } from "../services/api";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useToast } from "@/hooks/useToast";
+import LoadingSpinner from "./LoadingSpinner";
 
 export const AdminDashboard = () => {
     const { user } = useApp();
@@ -79,7 +80,9 @@ export const AdminDashboard = () => {
             setProducts(prodData.products || []);
             setOrders(orderData.orders || []);
         } catch (error) {
-            console.error("Dashboard fetch error:", error);
+            const errorMessage = (error as any).response?.data?.message || (error as any).message || "Unknown error occurred";
+            console.error("Dashboard fetch error:", errorMessage);
+            showToast(`Error: ${errorMessage}`, "error");
         } finally {
             setIsLoading(false);
         }
@@ -174,20 +177,59 @@ export const AdminDashboard = () => {
     };
 
     const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
+        setIsSubmitting(true);
         try {
             const token = localStorage.getItem('token');
             if (!token) {
                 throw new Error('No authentication token found');
             }
-            // Note: Add updateOrderStatus to apiService if needed
-            // await apiService.updateOrderStatus(orderId, newStatus, token);
-            setOrders(orders.map(o =>
-                o._id === orderId ? { ...o, orderStatus: newStatus } : o
+            await apiService.updateOrderStatus(orderId, newStatus, token);
+            setOrders(orders.map(order =>
+                order._id === orderId ? { ...order, orderStatus: newStatus } : order
             ));
             showToast(`Order status updated to ${newStatus}`, "success");
         } catch (error) {
             showToast("Error updating order status. Please try again.", "error");
+        } finally {
+            setIsSubmitting(false);
         }
+    };
+
+    const handleUpdateProductStatus = async (productId: string, newStatus: string) => {
+        setIsSubmitting(true);
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('No authentication token found');
+            }
+            await apiService.updateProductStatus(productId, newStatus, token);
+            setProducts(products.map(product =>
+                product._id === productId ? { ...product, status: newStatus } : product
+            ));
+            showToast(`Product status updated to ${newStatus}`, "success");
+        } catch (error) {
+            showToast("Error updating product status. Please try again.", "error");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+
+    const paginatedProducts = products.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    const paginatedOrders = orders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+    const filteredProducts = paginatedProducts.filter(product =>
+        product?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const filteredOrders = paginatedOrders.filter(order =>
+        order?.customerName?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
     };
 
     if (!user || user.role !== "admin") {
@@ -219,6 +261,14 @@ export const AdminDashboard = () => {
             default: return "bg-blue-100 text-blue-700";
         }
     };
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <LoadingSpinner />
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-muted/20 pb-20">
@@ -377,9 +427,16 @@ export const AdminDashboard = () => {
                                                     <td className="py-4 px-6 font-bold text-primary italic">{product.category}</td>
                                                     <td className="py-4 px-6 font-extrabold">₹{product.price}</td>
                                                     <td className="py-4 px-6 text-center">
-                                                        <span className={`text-[10px] font-bold uppercase tracking-widest ${product.inStock ? "text-green-600" : "text-destructive"}`}>
-                                                            {product.inStock ? "In Presence" : "Depleted"}
-                                                        </span>
+                                                        <select
+                                                            value={product.status}
+                                                            onChange={(e) => handleUpdateProductStatus(product._id, e.target.value)}
+                                                            className="border rounded px-2 py-1"
+                                                            disabled={isSubmitting}
+                                                        >
+                                                            <option value="active">Active</option>
+                                                            <option value="inactive">Inactive</option>
+                                                            <option value="archived">Archived</option>
+                                                        </select>
                                                     </td>
                                                     <td className="py-4 px-6 text-right rounded-r-3xl">
                                                         <div className="flex items-center justify-end gap-2">

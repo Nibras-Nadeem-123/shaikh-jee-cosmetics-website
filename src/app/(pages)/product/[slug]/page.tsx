@@ -4,15 +4,17 @@ import { Product } from "@/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
+export const dynamic = 'force-dynamic';
+
 // Generate static params for all products
 export async function generateStaticParams() {
   try {
     const res = await fetch(`${API_URL}/products?limit=100`, {
       cache: 'no-store'
     });
-    
+
     if (!res.ok) return [];
-    
+
     const data = await res.json();
     return (data.products || []).map((product: Product) => ({
       slug: product.slug,
@@ -26,21 +28,21 @@ export async function generateStaticParams() {
 // Generate metadata for SEO
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  
+
   try {
     const res = await fetch(`${API_URL}/products/${slug}`, {
       cache: 'no-store'
     });
-    
+
     if (!res.ok) {
       return {
         title: "Product Not Found | Shaikh Jee Cosmetics",
       };
     }
-    
+
     const data = await res.json();
     const product = data.product;
-    
+
     return {
       title: `${product.name} | Shaikh Jee Cosmetics`,
       description: product.description,

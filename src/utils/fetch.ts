@@ -30,15 +30,15 @@ export async function authenticatedFetch(
       // Clear token and retry
       localStorage.removeItem('csrfToken');
       const newCsrfToken = await getCSRFToken();
-      
-      headers['x-csrf-token'] = newCsrfToken;
-      
+
+      (headers as any)['x-csrf-token'] = newCsrfToken;
+
       const retryResponse = await fetch(`${API_URL}${endpoint}`, {
         ...options,
         headers,
         credentials: 'include',
       });
-      
+
       return retryResponse.json();
     }
   }

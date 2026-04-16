@@ -18,8 +18,11 @@ export async function getCSRFToken(): Promise<string> {
     }
 
     const data = await response.json();
+    if (data.csrfToken == null) {
+      throw new Error('No CSRF token received');
+    }
     csrfToken = data.csrfToken;
-    return csrfToken;
+    return csrfToken!;
   } catch (error) {
     console.error('CSRF token error:', error);
     throw error;

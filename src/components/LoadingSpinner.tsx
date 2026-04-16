@@ -7,7 +7,7 @@ interface LoadingSpinnerProps {
   fullScreen?: boolean;
 }
 
-export const LoadingSpinner = ({ size = 'md', text, fullScreen = false }: LoadingSpinnerProps) => {
+const LoadingSpinner = ({ size = 'md', text, fullScreen = false }: LoadingSpinnerProps) => {
   const sizeClasses = {
     sm: 'w-6 h-6',
     md: 'w-10 h-10',
@@ -30,7 +30,7 @@ export const LoadingSpinner = ({ size = 'md', text, fullScreen = false }: Loadin
 
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
         {content}
       </div>
     );
@@ -39,6 +39,7 @@ export const LoadingSpinner = ({ size = 'md', text, fullScreen = false }: Loadin
   return content;
 };
 
+export default LoadingSpinner;
 // Button with loading state
 interface LoadingButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean;

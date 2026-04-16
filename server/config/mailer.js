@@ -79,7 +79,8 @@ export const sendOrderConfirmationEmail = async (user, order) => {
 
     console.log('Order confirmation email sent to:', user.email);
   } catch (error) {
-    console.error('Error sending email:', error);
+    console.error('Failed to send order confirmation email:', error.message);
+    throw new Error('Email sending failed. Please try again later.');
   }
 };
 

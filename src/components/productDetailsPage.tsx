@@ -565,11 +565,11 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
                 )}
 
                 {/* Reviews Summary */}
-                <div className="mb-8 p-6 bg-gradient-to-br from-primary/5 to-secondary/30 rounded-2xl border border-primary/10">
-                  <div className="flex flex-col md:flex-row gap-8 items-center">
+                <div className="p-6 mb-8 border bg-gradient-to-br from-primary/5 to-secondary/30 rounded-2xl border-primary/10">
+                  <div className="flex flex-col items-center gap-8 md:flex-row">
                     {/* Average Rating */}
                     <div className="text-center">
-                      <div className="text-5xl font-bold text-primary mb-2">{averageRating}</div>
+                      <div className="mb-2 text-5xl font-bold text-primary">{averageRating}</div>
                       <div className="flex justify-center mb-2">
                         {[...Array(5)].map((_, i) => (
                           <Star
@@ -589,17 +589,17 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
                       <div className="space-y-2">
                         {ratingDistribution.map(({ rating, count, percentage }) => (
                           <div key={rating} className="flex items-center gap-3">
-                            <div className="flex items-center gap-1 w-16">
+                            <div className="flex items-center w-16 gap-1">
                               <span className="text-sm font-medium">{rating}</span>
-                              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                              <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
                             </div>
-                            <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div className="flex-1 h-2 overflow-hidden bg-gray-200 rounded-full">
                               <div
-                                className="h-full bg-gradient-to-r from-primary/60 to-primary rounded-full transition-all duration-500"
+                                className="h-full transition-all duration-500 rounded-full bg-gradient-to-r from-primary/60 to-primary"
                                 style={{ width: `${percentage}%` }}
                               />
                             </div>
-                            <span className="text-sm text-muted-foreground w-12 text-right">{count}</span>
+                            <span className="w-12 text-sm text-right text-muted-foreground">{count}</span>
                           </div>
                         ))}
                       </div>
@@ -615,7 +615,7 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                      className="px-4 py-2 text-sm bg-secondary/50 border border-primary/20 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer hover:bg-secondary/80 transition-all"
+                      className="px-4 py-2 text-sm transition-all border rounded-full cursor-pointer bg-secondary/50 border-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/50 hover:bg-secondary/80"
                     >
                       <option value="newest">Newest First</option>
                       <option value="highest">Highest Rated</option>
@@ -635,21 +635,21 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
                     {sortedReviews.map((review) => (
                       <div
                         key={review._id}
-                        className="p-6 bg-secondary/30 rounded-2xl border border-primary/10 hover:border-primary/30 transition-all duration-300 hover:shadow-lg"
+                        className="p-6 transition-all duration-300 border bg-secondary/30 rounded-2xl border-primary/10 hover:border-primary/30 hover:shadow-lg"
                       >
                         <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-start gap-3 flex-1">
+                          <div className="flex items-start flex-1 gap-3">
                             {/* User Avatar Placeholder */}
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/40 to-secondary flex items-center justify-center text-primary font-bold text-sm flex-shrink-0">
+                            <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 text-sm font-bold rounded-full bg-gradient-to-br from-primary/40 to-secondary text-primary">
                               {(review.userName || review.user?.name || 'A').charAt(0).toUpperCase()}
                             </div>
 
                             <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <div className="flex flex-wrap items-center gap-2 mb-1">
                                 <span className="font-semibold text-foreground">
                                   {review.userName || (typeof review.userId === 'object' ? review.userId.name : '') || (review.user?.name) || 'Anonymous'}
-                                  {user && (review.userId === user._id || review.user?._id === user._id) && (
-                                    <span className="text-primary ml-1">(You)</span>
+                                  {user && (review.userId === user.id || review.user?._id === user.id) && (
+                                    <span className="ml-1 text-primary">(You)</span>
                                   )}
                                 </span>
                                 {review.verified && (
@@ -677,34 +677,32 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
                                   {typeof review.createdAt === 'string'
                                     ? new Date(review.createdAt).toLocaleDateString()
                                     : new Date(review.createdAt).toLocaleDateString()
-                                }
+                                  }
                                 </span>
                               </div>
                             </div>
                           </div>
                         </div>
 
-                        <p className="text-foreground/80 mb-4 leading-relaxed">{review.comment}</p>
+                        <p className="mb-4 leading-relaxed text-foreground/80">{review.comment}</p>
 
                         {/* Helpful Button */}
                         <div className="flex items-center gap-4">
                           <button
                             onClick={() => handleHelpfulClick(review._id)}
                             disabled={helpfulReviews.has(review._id)}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm transition-all ${
-                              helpfulReviews.has(review._id)
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm transition-all ${helpfulReviews.has(review._id)
                                 ? 'bg-primary text-white'
                                 : 'bg-secondary/50 text-muted-foreground hover:bg-primary/20 hover:text-primary'
-                            }`}
+                              }`}
                           >
                             <ThumbsUp className={`w-4 h-4 ${helpfulReviews.has(review._id) ? 'fill-white' : ''}`} />
                             <span>Helpful</span>
                             {(review.helpful || 0) > 0 && (
-                              <span className={`ml-1 px-2 py-0.5 rounded-full text-xs ${
-                                helpfulReviews.has(review._id)
+                              <span className={`ml-1 px-2 py-0.5 rounded-full text-xs ${helpfulReviews.has(review._id)
                                   ? 'bg-white/20'
                                   : 'bg-primary/10 text-primary'
-                              }`}>
+                                }`}>
                                 {review.helpful || 0}
                               </span>
                             )}
@@ -714,10 +712,10 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-16 bg-secondary/30 rounded-2xl border border-primary/10">
-                    <Star size={56} className="mx-auto mb-4 text-muted-foreground opacity-50" />
-                    <h4 className="text-xl font-bold text-foreground mb-2">No Reviews Yet</h4>
-                    <p className="text-muted-foreground mb-6">Be the first to review this product and help others!</p>
+                  <div className="py-16 text-center border bg-secondary/30 rounded-2xl border-primary/10">
+                    <Star size={56} className="mx-auto mb-4 opacity-50 text-muted-foreground" />
+                    <h4 className="mb-2 text-xl font-bold text-foreground">No Reviews Yet</h4>
+                    <p className="mb-6 text-muted-foreground">Be the first to review this product and help others!</p>
                   </div>
                 )}
               </div>

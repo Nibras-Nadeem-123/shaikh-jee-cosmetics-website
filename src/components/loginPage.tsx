@@ -228,8 +228,8 @@ export const LoginPage = () => {
                   onChange={(e) => handleChange('name', e.target.value)}
                   onBlur={() => handleBlur('name')}
                   className={`w-full px-6 py-4 bg-muted border rounded-2xl focus:outline-none focus:bg-white transition-all text-sm ${errors.name && touched.name
-                      ? 'border-red-500 focus:border-red-500'
-                      : 'border-transparent focus:border-primary'
+                    ? 'border-red-500 focus:border-red-500'
+                    : 'border-transparent focus:border-primary'
                     }`}
                   placeholder="e.g. Jane Doe"
                   disabled={isSubmitting}
@@ -254,8 +254,8 @@ export const LoginPage = () => {
                 onChange={(e) => handleChange('email', e.target.value)}
                 onBlur={() => handleBlur('email')}
                 className={`w-full px-6 py-4 bg-muted border rounded-2xl focus:outline-none focus:bg-white transition-all text-sm ${errors.email && touched.email
-                    ? 'border-red-500 focus:border-red-500'
-                    : 'border-transparent focus:border-primary'
+                  ? 'border-red-500 focus:border-red-500'
+                  : 'border-transparent focus:border-primary'
                   }`}
                 placeholder="you@example.com"
                 disabled={isSubmitting}
@@ -290,8 +290,8 @@ export const LoginPage = () => {
                   onChange={(e) => handleChange('password', e.target.value)}
                   onBlur={() => handleBlur('password')}
                   className={`w-full px-6 py-4 bg-muted border rounded-2xl focus:outline-none focus:bg-white transition-all text-sm ${errors.password && touched.password
-                      ? 'border-red-500 focus:border-red-500'
-                      : 'border-transparent focus:border-primary'
+                    ? 'border-red-500 focus:border-red-500'
+                    : 'border-transparent focus:border-primary'
                     }`}
                   placeholder="Minimum 8 characters"
                   disabled={isSubmitting}

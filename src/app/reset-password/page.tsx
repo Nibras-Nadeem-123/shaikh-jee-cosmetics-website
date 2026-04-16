@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { Lock, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/hooks/useToast';
 
-export default function ResetPasswordPage() {
+export const dynamic = 'force-dynamic';
+
+function ResetPasswordPageInner() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -52,7 +54,7 @@ export default function ResetPasswordPage() {
       }
 
       showToast('Password reset successfully! Please login.', 'success');
-      
+
       // Redirect to login after 2 seconds
       setTimeout(() => {
         router.push('/login');
@@ -154,5 +156,13 @@ export default function ResetPasswordPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ResetPasswordPageInner />
+    </Suspense>
   );
 }

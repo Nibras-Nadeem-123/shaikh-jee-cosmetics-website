@@ -57,7 +57,6 @@ const reviewSchema = new mongoose.Schema({
 
 // Index for faster queries
 reviewSchema.index({ productId: 1 });
-reviewSchema.index({ userId: 1 });
 reviewSchema.index({ rating: 1 });
 reviewSchema.index({ createdAt: -1 });
 

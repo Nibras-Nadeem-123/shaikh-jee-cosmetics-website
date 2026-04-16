@@ -22,7 +22,7 @@ const productSchema = new mongoose.Schema({
   reviewCount: { type: Number, default: 0 },
   inStock: { type: Boolean, default: true },
   isBestSeller: { type: Boolean, default: false },
-  isNew: { type: Boolean, default: false },
+  isNewProduct: { type: Boolean, default: false },
   brand: { type: String },
   featured: { type: Boolean, default: false }
 }, {

@@ -44,11 +44,11 @@ export function OrderTracking({ order }: OrderTrackingProps) {
       {/* Order Status Timeline */}
       <div className="bg-card rounded-2xl p-6 shadow-sm">
         <h3 className="text-xl font-bold mb-6">Order Status</h3>
-        
+
         <div className="relative">
           {/* Progress Line */}
           <div className="absolute top-5 left-0 right-0 h-1 bg-muted hidden md:block">
-            <div 
+            <div
               className="h-full bg-primary transition-all duration-500"
               style={{ width: `${(currentStatusIndex / (orderStatusSteps.length - 1)) * 100}%` }}
             />
@@ -64,18 +64,16 @@ export function OrderTracking({ order }: OrderTrackingProps) {
               return (
                 <div key={step.status} className="flex flex-col items-center flex-1">
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all z-10 ${
-                      isCompleted
+                    className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all z-10 ${isCompleted
                         ? 'bg-primary border-primary text-white'
                         : 'bg-background border-muted text-muted-foreground'
-                    } ${isCurrent ? 'ring-4 ring-primary/20 scale-110' : ''}`}
+                      } ${isCurrent ? 'ring-4 ring-primary/20 scale-110' : ''}`}
                   >
                     <Icon className="w-5 h-5" />
                   </div>
                   <span
-                    className={`text-xs mt-2 font-medium hidden md:block ${
-                      isCurrent ? 'text-primary font-bold' : 'text-muted-foreground'
-                    }`}
+                    className={`text-xs mt-2 font-medium hidden md:block ${isCurrent ? 'text-primary font-bold' : 'text-muted-foreground'
+                      }`}
                   >
                     {step.label}
                   </span>
@@ -146,10 +144,9 @@ export function OrderTracking({ order }: OrderTrackingProps) {
             {order.tracking.map((track, index) => (
               <div key={index} className="flex gap-4">
                 <div className="flex flex-col items-center">
-                  <div className={`w-3 h-3 rounded-full ${
-                    index === 0 ? 'bg-primary' : 'bg-muted'
-                  }`} />
-                  {index < order.tracking.length - 1 && (
+                  <div className={`w-3 h-3 rounded-full ${index === 0 ? 'bg-primary' : 'bg-muted'
+                    }`} />
+                  {index < order.tracking!.length - 1 && (
                     <div className="w-0.5 h-full bg-muted mt-2" />
                   )}
                 </div>
