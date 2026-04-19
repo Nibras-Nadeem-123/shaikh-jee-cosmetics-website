@@ -11,12 +11,19 @@ interface Category {
   slug: string;
 }
 
+interface SitemapPage {
+  url: string;
+  priority: number;
+  frequency: string;
+  lastmod?: string;
+}
+
 export async function GET() {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://shaikhjee.com';
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
   // Static pages
-  const staticPages = [
+  const staticPages: SitemapPage[] = [
     { url: '', priority: 1.0, frequency: 'daily' },
     { url: '/shop', priority: 0.9, frequency: 'daily' },
     { url: '/about', priority: 0.7, frequency: 'monthly' },
@@ -35,14 +42,14 @@ export async function GET() {
     { name: 'Tools', slug: 'tools' },
   ];
 
-  const categoryPages = categories.map(cat => ({
+  const categoryPages: SitemapPage[] = categories.map(cat => ({
     url: `/shop?category=${cat.slug}`,
     priority: 0.8,
     frequency: 'daily'
   }));
 
   // Fetch products dynamically
-  let productPages: { url: string; priority: number; frequency: string; lastmod?: string }[] = [];
+  let productPages: SitemapPage[] = [];
 
   try {
     const response = await fetch(`${apiUrl}/products?limit=1000`, {
@@ -65,7 +72,7 @@ export async function GET() {
   }
 
   // Combine all pages
-  const allPages = [...staticPages, ...categoryPages, ...productPages];
+  const allPages: SitemapPage[] = [...staticPages, ...categoryPages, ...productPages];
 
   // Generate sitemap XML
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
