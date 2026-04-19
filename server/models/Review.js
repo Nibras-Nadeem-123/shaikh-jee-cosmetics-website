@@ -39,10 +39,6 @@ const reviewSchema = new mongoose.Schema({
     type: String,
     trim: true
   }],
-  verified: {
-    type: Boolean,
-    default: false // Verified purchase
-  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -55,9 +51,13 @@ const reviewSchema = new mongoose.Schema({
   suppressReservedKeysWarning: true
 });
 
-// Index for faster queries
-reviewSchema.index({ productId: 1 });
-reviewSchema.index({ rating: 1 });
+// Single field indexes
 reviewSchema.index({ createdAt: -1 });
+
+// Compound indexes for better query performance
+reviewSchema.index({ productId: 1, rating: -1 }); // Product reviews sorted by rating
+reviewSchema.index({ productId: 1, createdAt: -1 }); // Product reviews sorted by date
+reviewSchema.index({ userId: 1, productId: 1 }, { unique: true }); // One review per user per product
+reviewSchema.index({ productId: 1, verified: 1 }); // Verified reviews for a product
 
 export default mongoose.model('Review', reviewSchema);

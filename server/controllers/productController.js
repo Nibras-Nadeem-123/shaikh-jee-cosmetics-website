@@ -1,59 +1,66 @@
 import Product from '../models/Product.js';
 import { catchAsyncErrors, ErrorHandler } from '../middleware/errorHandler.js';
 import { clearCache, getCache, setCache } from '../config/redis.js';
+import { parsePaginationParams, buildPaginationMeta } from '../utils/pagination.js';
 
 // Get all products (supports Shop filtering with pagination)
 export const getProducts = catchAsyncErrors(async (req, res) => {
-  const { category, subcategory, minPrice, maxPrice, sort, search, page = 1, limit = 12 } = req.query;
+  const { category, subcategory, minPrice, maxPrice, sort, search, inStock } = req.query;
+
+  // Parse pagination parameters
+  const { page, limit, skip } = parsePaginationParams(req.query);
 
   let query = {};
 
   if (category) query.category = new RegExp(category, 'i');
   if (subcategory) query.subcategory = new RegExp(subcategory, 'i');
+  if (inStock !== undefined) query.inStock = inStock === 'true';
 
   // Use full-text search if search query provided
   if (search) {
-    query.$text = { $search: search };
+    query.$or = [
+      { name: { $regex: search, $options: 'i' } },
+      { description: { $regex: search, $options: 'i' } },
+      { brand: { $regex: search, $options: 'i' } }
+    ];
   }
 
-  query.price = {
-    $gte: Number(minPrice) || 0,
-    $lte: Number(maxPrice) || 1000000
-  };
+  if (minPrice || maxPrice) {
+    query.price = {};
+    if (minPrice) query.price.$gte = Number(minPrice);
+    if (maxPrice) query.price.$lte = Number(maxPrice);
+  }
 
   let apiQuery = Product.find(query);
 
-  // If full-text search was used, add text search score
-  if (search) {
-    apiQuery = apiQuery.select({ score: { $meta: 'textScore' } }).sort({ score: { $meta: 'textScore' } });
-  }
-
   // Sorting
   if (sort) {
-    const sortBy = sort ? sort.split(',').join(' ') : '';
+    const sortBy = sort.split(',').join(' ');
     apiQuery = apiQuery.sort(sortBy);
   } else {
     apiQuery = apiQuery.sort('-createdAt');
   }
 
-  // Pagination
-  const pageNum = Math.max(1, parseInt(page) || 1);
-  const limitNum = Math.max(1, Math.min(100, parseInt(limit) || 12));
-  const skip = (pageNum - 1) * limitNum;
+  // Get total count for pagination
+  const totalProducts = await Product.countDocuments(query);
 
-  apiQuery = apiQuery.skip(skip).limit(limitNum);
+  // Apply pagination
+  apiQuery = apiQuery.skip(skip).limit(limit);
 
   const products = await apiQuery;
-  const totalProducts = await Product.countDocuments(query);
-  const totalPages = Math.ceil(totalProducts / limitNum);
+
+  // Build pagination metadata
+  const paginationMeta = buildPaginationMeta(totalProducts, page, limit);
 
   res.status(200).json({
     success: true,
+    products,
+    ...paginationMeta,
+    // Legacy fields for backward compatibility
     count: products.length,
     totalProducts,
-    totalPages,
-    currentPage: pageNum,
-    products
+    totalPages: paginationMeta.pagination.totalPages,
+    currentPage: page
   });
 });
 

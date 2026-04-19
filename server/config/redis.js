@@ -111,17 +111,25 @@ export const clearCache = async (pattern) => {
 };
 
 // Session storage helpers
-export const setSession = async (key, value, expiresIn = 86400) => {
+export const setSession = async (userId, sessionData, expiresIn = 86400) => {
+  if (!redisConnected) return false;
   try {
-    await redisClient.setEx(key, expiresIn, JSON.stringify(value));
+    const client = getRedisClient();
+    const key = `session:${userId}`;
+    await client.setEx(key, expiresIn, JSON.stringify(sessionData));
+    return true;
   } catch (error) {
     console.error('Session storage error:', error);
+    return false;
   }
 };
 
-export const getSession = async (key) => {
+export const getSession = async (userId) => {
+  if (!redisConnected) return null;
   try {
-    const data = await redisClient.get(key);
+    const client = getRedisClient();
+    const key = `session:${userId}`;
+    const data = await client.get(key);
     return data ? JSON.parse(data) : null;
   } catch (error) {
     console.error('Session retrieval error:', error);
@@ -129,12 +137,98 @@ export const getSession = async (key) => {
   }
 };
 
-export const deleteSession = async (key) => {
+export const deleteSession = async (userId) => {
+  if (!redisConnected) return;
   try {
     const client = getRedisClient();
+    const key = `session:${userId}`;
     await client.del(key);
   } catch (error) {
     console.error('Session deletion error:', error);
+  }
+};
+
+// Cart caching helpers
+export const cacheCart = async (userId, cartData, expiresIn = 604800) => { // 7 days
+  if (!redisConnected) return false;
+  try {
+    const client = getRedisClient();
+    const key = `cart:${userId}`;
+    await client.setEx(key, expiresIn, JSON.stringify(cartData));
+    return true;
+  } catch (error) {
+    console.error('Cart cache error:', error);
+    return false;
+  }
+};
+
+export const getCachedCart = async (userId) => {
+  if (!redisConnected) return null;
+  try {
+    const client = getRedisClient();
+    const key = `cart:${userId}`;
+    const data = await client.get(key);
+    return data ? JSON.parse(data) : null;
+  } catch (error) {
+    console.error('Cart retrieval error:', error);
+    return null;
+  }
+};
+
+export const clearCartCache = async (userId) => {
+  if (!redisConnected) return;
+  try {
+    const client = getRedisClient();
+    const key = `cart:${userId}`;
+    await client.del(key);
+  } catch (error) {
+    console.error('Cart cache clear error:', error);
+  }
+};
+
+// User session token blacklist (for logout)
+export const blacklistToken = async (token, expiresIn = 604800) => { // 7 days
+  if (!redisConnected) return false;
+  try {
+    const client = getRedisClient();
+    const key = `blacklist:${token}`;
+    await client.setEx(key, expiresIn, '1');
+    return true;
+  } catch (error) {
+    console.error('Token blacklist error:', error);
+    return false;
+  }
+};
+
+export const isTokenBlacklisted = async (token) => {
+  if (!redisConnected) return false;
+  try {
+    const client = getRedisClient();
+    const key = `blacklist:${token}`;
+    const exists = await client.exists(key);
+    return exists === 1;
+  } catch (error) {
+    return false;
+  }
+};
+
+// Rate limiting helpers with Redis
+export const checkRateLimit = async (key, limit, windowSeconds) => {
+  if (!redisConnected) return { allowed: true, remaining: limit };
+  try {
+    const client = getRedisClient();
+    const current = await client.incr(key);
+    if (current === 1) {
+      await client.expire(key, windowSeconds);
+    }
+    const ttl = await client.ttl(key);
+    return {
+      allowed: current <= limit,
+      remaining: Math.max(0, limit - current),
+      resetIn: ttl
+    };
+  } catch (error) {
+    return { allowed: true, remaining: limit };
   }
 };
 

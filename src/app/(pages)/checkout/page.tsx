@@ -32,10 +32,25 @@ const CheckoutPage = () => {
         }
 
         try {
+            // Transform cart items to order items with required fields
+            const orderItems = cart.map(item => ({
+                product: item.product._id,
+                name: item.product.name,
+                quantity: item.quantity,
+                image: item.product.images?.[0] || '',
+                price: item.product.price,
+                selectedShade: item.selectedShade ? {
+                    id: item.selectedShade._id || item.selectedShade.id,
+                    name: item.selectedShade.name,
+                    color: item.selectedShade.color
+                } : undefined
+            }));
+
             await createOrder({
-                items: cart,
-                total,
-                status: 'processing',
+                orderItems,
+                itemsPrice: cartTotal,
+                shippingPrice: shipping,
+                totalPrice: total,
                 shippingAddress: {
                     name: formData.name,
                     addressLine1: formData.addressLine1,
@@ -56,12 +71,12 @@ const CheckoutPage = () => {
     };
 
     const states = [
-        'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware', 'Florida', 'Georgia',
-        'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland',
-        'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire',
-        'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania',
-        'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington',
-        'West Virginia', 'Wisconsin', 'Wyoming'
+        'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 'Haryana',
+        'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur',
+        'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana',
+        'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
+        'Andaman and Nicobar Islands', 'Chandigarh', 'Dadra and Nagar Haveli and Daman and Diu', 'Delhi',
+        'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry'
     ];
 
     if (cart.length === 0) {

@@ -159,3 +159,115 @@ export const sendCustomerOrderConfirmationEmail = async (order) => {
 
   await transporter.sendMail(mailOptions);
 };
+
+// Send order status update email to customer
+export const sendOrderStatusUpdateEmail = async (order, newStatus) => {
+  const transporter = createTransporter();
+
+  const statusMessages = {
+    confirmed: 'Your order has been confirmed and is being prepared.',
+    processing: 'Your order is now being processed.',
+    shipped: 'Great news! Your order has been shipped and is on its way.',
+    out_for_delivery: 'Your order is out for delivery. It will arrive soon!',
+    delivered: 'Your order has been delivered successfully. Thank you for shopping with us!',
+    cancelled: 'Your order has been cancelled. If you have any questions, please contact us.',
+  };
+
+  const statusEmojis = {
+    confirmed: '✅',
+    processing: '⚙️',
+    shipped: '📦',
+    out_for_delivery: '🚚',
+    delivered: '🎉',
+    cancelled: '❌',
+  };
+
+  const message = statusMessages[newStatus] || `Your order status has been updated to: ${newStatus}`;
+  const emoji = statusEmojis[newStatus] || '📋';
+
+  const mailOptions = {
+    from: EMAIL_FROM,
+    to: order.shippingAddress.email,
+    subject: `${emoji} Order Update • ${order.orderNumber} - ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)}`,
+    html: buildStatusUpdateTemplate({
+      title: `Order Status Update • ${order.orderNumber}`,
+      heading: `Order ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)}`,
+      recipientName: order.shippingAddress.name,
+      message,
+      order,
+      newStatus
+    })
+  };
+
+  await transporter.sendMail(mailOptions);
+};
+
+// Build status update email template
+const buildStatusUpdateTemplate = ({ title, heading, message, order, recipientName, newStatus }) => `
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>${title}</title>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; color: #333; background: #f7f7fb; }
+        .wrapper { width: 100%; padding: 20px; }
+        .container { max-width: 680px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 12px 34px rgba(15, 23, 42, 0.08); }
+        .header { background: linear-gradient(135deg, #b08968, #f5c79a); padding: 28px 32px; color: #fff; text-align: center; }
+        .content { padding: 32px; }
+        .status-badge { display: inline-block; padding: 12px 24px; border-radius: 50px; font-weight: bold; font-size: 14px; text-transform: uppercase; margin: 20px 0; }
+        .status-delivered { background: #d1fae5; color: #065f46; }
+        .status-shipped { background: #dbeafe; color: #1e40af; }
+        .status-processing { background: #fef3c7; color: #92400e; }
+        .status-cancelled { background: #fee2e2; color: #991b1b; }
+        .status-default { background: #e5e7eb; color: #374151; }
+        .section { margin-bottom: 26px; }
+        .section-title { margin-bottom: 12px; font-size: 18px; font-weight: 700; }
+        .summary { padding: 18px; background: #f3f4f6; border-radius: 12px; }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 12px; }
+        .footer { padding: 24px 32px 32px; font-size: 13px; color: #6b7280; text-align: center; }
+        .track-btn { display: inline-block; padding: 14px 32px; background: #b08968; color: white; text-decoration: none; border-radius: 50px; font-weight: bold; margin-top: 20px; }
+      </style>
+    </head>
+    <body>
+      <div class="wrapper">
+        <div class="container">
+          <div class="header">
+            <h1>${heading}</h1>
+          </div>
+          <div class="content">
+            <div class="section">
+              <p>Hi ${recipientName || 'Valued Customer'},</p>
+              <p>${message}</p>
+              <div class="status-badge status-${newStatus === 'delivered' ? 'delivered' : newStatus === 'shipped' || newStatus === 'out_for_delivery' ? 'shipped' : newStatus === 'processing' || newStatus === 'confirmed' ? 'processing' : newStatus === 'cancelled' ? 'cancelled' : 'default'}">
+                Status: ${newStatus.replace(/_/g, ' ').toUpperCase()}
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">Order Details</div>
+              <div class="summary">
+                <div class="summary-row"><span>Order Number</span><strong>${order.orderNumber || order._id}</strong></div>
+                <div class="summary-row"><span>Order Date</span><strong>${new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</strong></div>
+                <div class="summary-row"><span>Total Amount</span><strong>${formatCurrency(order.totalPrice)}</strong></div>
+                ${newStatus === 'delivered' && order.deliveredAt ? `<div class="summary-row"><span>Delivered On</span><strong>${new Date(order.deliveredAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</strong></div>` : ''}
+              </div>
+            </div>
+
+            ${newStatus === 'delivered' ? `
+            <div class="section" style="text-align: center; padding: 20px; background: #f0fdf4; border-radius: 12px;">
+              <p style="font-size: 18px; margin: 0;">🎁 Thank you for shopping with us!</p>
+              <p style="color: #6b7280; margin-top: 8px;">We hope you love your purchase. If you have any questions, feel free to contact us.</p>
+            </div>
+            ` : ''}
+          </div>
+          <div class="footer">
+            <p>This email was sent by Shaikh Jee Cosmetics regarding your order.</p>
+            <p>If you have any questions, please contact our support team.</p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+`;

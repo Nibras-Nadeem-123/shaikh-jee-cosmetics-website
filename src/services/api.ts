@@ -9,6 +9,10 @@ export const apiService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(credentials),
       });
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Server returned unexpected response. Please ensure the backend is running on ' + API_URL);
+      }
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Invalid credentials');
@@ -29,6 +33,10 @@ export const apiService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData),
       });
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Server returned unexpected response. Please ensure the backend is running on ' + API_URL);
+      }
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Signup failed');
@@ -195,6 +203,33 @@ export const apiService = {
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Failed to delete product');
+      }
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Unexpected response format. Server did not return JSON.');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server. Please check if backend is running.');
+      }
+      throw error;
+    }
+  },
+
+  updateProduct: async (productId: string, productData: any, token: string) => {
+    try {
+      const response = await fetch(`${API_URL}/products/admin/${productId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(productData),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update product');
       }
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
@@ -462,8 +497,8 @@ export const apiService = {
   // Admin
   updateOrderStatus: async (orderId: string, newStatus: string, token: string) => {
     try {
-      const response = await fetch(`${API_URL}/orders/${orderId}/status`, {
-        method: "PATCH",
+      const response = await fetch(`${API_URL}/orders/admin/${orderId}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -471,7 +506,8 @@ export const apiService = {
         body: JSON.stringify({ status: newStatus }),
       });
       if (!response.ok) {
-        throw new Error(`Failed to update order status: ${response.statusText}`);
+        const error = await response.json().catch(() => ({ message: response.statusText }));
+        throw new Error(error.message || `Failed to update order status: ${response.statusText}`);
       }
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
@@ -499,5 +535,105 @@ export const apiService = {
       throw new Error(`Failed to update product status: ${response.statusText}`);
     }
     return await response.json();
+  },
+
+  // Admin - User Management
+  getAllUsers: async (token: string) => {
+    try {
+      const response = await fetch(`${API_URL}/users`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: response.statusText }));
+        throw new Error(error.message || 'Failed to fetch users');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server.');
+      }
+      throw error;
+    }
+  },
+
+  updateUserRole: async (userId: string, role: string, token: string) => {
+    try {
+      const response = await fetch(`${API_URL}/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ role })
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: response.statusText }));
+        throw new Error(error.message || 'Failed to update user role');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server.');
+      }
+      throw error;
+    }
+  },
+
+  deleteUser: async (userId: string, token: string) => {
+    try {
+      const response = await fetch(`${API_URL}/users/${userId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: response.statusText }));
+        throw new Error(error.message || 'Failed to delete user');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server.');
+      }
+      throw error;
+    }
+  },
+
+  // Admin - Get order details
+  getOrderDetails: async (orderId: string, token: string) => {
+    try {
+      const response = await fetch(`${API_URL}/orders/admin/${orderId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: response.statusText }));
+        throw new Error(error.message || 'Failed to fetch order details');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server.');
+      }
+      throw error;
+    }
+  },
+
+  // Public - Track order (no auth required)
+  trackOrder: async (orderNumber: string, email?: string) => {
+    try {
+      const params = new URLSearchParams({ orderNumber });
+      if (email) params.append('email', email);
+
+      const response = await fetch(`${API_URL}/orders/track?${params.toString()}`);
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: response.statusText }));
+        throw new Error(error.message || 'Order not found');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server. Please check if backend is running.');
+      }
+      throw error;
+    }
   }
 };

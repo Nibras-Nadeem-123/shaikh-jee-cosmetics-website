@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { CartItem, User, Address, Order, Product, Shade } from '@/types';
 import { apiService } from '@/services/api';
 import { v4 as uuidv4 } from 'uuid';
+import { requestDedup, REQUEST_KEYS } from '@/utils/requestDedup';
 
 
 interface AppContextType {
@@ -45,22 +46,37 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Sync wishlist with database when user logs in
-  const syncWishlist = async () => {
+  // Track if sync is in progress to prevent duplicate calls
+  const syncInProgress = useRef(false);
+
+  // Sync wishlist with database when user logs in (with deduplication)
+  const syncWishlist = useCallback(async () => {
     if (!token) {
       // If no token, keep localStorage wishlist
       return;
     }
 
+    // Prevent duplicate sync calls
+    if (syncInProgress.current) {
+      return;
+    }
+
     try {
-      const data = await apiService.getWishlist(token);
+      syncInProgress.current = true;
+      const data = await requestDedup.dedupe(
+        REQUEST_KEYS.WISHLIST,
+        () => apiService.getWishlist(token),
+        { cacheTTL: 30000 } // Cache for 30 seconds
+      );
       if (data.products) {
         setWishlist(data.products);
       }
     } catch (error) {
       console.error('Failed to sync wishlist:', error);
+    } finally {
+      syncInProgress.current = false;
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     const savedToken = localStorage.getItem('token');
@@ -124,13 +140,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setUser(null); // Correctly set user to null on logout
     setToken(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setCart([]);
-  };
+    setWishlist([]);
+    setOrders([]);
+    // Clear request cache on logout
+    requestDedup.reset();
+  }, []);
 
   const addToCart = (product: Product, quantity = 1, shade?: Shade) => {
     setCart((prev) => {

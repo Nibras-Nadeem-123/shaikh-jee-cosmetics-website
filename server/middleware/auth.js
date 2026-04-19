@@ -123,4 +123,48 @@ const setTokenCookie = (res, token) => {
   });
 };
 
+/**
+ * IP Whitelisting middleware for admin routes
+ * Restricts admin access to specific IP addresses
+ * Set ADMIN_WHITELIST_IPS in env as comma-separated values
+ * If not set or empty, allows all IPs (for development)
+ */
+export const ipWhitelist = catchAsyncErrors(async (req, res, next) => {
+  const whitelistStr = process.env.ADMIN_WHITELIST_IPS;
+
+  // Skip IP check if whitelist is not configured (development mode)
+  if (!whitelistStr || whitelistStr.trim() === '') {
+    return next();
+  }
+
+  const whitelist = whitelistStr.split(',').map(ip => ip.trim());
+
+  // Get client IP (handle proxies)
+  const clientIP = req.ip ||
+    req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+    req.connection?.remoteAddress ||
+    req.socket?.remoteAddress;
+
+  // Normalize IPv6 localhost to IPv4
+  const normalizedIP = clientIP === '::1' ? '127.0.0.1' : clientIP;
+
+  // Check if IP is in whitelist
+  const isAllowed = whitelist.some(ip => {
+    // Support CIDR notation in future, for now exact match
+    return normalizedIP === ip || normalizedIP?.includes(ip);
+  });
+
+  if (!isAllowed) {
+    console.warn(`Admin access denied for IP: ${normalizedIP}`);
+    throw new ErrorHandler('Access denied: Your IP is not authorized for admin access', 403);
+  }
+
+  next();
+});
+
+/**
+ * Combined admin middleware: IP whitelist + authentication + admin role
+ */
+export const secureAdmin = [ipWhitelist, isAuthenticatedUser, isAdmin];
+
 export { setTokenCookie };

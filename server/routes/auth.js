@@ -5,9 +5,10 @@ import jwt from 'jsonwebtoken';
 import { catchAsyncErrors, ErrorHandler } from '../middleware/errorHandler.js';
 import { signupValidation, loginValidation, handleValidationErrors } from '../middleware/validation.js';
 import { setTokenCookie } from '../middleware/auth.js';
+import { passwordResetLimiter } from '../middleware/rateLimiter.js';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
-import bcrypt from 'bcryptjs';
+// bcrypt not needed here - User model pre-save hook handles password hashing
 
 // Signup
 router.post('/signup', signupValidation, handleValidationErrors, catchAsyncErrors(async (req, res) => {
@@ -37,11 +38,22 @@ router.post('/signup', signupValidation, handleValidationErrors, catchAsyncError
 // Login
 router.post('/login', loginValidation, handleValidationErrors, catchAsyncErrors(async (req, res) => {
   const { email, password } = req.body;
-  
+
   console.log(`Attempting login for email: ${email}`);
   const user = await User.findOne({ email }).select('+password');
-  if (!user || !(await user.comparePassword(password))) {
-    console.error(`Invalid login attempt for email: ${email}`); // Log the email for debugging
+
+  // Debug logging
+  if (!user) {
+    console.error(`Login failed: User not found for email: ${email}`);
+    throw new ErrorHandler('Invalid email or password', 401);
+  }
+
+  console.log(`User found: ${user.email}, checking password...`);
+  const isPasswordValid = await user.comparePassword(password);
+  console.log(`Password valid: ${isPasswordValid}`);
+
+  if (!isPasswordValid) {
+    console.error(`Login failed: Invalid password for email: ${email}`);
     throw new ErrorHandler('Invalid email or password', 401);
   }
   
@@ -60,14 +72,18 @@ router.post('/login', loginValidation, handleValidationErrors, catchAsyncErrors(
   });
 }));
 
-// Password reset request
-router.post('/password-reset', async (req, res) => {
+// Password reset request handler
+const handlePasswordResetRequest = async (req, res) => {
   const { email } = req.body;
 
   try {
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      // Return success even if user not found to prevent email enumeration
+      return res.status(200).json({
+        success: true,
+        message: 'If an account with that email exists, a password reset link has been sent.'
+      });
     }
 
     const resetToken = crypto.randomBytes(32).toString('hex');
@@ -75,7 +91,7 @@ router.post('/password-reset', async (req, res) => {
     user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
     await user.save();
 
-    const resetUrl = `${process.env.FRONTEND_URL}/password-reset/${resetToken}`;
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
 
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
@@ -86,22 +102,34 @@ router.post('/password-reset', async (req, res) => {
       }
     });
 
-    const message = `You are receiving this email because you (or someone else) requested a password reset. Please make a PUT request to: \n\n ${resetUrl}`;
+    const message = `You are receiving this email because you (or someone else) requested a password reset.\n\nPlease click the following link to reset your password:\n\n${resetUrl}\n\nThis link will expire in 10 minutes.\n\nIf you did not request this, please ignore this email.`;
 
     await transporter.sendMail({
+      from: process.env.EMAIL_FROM || '"Shaikh Jee Cosmetics" <noreply@shaikhjee.com>',
       to: user.email,
-      subject: 'Password Reset Request',
+      subject: 'Password Reset Request - Shaikh Jee Cosmetics',
       text: message
     });
 
-    res.status(200).json({ message: 'Email sent' });
+    res.status(200).json({
+      success: true,
+      message: 'If an account with that email exists, a password reset link has been sent.'
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Password reset error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Unable to send password reset email. Please try again later.'
+    });
   }
-});
+};
 
-// Reset password
-router.put('/password-reset/:token', async (req, res) => {
+// Password reset request routes (rate limited to 3 requests per hour)
+router.post('/password-reset', passwordResetLimiter, handlePasswordResetRequest);
+router.post('/forgot-password', passwordResetLimiter, handlePasswordResetRequest); // Alias
+
+// Reset password handler
+const handleResetPassword = async (req, res) => {
   const resetPasswordToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
 
   try {
@@ -111,22 +139,47 @@ router.put('/password-reset/:token', async (req, res) => {
     });
 
     if (!user) {
-      return res.status(400).json({ message: 'Invalid or expired token' });
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired reset token. Please request a new password reset.'
+      });
     }
 
-    user.password = await bcrypt.hash(req.body.password, 12);
+    // Validate password
+    if (!req.body.password || req.body.password.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 8 characters long.'
+      });
+    }
+
+    // Set plain password - the pre-save hook will hash it
+    user.password = req.body.password;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
     await user.save();
 
-    res.status(200).json({ message: 'Password updated successfully' });
+    res.status(200).json({
+      success: true,
+      message: 'Password updated successfully. You can now login with your new password.'
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Reset password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Unable to reset password. Please try again.'
+    });
   }
-});
+};
 
-// Email verification
-router.post('/verify-email', async (req, res) => {
+// Reset password routes (both PUT and POST for flexibility)
+router.put('/password-reset/:token', handleResetPassword);
+router.post('/password-reset/:token', handleResetPassword);
+router.put('/reset-password/:token', handleResetPassword); // Alias
+router.post('/reset-password/:token', handleResetPassword); // Alias
+
+// Email verification (rate limited to prevent abuse)
+router.post('/verify-email', passwordResetLimiter, async (req, res) => {
   const { email } = req.body;
 
   try {

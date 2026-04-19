@@ -1,10 +1,16 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
+import helmet from 'helmet';
+import compression from 'compression';
+import mongoSanitize from 'express-mongo-sanitize';
+import swaggerUi from 'swagger-ui-express';
 import 'dotenv/config';
 import { limiter, authLimiter, signupLimiter } from './middleware/rateLimiter.js';
 import { connectRedis, isRedisConnected } from './config/redis.js';
 import cookieParser from 'cookie-parser';
+import logger, { requestLogger } from './utils/logger.js';
+import swaggerSpec from './config/swagger.js';
 
 const app = express();
 
@@ -13,8 +19,19 @@ import { errorMiddleware } from './middleware/errorHandler.js';
 // CSRF temporarily disabled for testing
 // import { applyCSRF, handleCSRFError } from './middleware/csrf.js';
 
-// Middleware
-app.use(express.json());
+// Security Middleware
+app.use(helmet()); // Set security HTTP headers
+app.use(mongoSanitize()); // Prevent NoSQL injection attacks
+
+// Performance Middleware
+app.use(compression()); // Compress response bodies
+
+// Logging Middleware
+app.use(requestLogger);
+
+// Core Middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
@@ -47,6 +64,9 @@ app.use(cors({
 // CSRF error handler
 // app.use(handleCSRFError);
 
+// Apply global rate limiting middleware BEFORE routes
+app.use(limiter);
+
 // Import Routes
 import productRoutes from './routes/product.js';
 import orderRoutes from './routes/order.js';
@@ -62,6 +82,10 @@ import loyaltyRoutes from './routes/loyalty.js';
 import newsletterRoutes from './routes/newsletter.js';
 import cartRoutes from './routes/cart.js';
 // import analyticsRoutes from './routes/analytics.js'; // Temporarily disabled
+
+// Apply specific rate limits to auth routes BEFORE mounting routes
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/signup', signupLimiter);
 
 // Mount Routes
 app.use('/api/products', productRoutes);
@@ -79,14 +103,19 @@ app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/cart', cartRoutes);
 // app.use('/api/analytics', analyticsRoutes); // Temporarily disabled
 
-// Apply specific rate limits to auth routes
-app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/signup', signupLimiter);
+// Swagger API Documentation
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'Shaikh Jee API Docs'
+}));
 
-// Apply rate limiting middleware
-app.use(limiter);
+// Swagger JSON spec endpoint
+app.get('/api/docs.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
 
-// Health check endpoint
+// Health check endpoint (basic)
 app.get('/health', (req, res) => {
   res.status(200).json({
     success: true,
@@ -94,6 +123,74 @@ app.get('/health', (req, res) => {
     redis: isRedisConnected(),
     mongodb: mongoose.connection.readyState === 1
   });
+});
+
+// Detailed health check endpoint
+app.get('/api/health', async (req, res) => {
+  const healthCheck = {
+    success: true,
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development',
+    version: process.env.npm_package_version || '1.0.0',
+    services: {
+      mongodb: {
+        status: 'unknown',
+        latency: null
+      },
+      redis: {
+        status: 'unknown',
+        latency: null
+      }
+    },
+    memory: {
+      used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+      total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
+      unit: 'MB'
+    }
+  };
+
+  // Check MongoDB
+  try {
+    const mongoStart = Date.now();
+    await mongoose.connection.db.admin().ping();
+    healthCheck.services.mongodb = {
+      status: 'healthy',
+      latency: Date.now() - mongoStart
+    };
+  } catch (error) {
+    healthCheck.services.mongodb = {
+      status: 'unhealthy',
+      error: error.message
+    };
+    healthCheck.success = false;
+  }
+
+  // Check Redis
+  try {
+    if (isRedisConnected()) {
+      const redisStart = Date.now();
+      const { getRedisClient } = await import('./config/redis.js');
+      await getRedisClient().ping();
+      healthCheck.services.redis = {
+        status: 'healthy',
+        latency: Date.now() - redisStart
+      };
+    } else {
+      healthCheck.services.redis = {
+        status: 'disconnected',
+        message: 'Redis not connected (optional service)'
+      };
+    }
+  } catch (error) {
+    healthCheck.services.redis = {
+      status: 'unhealthy',
+      error: error.message
+    };
+  }
+
+  const statusCode = healthCheck.success ? 200 : 503;
+  res.status(statusCode).json(healthCheck);
 });
 
 // Base route
