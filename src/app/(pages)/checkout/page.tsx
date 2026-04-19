@@ -40,7 +40,7 @@ const CheckoutPage = () => {
                 image: item.product.images?.[0] || '',
                 price: item.product.price,
                 selectedShade: item.selectedShade ? {
-                    id: item.selectedShade._id || item.selectedShade.id,
+                    id: item.selectedShade._id,
                     name: item.selectedShade.name,
                     color: item.selectedShade.color
                 } : undefined
