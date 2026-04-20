@@ -70,28 +70,17 @@ const transports = [
   })
 ];
 
-// Add file transports in production
-if (process.env.NODE_ENV === 'production') {
-  const logsDir = path.join(__dirname, '../logs');
+// Skip file transports on cloud platforms (Railway, Vercel, Render, Heroku)
+// These platforms don't allow filesystem writes and use their own logging
+const isCloudPlatform = !!(
+  process.env.RAILWAY_ENVIRONMENT ||
+  process.env.VERCEL ||
+  process.env.RENDER ||
+  process.env.HEROKU ||
+  process.env.DYNO // Heroku
+);
 
-  transports.push(
-    // Error log file
-    new winston.transports.File({
-      filename: path.join(logsDir, 'error.log'),
-      level: 'error',
-      format,
-      maxsize: 5242880, // 5MB
-      maxFiles: 5
-    }),
-    // Combined log file
-    new winston.transports.File({
-      filename: path.join(logsDir, 'combined.log'),
-      format,
-      maxsize: 5242880, // 5MB
-      maxFiles: 5
-    })
-  );
-}
+// File logging disabled for cloud platforms - use console only
 
 // Create the logger
 const logger = winston.createLogger({
