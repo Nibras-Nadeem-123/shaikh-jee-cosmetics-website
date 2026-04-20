@@ -46,7 +46,8 @@ export const catchAsyncErrors = (fn) => (req, res, next) => {
 };
 
 // Error handling middleware (should be last middleware)
-export const errorMiddleware = (err, req, res) => {
+// Note: Express requires 4 parameters to recognize this as an error handler
+export const errorMiddleware = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.message = err.message || 'Internal Server Error';
 
