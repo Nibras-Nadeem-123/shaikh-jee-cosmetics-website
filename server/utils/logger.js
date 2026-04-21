@@ -70,17 +70,19 @@ const transports = [
   })
 ];
 
-// Skip file transports on cloud platforms (Railway, Vercel, Render, Heroku)
-// These platforms don't allow filesystem writes and use their own logging
-const isCloudPlatform = !!(
+// Skip file transports on cloud platforms, Docker, or production
+// These environments often don't allow filesystem writes or use their own logging
+const isCloudOrContainer = !!(
   process.env.RAILWAY_ENVIRONMENT ||
   process.env.VERCEL ||
   process.env.RENDER ||
   process.env.HEROKU ||
-  process.env.DYNO // Heroku
+  process.env.DYNO || // Heroku
+  process.env.DOCKER || // Docker (set in docker-compose)
+  process.env.NODE_ENV === 'production' // Any production environment
 );
 
-// File logging disabled for cloud platforms - use console only
+// File logging disabled for cloud/container platforms - use console only
 
 // Create the logger
 const logger = winston.createLogger({

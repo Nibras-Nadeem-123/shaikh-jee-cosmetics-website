@@ -29,6 +29,7 @@ services:
       - "5000:5000"
     environment:
       - NODE_ENV=production
+      - DOCKER=true
       - PORT=5000
       - MONGO_URI=mongodb://mongo:27017/shaikh-jee-cosmetics
       - REDIS_URL=redis://redis:6379
