@@ -23,13 +23,12 @@ const createTransporter = () => {
   });
 };
 
-transporter.verify((error, success) => {
-  if (error) {
-    console.log("SMTP ERROR:", error);
-  } else {
-    console.log("SMTP READY ✅");
-  }
-})
+try {
+  const info = await transporter.sendMail(mailOptions);
+  console.log("EMAIL SENT:", info);
+} catch (err) {
+  console.error("EMAIL FAILED:", err);
+}
 
 const formatCurrency = (value) => {
   if (typeof value !== 'number') value = Number(value) || 0;
