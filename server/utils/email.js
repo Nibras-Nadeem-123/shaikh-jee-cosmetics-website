@@ -7,17 +7,29 @@ const EMAIL_FROM = process.env.EMAIL_FROM || `"Shaikh Jee Cosmetics" <${EMAIL_US
 
 const createTransporter = () => {
   if (!EMAIL_USER || !EMAIL_PASS) {
-    throw new Error('Email configuration is missing. Set EMAIL_USER and EMAIL_PASS in environment variables.');
+    throw new Error('Email configuration is missing. Set SMTP_USER and SMTP_PASS in environment variables.');
   }
 
   return nodemailer.createTransport({
-    service: 'gmail',
+    host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
+    port: Number(process.env.SMTP_PORT) || 587,
+    secure: false, // important for port 587
+    requireTLS: true,
     auth: {
       user: EMAIL_USER,
       pass: EMAIL_PASS,
     },
+    connectionTimeout: 10000, // avoid long timeout
   });
 };
+
+transporter.verify((error, success) => {
+  if (error) {
+    console.log("SMTP ERROR:", error);
+  } else {
+    console.log("SMTP READY ✅");
+  }
+})
 
 const formatCurrency = (value) => {
   if (typeof value !== 'number') value = Number(value) || 0;

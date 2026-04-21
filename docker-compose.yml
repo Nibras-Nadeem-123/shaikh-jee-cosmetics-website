@@ -25,6 +25,9 @@ services:
       dockerfile: Dockerfile
     container_name: shaikhjee-backend
     restart: unless-stopped
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     ports:
       - "5000:5000"
     environment:

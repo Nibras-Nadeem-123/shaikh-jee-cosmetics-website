@@ -1,24 +1,21 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
-// Create transporter
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: process.env.SMTP_PORT || 587,
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD
-  }
-});
+// Initialize Resend client
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Verify connection
-transporter.verify((error) => {
-  if (error) {
-    console.log('Email service not configured:', error.message);
-  } else {
-    console.log('Email service ready');
+// Email sender address (must be verified in Resend or use onboarding@resend.dev for testing)
+const FROM_EMAIL = process.env.FROM_EMAIL || 'Shaikh Jee Cosmetics <onboarding@resend.dev>';
+
+// Verify connection on startup
+const verifyEmailService = async () => {
+  if (!process.env.RESEND_API_KEY) {
+    console.log('Email service not configured: RESEND_API_KEY is missing');
+    return;
   }
-});
+  console.log('Email service ready (Resend)');
+};
+
+verifyEmailService();
 
 // Send order confirmation email
 export const sendOrderConfirmationEmail = async (user, order) => {
@@ -26,9 +23,9 @@ export const sendOrderConfirmationEmail = async (user, order) => {
     const orderItems = order.orderItems
       .map(item => `<tr>
         <td style="padding: 8px; border: 1px solid #ddd;">${item.name}</td>
-        <td style="padding: 8px; border: 1px solid #ddd;">₹${item.price}</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">Rs.${item.price}</td>
         <td style="padding: 8px; border: 1px solid #ddd;">${item.quantity}</td>
-        <td style="padding: 8px; border: 1px solid #ddd;">₹${item.price * item.quantity}</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">Rs.${item.price * item.quantity}</td>
       </tr>`)
       .join('');
 
@@ -36,11 +33,11 @@ export const sendOrderConfirmationEmail = async (user, order) => {
       <h2>Order Confirmation</h2>
       <p>Dear ${user.name},</p>
       <p>Thank you for your order! Your order has been received and is being processed.</p>
-      
+
       <h3>Order Details:</h3>
       <p><strong>Order ID:</strong> ${order._id}</p>
       <p><strong>Order Date:</strong> ${new Date(order.createdAt).toLocaleDateString()}</p>
-      
+
       <h3>Items:</h3>
       <table style="width: 100%; border-collapse: collapse;">
         <tr style="background-color: #f2f2f2;">
@@ -51,12 +48,12 @@ export const sendOrderConfirmationEmail = async (user, order) => {
         </tr>
         ${orderItems}
       </table>
-      
+
       <h3>Price Summary:</h3>
-      <p>Subtotal: ₹${order.itemsPrice}</p>
-      <p>Shipping: ₹${order.shippingPrice}</p>
-      <p><strong>Total: ₹${order.totalPrice}</strong></p>
-      
+      <p>Subtotal: Rs.${order.itemsPrice}</p>
+      <p>Shipping: Rs.${order.shippingPrice}</p>
+      <p><strong>Total: Rs.${order.totalPrice}</strong></p>
+
       <h3>Shipping Address:</h3>
       <p>
         ${order.shippingAddress.name}<br/>
@@ -64,18 +61,23 @@ export const sendOrderConfirmationEmail = async (user, order) => {
         ${order.shippingAddress.addressLine2 ? order.shippingAddress.addressLine2 + '<br/>' : ''}
         ${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.pincode}
       </p>
-      
+
       <p>You can track your order status on our website.</p>
       <p>If you have any questions, please contact us.</p>
       <p>Best regards,<br/>Shaikh Jee Cosmetics Team</p>
     `;
 
-    await transporter.sendMail({
-      from: process.env.SMTP_USER,
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
       to: user.email,
       subject: `Order Confirmation - Order #${order._id}`,
       html: htmlContent
     });
+
+    if (error) {
+      console.error('Failed to send order confirmation email:', error);
+      throw new Error('Email sending failed. Please try again later.');
+    }
 
     console.log('Order confirmation email sent to:', user.email);
   } catch (error) {
@@ -98,20 +100,25 @@ export const sendOrderStatusEmail = async (user, order, newStatus) => {
       <h2>Order Status Update</h2>
       <p>Dear ${user.name},</p>
       <p>${statusMessages[newStatus]}</p>
-      
+
       <p><strong>Order ID:</strong> ${order._id}</p>
       <p><strong>New Status:</strong> ${newStatus.toUpperCase()}</p>
-      
+
       <p>You can track your order on our website.</p>
       <p>Best regards,<br/>Shaikh Jee Cosmetics Team</p>
     `;
 
-    await transporter.sendMail({
-      from: process.env.SMTP_USER,
+    const { error } = await resend.emails.send({
+      from: FROM_EMAIL,
       to: user.email,
       subject: `Order Status Update - Order #${order._id}`,
       html: htmlContent
     });
+
+    if (error) {
+      console.error('Error sending email:', error);
+      return;
+    }
 
     console.log('Order status email sent to:', user.email);
   } catch (error) {
@@ -134,12 +141,17 @@ export const sendPasswordResetEmail = async (email, resetToken) => {
       <p>Best regards,<br/>Shaikh Jee Cosmetics Team</p>
     `;
 
-    await transporter.sendMail({
-      from: process.env.SMTP_USER,
+    const { error } = await resend.emails.send({
+      from: FROM_EMAIL,
       to: email,
       subject: 'Password Reset Request',
       html: htmlContent
     });
+
+    if (error) {
+      console.error('Error sending email:', error);
+      return;
+    }
 
     console.log('Password reset email sent to:', email);
   } catch (error) {
@@ -154,24 +166,29 @@ export const sendWelcomeEmail = async (user) => {
       <h2>Welcome to Shaikh Jee Cosmetics!</h2>
       <p>Dear ${user.name},</p>
       <p>Welcome to our cosmetics store! We're excited to have you as a customer.</p>
-      
+
       <h3>What's Next?</h3>
       <ul>
         <li>Browse our collection of premium products</li>
         <li>Add items to your wishlist for later</li>
         <li>Check out our latest offers</li>
       </ul>
-      
+
       <p>If you have any questions, please don't hesitate to contact us.</p>
       <p>Best regards,<br/>Shaikh Jee Cosmetics Team</p>
     `;
 
-    await transporter.sendMail({
-      from: process.env.SMTP_USER,
+    const { error } = await resend.emails.send({
+      from: FROM_EMAIL,
       to: user.email,
       subject: 'Welcome to Shaikh Jee Cosmetics',
       html: htmlContent
     });
+
+    if (error) {
+      console.error('Error sending email:', error);
+      return;
+    }
 
     console.log('Welcome email sent to:', user.email);
   } catch (error) {

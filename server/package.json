@@ -31,6 +31,7 @@
     "mongoose": "^8.23.0",
     "mongoose-delete": "^1.0.7",
     "nodemailer": "^7.0.12",
+    "resend": "^4.0.0",
     "razorpay": "^2.9.6",
     "redis": "^4.7.1",
     "redis-server": "^1.2.2",
