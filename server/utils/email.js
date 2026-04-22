@@ -7,8 +7,8 @@ const EMAIL_FROM = process.env.EMAIL_FROM || `"Shaikh Jee Cosmetics"  nibrasnade
 
 
 
-export const Transporter = async (order) => {
-   const createTransporter = () => {
+export const createTransporter = async (order) => {
+   const Transporter = () => {
   if (!EMAIL_USER || !EMAIL_PASS) {
     throw new Error('Email configuration is missing. Set SMTP_USER and SMTP_PASS in environment variables.');
   }
@@ -27,7 +27,7 @@ export const Transporter = async (order) => {
 };
 
   try {
-    const info = await createTransporter.sendMail(mailOptions);
+    const info = await Transporter.sendMail(mailOptions);
     console.log("EMAIL SENT:", info.response);
   } catch (err) {
     console.error("EMAIL FAILED:", err);
