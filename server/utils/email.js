@@ -3,12 +3,9 @@ import nodemailer from 'nodemailer';
 const EMAIL_USER = process.env.EMAIL_USER || process.env.SMTP_USER;
 const EMAIL_PASS = process.env.EMAIL_PASS || process.env.SMTP_PASS;
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || process.env.SMTP_USER;
-const EMAIL_FROM = process.env.EMAIL_FROM || `"Shaikh Jee Cosmetics"  nibrasnadeem621@gmail.com`;
+const EMAIL_FROM = process.env.EMAIL_FROM || `"Shaikh Jee Cosmetics" nibrasnadeem621@gmail.com`;
 
-
-
-export const createTransporter = async (order) => {
-   const Transporter = () => {
+const createTransporter = () => {
   if (!EMAIL_USER || !EMAIL_PASS) {
     throw new Error('Email configuration is missing. Set SMTP_USER and SMTP_PASS in environment variables.');
   }
@@ -26,13 +23,6 @@ export const createTransporter = async (order) => {
   });
 };
 
-  try {
-    const info = await Transporter.sendMail(mailOptions);
-    console.log("EMAIL SENT:", info.response);
-  } catch (err) {
-    console.error("EMAIL FAILED:", err);
-  }
-};
 
 
 const formatCurrency = (value) => {
@@ -155,7 +145,14 @@ export const sendOrderEmail = async (order) => {
     })
   };
 
-  await transporter.sendMail(mailOptions);
+  try {
+  const info = await transporter.sendMail(mailOptions);
+  console.log("EMAIL SENT:", info);
+} catch (err) {
+  console.error("EMAIL FAILED:", err);
+}
+
+  // await transporter.sendMail(mailOptions);
 };
 
 export const sendCustomerOrderConfirmationEmail = async (order) => {
