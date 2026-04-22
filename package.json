@@ -11,6 +11,7 @@
   "dependencies": {
     "@types/mongoose": "^5.11.96",
     "aws4": "^1.13.2",
+    "axios": "^1.15.2",
     "geist": "^1.3.1",
     "lucide-react": "^0.562.0",
     "mongoose": "^9.3.0",
