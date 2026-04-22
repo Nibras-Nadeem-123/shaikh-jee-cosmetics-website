@@ -3,16 +3,16 @@ import nodemailer from 'nodemailer';
 const EMAIL_USER = process.env.SMTP_USER;
 const EMAIL_PASS = process.env.SMTP_PASS;
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || process.env.SMTP_USER;
-const EMAIL_FROM = `"Shaikh Jee Cosmetics" nibrasnadeem621@gmail.com`;
+const EMAIL_FROM = `"Shaikh Jee Cosmetics" <nibrasnadeem621@gmail.com>`;
 
 const createTransporter = () => {
   if (!EMAIL_USER || !EMAIL_PASS) {
     throw new Error('Email configuration is missing. Set SMTP_USER and SMTP_PASS in environment variables.');
   }
 
-  return nodemailer.createTransport({
+  const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
-    port: Number(process.env.SMTP_PORT) || 587,
+    port: Number(process.env.SMTP_PORT) || 2525,
     secure: false, // important for port 587
     requireTLS: true,
     auth: {
@@ -21,8 +21,20 @@ const createTransporter = () => {
     },
     connectionTimeout: 10000, // avoid long timeout
   });
+
+  return transporter;
 };
 
+// ✅ Optional but VERY useful (debug connection)
+export const verifySMTP = async () => {
+  try {
+    const transporter = createTransporter();
+    await transporter.verify();
+    console.log("✅ SMTP is ready");
+  } catch (err) {
+    console.error("❌ SMTP ERROR:", err);
+  }
+};
 
 
 const formatCurrency = (value) => {
@@ -131,88 +143,100 @@ const buildHtmlTemplate = ({ title, heading, message, order, recipientName }) =>
 `;
 
 export const sendOrderEmail = async (order) => {
-  const transporter = createTransporter();
-  const mailOptions = {
-    from: EMAIL_FROM,
-    to: ADMIN_EMAIL,
-    subject: `New Order Received • ${order.orderNumber}`,
-    html: buildHtmlTemplate({
-      title: `New Order Received • ${order.orderNumber}`,
-      heading: 'New Order Notification',
-      recipientName: 'Admin',
-      message: `A new order has been placed. Please review the details below and process it.`,
-      order
-    })
-  };
-
   try {
-  const info = await transporter.sendMail(mailOptions);
-  console.log("EMAIL SENT:", info);
-} catch (err) {
-  console.error("EMAIL FAILED:", err);
-}
-
+    const transporter = createTransporter();
+    const mailOptions = {
+      from: EMAIL_FROM,
+      to: ADMIN_EMAIL,
+      subject: `New Order Received • ${order.orderNumber}`,
+      html: buildHtmlTemplate({
+        title: `New Order Received • ${order.orderNumber}`,
+        heading: 'New Order Notification',
+        recipientName: 'Admin',
+        message: `A new order has been placed. Please review the details below and process it.`,
+        order
+      })
+    };
+    const info = await transporter.sendMail(mailOptions);
+    console.log("EMAIL SENT:", info);
+  } catch (err) {
+    console.error("EMAIL FAILED:", err);
+  }
   // await transporter.sendMail(mailOptions);
 };
 
 export const sendCustomerOrderConfirmationEmail = async (order) => {
-  const transporter = createTransporter();
-  const mailOptions = {
-    from: EMAIL_FROM,
-    to: order.shippingAddress.email,
-    subject: `Order Confirmation • ${order.orderNumber}`,
-    html: buildHtmlTemplate({
-      title: `Order Confirmation • ${order.orderNumber}`,
-      heading: 'Order Confirmed',
-      recipientName: order.shippingAddress.name,
-      message: `Thank you for your purchase! We have received your order and will process it shortly. Here are the details of your order:`,
-      order
-    })
-  };
+  try {
+    const transporter = createTransporter();
+    const mailOptions = {
+      from: EMAIL_FROM,
+      to: order.shippingAddress.email,
+      subject: `Order Confirmation • ${order.orderNumber}`,
+      html: buildHtmlTemplate({
+        title: `Order Confirmation • ${order.orderNumber}`,
+        heading: 'Order Confirmed',
+        recipientName: order.shippingAddress.name,
+        message: `Thank you for your purchase! We have received your order and will process it shortly. Here are the details of your order:`,
+        order
+      })
+    };
+    const info = await transporter.sendMail(mailOptions);
+    console.log("✅ CUSTOMER EMAIL SENT:", info.response);
 
-  await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error("❌ CUSTOMER EMAIL FAILED:", err);
+  }
+
+  // await transporter.sendMail(mailOptions);
 };
 
 // Send order status update email to customer
 export const sendOrderStatusUpdateEmail = async (order, newStatus) => {
-  const transporter = createTransporter();
+  try {
+    const transporter = createTransporter();
 
-  const statusMessages = {
-    confirmed: 'Your order has been confirmed and is being prepared.',
-    processing: 'Your order is now being processed.',
-    shipped: 'Great news! Your order has been shipped and is on its way.',
-    out_for_delivery: 'Your order is out for delivery. It will arrive soon!',
-    delivered: 'Your order has been delivered successfully. Thank you for shopping with us!',
-    cancelled: 'Your order has been cancelled. If you have any questions, please contact us.',
-  };
+    const statusMessages = {
+      confirmed: 'Your order has been confirmed and is being prepared.',
+      processing: 'Your order is now being processed.',
+      shipped: 'Great news! Your order has been shipped and is on its way.',
+      out_for_delivery: 'Your order is out for delivery. It will arrive soon!',
+      delivered: 'Your order has been delivered successfully. Thank you for shopping with us!',
+      cancelled: 'Your order has been cancelled. If you have any questions, please contact us.',
+    };
 
-  const statusEmojis = {
-    confirmed: '✅',
-    processing: '⚙️',
-    shipped: '📦',
-    out_for_delivery: '🚚',
-    delivered: '🎉',
-    cancelled: '❌',
-  };
+    const statusEmojis = {
+      confirmed: '✅',
+      processing: '⚙️',
+      shipped: '📦',
+      out_for_delivery: '🚚',
+      delivered: '🎉',
+      cancelled: '❌',
+    };
 
-  const message = statusMessages[newStatus] || `Your order status has been updated to: ${newStatus}`;
-  const emoji = statusEmojis[newStatus] || '📋';
+    const message = statusMessages[newStatus] || `Your order status has been updated to: ${newStatus}`;
+    const emoji = statusEmojis[newStatus] || '📋';
 
-  const mailOptions = {
-    from: EMAIL_FROM,
-    to: order.shippingAddress.email,
-    subject: `${emoji} Order Update • ${order.orderNumber} - ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)}`,
-    html: buildStatusUpdateTemplate({
-      title: `Order Status Update • ${order.orderNumber}`,
-      heading: `Order ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)}`,
-      recipientName: order.shippingAddress.name,
-      message,
-      order,
-      newStatus
-    })
-  };
+    const mailOptions = {
+      from: EMAIL_FROM,
+      to: order.shippingAddress.email,
+      subject: `${emoji} Order Update • ${order.orderNumber} - ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)}`,
+      html: buildStatusUpdateTemplate({
+        title: `Order Status Update • ${order.orderNumber}`,
+        heading: `Order ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)}`,
+        recipientName: order.shippingAddress.name,
+        message,
+        order,
+        newStatus
+      })
+    };
+  const info = await transporter.sendMail(mailOptions);
+    console.log("✅ STATUS EMAIL SENT:", info.response);
 
-  await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error("❌ STATUS EMAIL FAILED:", err);
+  }
+
+  // await transporter.sendMail(mailOptions);
 };
 
 // Build status update email template
