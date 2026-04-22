@@ -1,11 +1,14 @@
 import nodemailer from 'nodemailer';
 
 const EMAIL_USER = process.env.EMAIL_USER || process.env.SMTP_USER;
-const EMAIL_PASS = process.env.EMAIL_PASS || process.env.SMTP_PASSWORD;
+const EMAIL_PASS = process.env.EMAIL_PASS || process.env.SMTP_PASS;
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || process.env.SMTP_USER;
-const EMAIL_FROM = process.env.EMAIL_FROM || `"Shaikh Jee Cosmetics" <${EMAIL_USER}>`;
+const EMAIL_FROM = process.env.EMAIL_FROM || `"Shaikh Jee Cosmetics"  nibrasnadeem621@gmail.com`;
 
-const createTransporter = () => {
+
+
+export const sendOrderEmail = async (order) => {
+   const createTransporter = () => {
   if (!EMAIL_USER || !EMAIL_PASS) {
     throw new Error('Email configuration is missing. Set SMTP_USER and SMTP_PASS in environment variables.');
   }
@@ -23,12 +26,14 @@ const createTransporter = () => {
   });
 };
 
-try {
-  const info = await transporter.sendMail(mailOptions);
-  console.log("EMAIL SENT:", info);
-} catch (err) {
-  console.error("EMAIL FAILED:", err);
-}
+  try {
+    const info = await createTransporter.sendMail(mailOptions);
+    console.log("EMAIL SENT:", info.response);
+  } catch (err) {
+    console.error("EMAIL FAILED:", err);
+  }
+};
+
 
 const formatCurrency = (value) => {
   if (typeof value !== 'number') value = Number(value) || 0;
