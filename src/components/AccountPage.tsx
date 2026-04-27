@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/useToast';
 import { LoyaltyWidget } from './LoyaltyWidget';
 import { OrderTracking } from './OrderTracking';
 import LoadingSpinner from './LoadingSpinner';
+import { apiService } from '@/services/api';
 
  
 export const AccountPage = () => {
@@ -268,7 +269,20 @@ export const AccountPage = () => {
                         </div>
 
                         <div className="flex justify-end gap-4 p-6 bg-white border-t shadow-inner border-border">
-                          <button className="px-6 py-2.5 border-2 border-border text-xs font-bold uppercase rounded-full hover:bg-muted transition-all">Invoice</button>
+                          <button
+                            onClick={async () => {
+                              try {
+                                showToast('Generating invoice...', 'info');
+                                await apiService.downloadInvoice(order.id);
+                                showToast('Invoice downloaded!', 'success');
+                              } catch (error) {
+                                showToast('Failed to download invoice', 'error');
+                              }
+                            }}
+                            className="px-6 py-2.5 border-2 border-border text-xs font-bold uppercase rounded-full hover:bg-muted transition-all"
+                          >
+                            Invoice
+                          </button>
                           <button className="px-8 py-2.5 bg-foreground text-white text-xs font-bold uppercase rounded-full hover:bg-black transition-all">Re-order Luxe</button>
                         </div>
                       </div>

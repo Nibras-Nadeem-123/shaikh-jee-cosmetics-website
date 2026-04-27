@@ -6,7 +6,9 @@ import { useApp } from '@/contexts/AppContext';
 import { apiService } from '@/services/api';
 import Image from 'next/image';
 import { useToast } from '@/hooks/useToast';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
+import { SocialShareButtons } from './SocialShareButtons';
+import { BackInStockAlert } from './BackInStockAlert';
 
 interface ProductDetailsPageProps {
   product: Product;
@@ -16,7 +18,10 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
   product,
 }) => {
   const router = useRouter();
+  const pathname = usePathname();
   const { addToCart, addToWishlist, isInWishlist, removeFromWishlist, user } = useApp();
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://shaikhjee.com';
+  const productUrl = `${siteUrl}${pathname}`;
   const [selectedImage, setSelectedImage] = useState(0);
   const { showToast } = useToast();
   const [selectedShade, setSelectedShade] = useState<Shade | undefined>(
@@ -383,6 +388,16 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
               </div>
             </div>
 
+            {/* Back in Stock Alert - Show when out of stock */}
+            {!product.inStock && (
+              <div className="mb-6">
+                <BackInStockAlert
+                  productId={product._id}
+                  productName={product.name}
+                />
+              </div>
+            )}
+
             {/* Actions */}
             <div className="flex gap-4 mb-8">
               <button
@@ -396,12 +411,20 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
               <button
                 onClick={handleToggleWishlist}
                 className="px-6 py-3 transition-colors border-2 rounded-full border-primary hover:bg-secondary"
+                aria-label={isInWishlist(product._id) ? 'Remove from wishlist' : 'Add to wishlist'}
               >
                 <Heart
                   className={`w-5 h-5 ${isInWishlist(product._id) ? 'fill-red-500 text-red-500' : ''
                     }`}
                 />
               </button>
+              <SocialShareButtons
+                url={productUrl}
+                title={product.name}
+                description={product.description}
+                image={product.images?.[0] || '/placeholder.png'}
+                price={product.price}
+              />
             </div>
 
             {/* Features */}

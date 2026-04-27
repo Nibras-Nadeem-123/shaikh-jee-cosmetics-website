@@ -1,3 +1,5 @@
+const { withSentryConfig } = require('@sentry/nextjs');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Enable React strict mode for better development experience
@@ -90,4 +92,46 @@ const nextConfig = {
   }
 };
 
-module.exports = nextConfig;
+// Sentry configuration options
+const sentryWebpackPluginOptions = {
+  // Organization and project from Sentry dashboard
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+
+  // Auth token for uploading source maps
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+
+  // Suppress source map upload warnings
+  silent: !process.env.CI,
+
+  // Upload source maps for production builds only
+  disableServerWebpackPlugin: process.env.NODE_ENV !== 'production',
+  disableClientWebpackPlugin: process.env.NODE_ENV !== 'production',
+
+  // Automatically annotate React components
+  reactComponentAnnotation: {
+    enabled: true,
+  },
+
+  // Hide source maps from browser
+  hideSourceMaps: true,
+
+  // Disable Sentry telemetry
+  telemetry: false,
+
+  // Tunnel route for bypassing ad blockers (optional)
+  // tunnelRoute: '/monitoring',
+
+  // Tree shake Sentry logger in production
+  disableLogger: true,
+
+  // Automatically instrument components
+  widenClientFileUpload: true,
+};
+
+// Only wrap with Sentry if DSN is configured
+const config = process.env.NEXT_PUBLIC_SENTRY_DSN
+  ? withSentryConfig(nextConfig, sentryWebpackPluginOptions)
+  : nextConfig;
+
+module.exports = config;

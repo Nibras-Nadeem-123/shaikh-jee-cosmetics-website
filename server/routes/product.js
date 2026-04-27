@@ -2,19 +2,72 @@ import express from 'express';
 const router = express.Router();
 import { getProducts, getSingleProduct, newProduct, updateProduct, searchSuggestions, getFeaturedProducts, getBestSellers, getAllAdminProducts, deleteProduct } from '../controllers/productController.js';
 import { isAuthenticatedUser, authorizeRoles } from '../middleware/auth.js';
-import { cacheMiddleware } from '../config/redis.js';
+import { cache, invalidateCache } from '../middleware/cache.js';
+import { CACHE_TTL } from '../services/cacheService.js';
 
-// Public routes with caching
-router.get('/search/suggestions', cacheMiddleware(300), searchSuggestions); // Cache for 5 minutes
-router.get('/featured', cacheMiddleware(600), getFeaturedProducts); // Cache for 10 minutes
-router.get('/best-sellers', cacheMiddleware(600), getBestSellers); // Cache for 10 minutes
-router.get('/', cacheMiddleware(120), getProducts); // Cache for 2 minutes
-router.get('/:slug', cacheMiddleware(600), getSingleProduct); // Cache for 10 minutes
+// Public routes with enhanced caching
+router.get('/search/suggestions',
+  cache({ ttl: CACHE_TTL.MEDIUM, prefix: 'products:suggestions', tags: ['products'] }),
+  searchSuggestions
+);
 
-// Admin Routes (no caching)
-router.post('/admin/new', isAuthenticatedUser, authorizeRoles('admin'), newProduct);
-router.put('/admin/:id', isAuthenticatedUser, authorizeRoles('admin'), updateProduct);
-router.get('/admin/all', isAuthenticatedUser, authorizeRoles('admin'), getAllAdminProducts);
-router.delete('/admin/:id', isAuthenticatedUser, authorizeRoles('admin'), deleteProduct);
+router.get('/featured',
+  cache({ ttl: CACHE_TTL.LONG, prefix: 'products:featured', tags: ['products', 'featured'] }),
+  getFeaturedProducts
+);
+
+router.get('/best-sellers',
+  cache({ ttl: CACHE_TTL.LONG, prefix: 'products:bestsellers', tags: ['products', 'bestsellers'] }),
+  getBestSellers
+);
+
+router.get('/',
+  cache({ ttl: CACHE_TTL.MEDIUM, prefix: 'products:list', tags: ['products'] }),
+  getProducts
+);
+
+router.get('/:slug',
+  cache({ ttl: CACHE_TTL.LONG, prefix: 'products:detail', tags: ['products'] }),
+  getSingleProduct
+);
+
+// Admin Routes with cache invalidation
+router.post('/admin/new',
+  isAuthenticatedUser,
+  authorizeRoles('admin'),
+  invalidateCache({ tags: ['products', 'featured', 'bestsellers'] }),
+  newProduct
+);
+
+router.put('/admin/:id',
+  isAuthenticatedUser,
+  authorizeRoles('admin'),
+  invalidateCache({
+    tags: ['products', 'featured', 'bestsellers'],
+    custom: async (req, res, data, cacheService) => {
+      // Invalidate specific product cache
+      await cacheService.invalidateTag(`product:${req.params.id}`);
+    }
+  }),
+  updateProduct
+);
+
+router.get('/admin/all',
+  isAuthenticatedUser,
+  authorizeRoles('admin'),
+  getAllAdminProducts
+);
+
+router.delete('/admin/:id',
+  isAuthenticatedUser,
+  authorizeRoles('admin'),
+  invalidateCache({
+    tags: ['products', 'featured', 'bestsellers'],
+    custom: async (req, res, data, cacheService) => {
+      await cacheService.invalidateTag(`product:${req.params.id}`);
+    }
+  }),
+  deleteProduct
+);
 
 export default router;

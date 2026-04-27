@@ -11,13 +11,17 @@ import { connectRedis, isRedisConnected } from './config/redis.js';
 import cookieParser from 'cookie-parser';
 import logger, { requestLogger } from './utils/logger.js';
 import swaggerSpec from './config/swagger.js';
+import { initSentry, sentryErrorHandler, isSentryEnabled } from './config/sentry.js';
 
 const app = express();
 
+// Initialize Sentry (must be done early, before other middleware)
+initSentry(app);
+
 // Import error handling middleware
 import { errorMiddleware } from './middleware/errorHandler.js';
-// CSRF temporarily disabled for testing
-// import { applyCSRF, handleCSRFError } from './middleware/csrf.js';
+// CSRF Protection
+import { csrfProtection, getCSRFToken, handleCSRFError } from './middleware/csrf.js';
 
 // Security Middleware
 app.use(helmet()); // Set security HTTP headers
@@ -33,39 +37,74 @@ app.use(requestLogger);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
-// CORS configuration - allow all origins in production for flexibility
-app.use(cors({
-  origin: true, // Allow all origins
+// CORS configuration
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'https://shaikhjee.com',
+  'https://www.shaikhjee.com',
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman, server-to-server)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    // In development, allow all origins
+    if (process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+
+    // In production, check against allowed origins
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    // Log rejected origins for debugging
+    console.warn(`CORS blocked origin: ${origin}`);
+    return callback(new Error('Not allowed by CORS'), false);
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
-}));
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+    'X-CSRF-Token',
+    'csrf-token',
+    'Cache-Control',
+    'Pragma'
+  ],
+  exposedHeaders: [
+    'Content-Disposition',
+    'Content-Length',
+    'X-RateLimit-Limit',
+    'X-RateLimit-Remaining',
+    'X-RateLimit-Reset'
+  ],
+  maxAge: 86400, // 24 hours - cache preflight requests
+  optionsSuccessStatus: 200 // Some legacy browsers choke on 204
+};
 
-// CSRF temporarily disabled
-// Apply CSRF protection to all routes except GET and public endpoints
-// app.use((req, res, next) => {
-//   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
-//     return next();
-//   }
-//
-//   const publicPaths = [
-//     '/api/auth/login',
-//     '/api/auth/signup',
-//     '/api/auth/google',
-//     '/api/payment/razorpay-webhook',
-//     '/api/payment/webhook',
-//     '/api/orders/new'
-//   ];
-//
-//   if (publicPaths.some(path => req.path.startsWith(path))) {
-//     return next();
-//   }
-//
-//   applyCSRF(req, res, next);
-// });
+// Handle preflight requests explicitly
+app.options('*', cors(corsOptions));
+
+// Apply CORS to all routes
+app.use(cors(corsOptions));
+
+// CSRF Protection - Apply to all routes
+app.use(csrfProtection);
 
 // CSRF error handler
-// app.use(handleCSRFError);
+app.use(handleCSRFError);
+
+// Route to get CSRF token
+app.get('/api/csrf-token', getCSRFToken);
 
 // Apply global rate limiting middleware BEFORE routes
 app.use(limiter);
@@ -84,6 +123,9 @@ import userRoutes from './routes/user.js';
 import loyaltyRoutes from './routes/loyalty.js';
 import newsletterRoutes from './routes/newsletter.js';
 import cartRoutes from './routes/cart.js';
+import stockAlertRoutes from './routes/stockAlert.js';
+import backupRoutes from './routes/backup.js';
+import cacheRoutes from './routes/cache.js';
 // import analyticsRoutes from './routes/analytics.js'; // Temporarily disabled
 
 // Apply specific rate limits to auth routes BEFORE mounting routes
@@ -104,6 +146,9 @@ app.use('/api/users', userRoutes);
 app.use('/api/loyalty', loyaltyRoutes);
 app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/cart', cartRoutes);
+app.use('/api/stock-alerts', stockAlertRoutes);
+app.use('/api/admin/backups', backupRoutes);
+app.use('/api/admin/cache', cacheRoutes);
 // app.use('/api/analytics', analyticsRoutes); // Temporarily disabled
 
 // Swagger API Documentation
@@ -205,6 +250,11 @@ app.get('/', (req, res) => {
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' });
 });
+
+// Sentry error handler (must be before other error handlers)
+if (isSentryEnabled()) {
+  app.use(sentryErrorHandler());
+}
 
 // Error handling middleware (MUST be last)
 app.use(errorMiddleware);

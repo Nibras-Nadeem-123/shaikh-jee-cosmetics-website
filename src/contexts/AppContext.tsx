@@ -5,6 +5,8 @@ import { CartItem, User, Address, Order, Product, Shade } from '@/types';
 import { apiService } from '@/services/api';
 import { v4 as uuidv4 } from 'uuid';
 import { requestDedup, REQUEST_KEYS } from '@/utils/requestDedup';
+import { initializeCSRF, clearCSRFToken } from '@/utils/csrf';
+import { setUser as setSentryUser, trackAction } from '@/utils/sentry';
 
 
 interface AppContextType {
@@ -79,6 +81,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, [token]);
 
   useEffect(() => {
+    // Initialize CSRF token on app load
+    initializeCSRF().catch(console.warn);
+
     const savedToken = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
     const savedCart = localStorage.getItem('cart');
@@ -91,7 +96,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setToken(savedToken);
     }
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      const parsedUser = JSON.parse(savedUser);
+      setUser(parsedUser);
+      // Set Sentry user context on initial load
+      setSentryUser({
+        id: parsedUser._id,
+        email: parsedUser.email,
+        name: parsedUser.name,
+        role: parsedUser.role,
+      });
     }
     if (savedCart) {
       setCart(JSON.parse(savedCart));
@@ -119,6 +132,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setToken(data.token);
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
+      // Set Sentry user context
+      setSentryUser({
+        id: data.user._id,
+        email: data.user.email,
+        name: data.user.name,
+        role: data.user.role,
+      });
+      trackAction('user_login', { userId: data.user._id });
       return data.user;
     } catch (error) {
       console.error('Login error:', error);
@@ -141,6 +162,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const logout = useCallback(() => {
+    trackAction('user_logout');
     setUser(null); // Correctly set user to null on logout
     setToken(null);
     localStorage.removeItem('token');
@@ -150,6 +172,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setOrders([]);
     // Clear request cache on logout
     requestDedup.reset();
+    // Clear CSRF token
+    clearCSRFToken();
+    // Clear Sentry user context
+    setSentryUser(null);
   }, []);
 
   const addToCart = (product: Product, quantity = 1, shade?: Shade) => {

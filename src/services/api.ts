@@ -1,4 +1,50 @@
+import { getCurrentCSRFToken, getCSRFToken } from '@/utils/csrf';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+/**
+ * Get headers with CSRF token for state-changing requests
+ */
+const getHeaders = async (includeAuth = false, contentType = 'application/json'): Promise<Record<string, string>> => {
+  const headers: Record<string, string> = {};
+
+  if (contentType) {
+    headers['Content-Type'] = contentType;
+  }
+
+  // Add CSRF token
+  let csrfToken = getCurrentCSRFToken();
+  if (!csrfToken) {
+    try {
+      csrfToken = await getCSRFToken();
+    } catch (e) {
+      console.warn('Could not get CSRF token');
+    }
+  }
+  if (csrfToken) {
+    headers['X-CSRF-Token'] = csrfToken;
+  }
+
+  // Add auth token if needed
+  if (includeAuth) {
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+  }
+
+  return headers;
+};
+
+/**
+ * Make a fetch request with CSRF and credentials
+ */
+const apiFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
+  return fetch(url, {
+    ...options,
+    credentials: 'include',
+  });
+};
 
 export const apiService = {
   // Auth
@@ -7,6 +53,7 @@ export const apiService = {
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(credentials),
       });
       const contentType = response.headers.get('content-type');
@@ -31,6 +78,7 @@ export const apiService = {
       const response = await fetch(`${API_URL}/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(userData),
       });
       const contentType = response.headers.get('content-type');
@@ -54,7 +102,7 @@ export const apiService = {
   getProducts: async (params: string = '') => {
     const fetchUrl = `${API_URL}/products${params ? '?' + params : ''}`;
     try {
-      const response = await fetch(fetchUrl);
+      const response = await fetch(fetchUrl, { credentials: 'include' });
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || `Failed to fetch products (Status: ${response.status})`);
@@ -74,7 +122,7 @@ export const apiService = {
 
   getProduct: async (slug: string) => {
     try {
-      const response = await fetch(`${API_URL}/products/${slug}`);
+      const response = await fetch(`${API_URL}/products/${slug}`, { credentials: 'include' });
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Failed to fetch product');
@@ -95,12 +143,12 @@ export const apiService = {
   // Orders
   createOrder: async (orderData: any, token: string) => {
     try {
-      const response = await fetch(`${API_URL}/orders/new`, {
+      const headers = await getHeaders(false);
+      headers['Authorization'] = `Bearer ${token}`;
+
+      const response = await apiFetch(`${API_URL}/orders/new`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers,
         body: JSON.stringify(orderData),
       });
       if (!response.ok) {
@@ -123,7 +171,8 @@ export const apiService = {
   getMyOrders: async (token: string) => {
     try {
       const response = await fetch(`${API_URL}/orders/me`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${token}` },
+        credentials: 'include'
       });
       if (!response.ok) {
         const error = await response.json();
@@ -151,6 +200,7 @@ export const apiService = {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
+        credentials: 'include',
         body: JSON.stringify(productData),
       });
       if (!response.ok) {
@@ -173,7 +223,8 @@ export const apiService = {
   getAllOrders: async (token: string) => {
     try {
       const response = await fetch(`${API_URL}/orders/admin/all`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${token}` },
+        credentials: 'include'
       });
       if (!response.ok) {
         const error = await response.json();
@@ -194,11 +245,12 @@ export const apiService = {
 
   deleteProduct: async (productId: string, token: string) => {
     try {
-      const response = await fetch(`${API_URL}/products/admin/${productId}`, {
+      const headers = await getHeaders(false, '');
+      headers['Authorization'] = `Bearer ${token}`;
+
+      const response = await apiFetch(`${API_URL}/products/admin/${productId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
+        headers,
       });
       if (!response.ok) {
         const error = await response.json();
@@ -219,12 +271,12 @@ export const apiService = {
 
   updateProduct: async (productId: string, productData: any, token: string) => {
     try {
-      const response = await fetch(`${API_URL}/products/admin/${productId}`, {
+      const headers = await getHeaders(false);
+      headers['Authorization'] = `Bearer ${token}`;
+
+      const response = await apiFetch(`${API_URL}/products/admin/${productId}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers,
         body: JSON.stringify(productData),
       });
       if (!response.ok) {
@@ -246,7 +298,7 @@ export const apiService = {
 
   getReviewsByProductId: async (productId: string) => {
     try {
-      const response = await fetch(`${API_URL}/reviews/product/${encodeURIComponent(productId)}`);
+      const response = await fetch(`${API_URL}/reviews/product/${encodeURIComponent(productId)}`, { credentials: 'include' });
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Failed to fetch reviews');
@@ -273,6 +325,7 @@ export const apiService = {
           'Content-Type': 'application/json',
           ...(token && { 'Authorization': `Bearer ${token}` })
         },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
       if (!response.ok) {
@@ -296,7 +349,8 @@ export const apiService = {
   getWishlist: async (token: string) => {
     try {
       const response = await fetch(`${API_URL}/wishlist`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${token}` },
+        credentials: 'include'
       });
       if (!response.ok) {
         const error = await response.json();
@@ -317,12 +371,12 @@ export const apiService = {
 
   addToWishlistApi: async (productId: string, token: string) => {
     try {
-      const response = await fetch(`${API_URL}/wishlist/add`, {
+      const headers = await getHeaders(false);
+      headers['Authorization'] = `Bearer ${token}`;
+
+      const response = await apiFetch(`${API_URL}/wishlist/add`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers,
         body: JSON.stringify({ productId }),
       });
       if (!response.ok) {
@@ -344,12 +398,12 @@ export const apiService = {
 
   removeFromWishlistApi: async (productId: string, token: string) => {
     try {
-      const response = await fetch(`${API_URL}/wishlist/remove`, {
+      const headers = await getHeaders(false);
+      headers['Authorization'] = `Bearer ${token}`;
+
+      const response = await apiFetch(`${API_URL}/wishlist/remove`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers,
         body: JSON.stringify({ productId }),
       });
       if (!response.ok) {
@@ -372,7 +426,8 @@ export const apiService = {
   checkWishlist: async (productId: string, token: string) => {
     try {
       const response = await fetch(`${API_URL}/wishlist/check/${productId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${token}` },
+        credentials: 'include'
       });
       if (!response.ok) {
         const error = await response.json();
@@ -397,6 +452,7 @@ export const apiService = {
       const response = await fetch(`${API_URL}/discount/validate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
       if (!response.ok) {
@@ -425,6 +481,7 @@ export const apiService = {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
       if (!response.ok) {
@@ -452,6 +509,7 @@ export const apiService = {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
       if (!response.ok) {
@@ -475,7 +533,8 @@ export const apiService = {
   getOrderById: async (orderId: string, token: string) => {
     try {
       const response = await fetch(`${API_URL}/orders/${orderId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${token}` },
+        credentials: 'include'
       });
       if (!response.ok) {
         const error = await response.json();
@@ -503,6 +562,7 @@ export const apiService = {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
+        credentials: 'include',
         body: JSON.stringify({ status: newStatus }),
       });
       if (!response.ok) {
@@ -529,6 +589,7 @@ export const apiService = {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
+      credentials: 'include',
       body: JSON.stringify({ status: newStatus }),
     });
     if (!response.ok) {
@@ -541,7 +602,8 @@ export const apiService = {
   getAllUsers: async (token: string) => {
     try {
       const response = await fetch(`${API_URL}/users`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${token}` },
+        credentials: 'include'
       });
       if (!response.ok) {
         const error = await response.json().catch(() => ({ message: response.statusText }));
@@ -564,6 +626,7 @@ export const apiService = {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
+        credentials: 'include',
         body: JSON.stringify({ role })
       });
       if (!response.ok) {
@@ -583,7 +646,8 @@ export const apiService = {
     try {
       const response = await fetch(`${API_URL}/users/${userId}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${token}` },
+        credentials: 'include'
       });
       if (!response.ok) {
         const error = await response.json().catch(() => ({ message: response.statusText }));
@@ -602,7 +666,8 @@ export const apiService = {
   getOrderDetails: async (orderId: string, token: string) => {
     try {
       const response = await fetch(`${API_URL}/orders/admin/${orderId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${token}` },
+        credentials: 'include'
       });
       if (!response.ok) {
         const error = await response.json().catch(() => ({ message: response.statusText }));
@@ -623,12 +688,59 @@ export const apiService = {
       const params = new URLSearchParams({ orderNumber });
       if (email) params.append('email', email);
 
-      const response = await fetch(`${API_URL}/orders/track?${params.toString()}`);
+      const response = await fetch(`${API_URL}/orders/track?${params.toString()}`, { credentials: 'include' });
       if (!response.ok) {
         const error = await response.json().catch(() => ({ message: response.statusText }));
         throw new Error(error.message || 'Order not found');
       }
       return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server. Please check if backend is running.');
+      }
+      throw error;
+    }
+  },
+
+  // Download order invoice PDF
+  downloadInvoice: async (orderId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/orders/${orderId}/invoice`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: response.statusText }));
+        throw new Error(error.message || 'Failed to download invoice');
+      }
+
+      // Get the blob and create download link
+      const blob = await response.blob();
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = `invoice-${orderId}.pdf`;
+
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="(.+)"/);
+        if (match) {
+          filename = match[1];
+        }
+      }
+
+      // Create download link and trigger download
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      return { success: true };
     } catch (error) {
       if (error instanceof TypeError && error.message === 'Failed to fetch') {
         throw new Error('Unable to connect to server. Please check if backend is running.');

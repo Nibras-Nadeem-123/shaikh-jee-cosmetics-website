@@ -1,39 +1,41 @@
 import nodemailer from 'nodemailer';
 
+// Get email credentials from environment variables
+const EMAIL_USER = process.env.SMTP_USER;
+const EMAIL_PASS = process.env.SMTP_PASSWORD || process.env.SMTP_PASS;
+
 // Create transporter
 const createTransporter = () => {
   if (!EMAIL_USER || !EMAIL_PASS) {
-    throw new Error('Email configuration is missing. Set SMTP_USER and SMTP_PASS in environment variables.');
+    console.warn('Email configuration is missing. Set SMTP_USER and SMTP_PASS/SMTP_PASSWORD in environment variables.');
+    return null;
   }
 
   return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: Number(process.env.SMTP_PORT) || 587,
-    secure: false, // important for port 587
-    requireTLS: true,
+    secure: Number(process.env.SMTP_PORT) === 465,
     auth: {
       user: EMAIL_USER,
       pass: EMAIL_PASS,
     },
-    connectionTimeout: 10000, // avoid long timeout
+    connectionTimeout: 10000,
   });
 };
-
-try {
-  const info = await transporter.sendMail(mailOptions);
-  console.log("EMAIL SENT:", info);
-} catch (err) {
-  console.error("EMAIL FAILED:", err);
-}
 
 // Send password reset email
 export const sendPasswordResetEmail = async (email, resetToken, userName) => {
   const transporter = createTransporter();
 
+  if (!transporter) {
+    console.error('Email transporter not configured');
+    return { success: false, error: 'Email service not configured' };
+  }
+
   const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
 
   const mailOptions = {
-    from: `"Shaikh Jee Cosmetics" <${process.env.SMTP_USER}>`,
+    from: `"Shaikh Jee Cosmetics" <${EMAIL_USER}>`,
     to: email,
     subject: 'Password Reset Request - Shaikh Jee Cosmetics',
     html: `
@@ -85,7 +87,8 @@ export const sendPasswordResetEmail = async (email, resetToken, userName) => {
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Password reset email sent:', info.messageId);
     return { success: true };
   } catch (error) {
     console.error('Email send error:', error);
@@ -97,8 +100,13 @@ export const sendPasswordResetEmail = async (email, resetToken, userName) => {
 export const sendOrderConfirmationEmail = async (order) => {
   const transporter = createTransporter();
 
+  if (!transporter) {
+    console.error('Email transporter not configured');
+    return { success: false, error: 'Email service not configured' };
+  }
+
   const mailOptions = {
-    from: `"Shaikh Jee Cosmetics" <${process.env.SMTP_USER}>`,
+    from: `"Shaikh Jee Cosmetics" <${EMAIL_USER}>`,
     to: order.userEmail,
     subject: `Order Confirmation - Order #${order.orderNumber}`,
     html: `
@@ -166,7 +174,8 @@ export const sendOrderConfirmationEmail = async (order) => {
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Order confirmation email sent:', info.messageId);
     return { success: true };
   } catch (error) {
     console.error('Email send error:', error);
@@ -178,8 +187,13 @@ export const sendOrderConfirmationEmail = async (order) => {
 export const sendWelcomeEmail = async (email, userName) => {
   const transporter = createTransporter();
 
+  if (!transporter) {
+    console.error('Email transporter not configured');
+    return { success: false, error: 'Email service not configured' };
+  }
+
   const mailOptions = {
-    from: `"Shaikh Jee Cosmetics" <${process.env.SMTP_USER}>`,
+    from: `"Shaikh Jee Cosmetics" <${EMAIL_USER}>`,
     to: email,
     subject: 'Welcome to Shaikh Jee Cosmetics!',
     html: `
@@ -220,7 +234,8 @@ export const sendWelcomeEmail = async (email, userName) => {
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Welcome email sent:', info.messageId);
     return { success: true };
   } catch (error) {
     console.error('Email send error:', error);

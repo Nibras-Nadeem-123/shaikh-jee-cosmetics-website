@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@sentry/nextjs": "^8.0.0",
     "@types/mongoose": "^5.11.96",
     "aws4": "^1.13.2",
     "axios": "^1.15.2",
@@ -16,6 +17,8 @@
     "lucide-react": "^0.562.0",
     "mongoose": "^9.3.0",
     "next": "^16.1.6",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
     "redis": "^5.11.0",
     "uuid": "^9.0.1",
     "webpack": "^5.105.4"

@@ -442,6 +442,20 @@
     }
   }
 
+  /* Shimmer animation for premium skeleton loading */
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  .animate-shimmer {
+    animation: shimmer 1.5s infinite;
+  }
+
   /* Hover utilities */
   .hover-lift {
     @apply transition-transform duration-300 hover:-translate-y-1;

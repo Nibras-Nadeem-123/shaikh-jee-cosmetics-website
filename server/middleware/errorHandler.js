@@ -1,5 +1,6 @@
 // Centralized error handling middleware
 import { ERROR_CODES, createError } from '../utils/errorCodes.js';
+import { captureException, isSentryEnabled } from '../config/sentry.js';
 
 export class ErrorHandler extends Error {
   constructor(message, statusCode, errorCode = null) {
@@ -81,6 +82,23 @@ export const errorMiddleware = (err, req, res, next) => {
       .map((val) => val.message)
       .join(', ');
     err = new ErrorHandler(message, 400);
+  }
+
+  // Capture server errors (5xx) to Sentry
+  if (err.statusCode >= 500 && isSentryEnabled()) {
+    captureException(err, {
+      user: req.user,
+      tags: {
+        url: req.originalUrl,
+        method: req.method,
+        statusCode: err.statusCode,
+      },
+      extra: {
+        body: req.body,
+        query: req.query,
+        params: req.params,
+      },
+    });
   }
 
   // Build error response
