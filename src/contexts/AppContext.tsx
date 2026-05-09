@@ -23,7 +23,8 @@ interface AppContextType {
   isInWishlist: (productId: string) => boolean;
   syncWishlist: () => Promise<void>;
   user: User | null;
-  signup: (name: string, email: string, password: string) => Promise<boolean>;
+  token: string | null;
+  signup: (name: string, email: string, password: string, referralCode?: string) => Promise<boolean>;
   login: (email: string, password: string) => Promise<User | null>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -32,7 +33,7 @@ interface AppContextType {
   updateAddress: (id: string, address: Partial<Address>) => void;
   deleteAddress: (id: string) => void;
   orders: Order[];
-  createOrder: (orderData: any) => Promise<void>;
+  createOrder: (orderData: any) => Promise<Order | undefined>;
   isAdmin: boolean;
   loading: boolean;
 }
@@ -147,9 +148,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  const signup = async (name: string, email: string, password: string): Promise<boolean> => {
+  const signup = async (name: string, email: string, password: string, referralCode?: string): Promise<boolean> => {
     try {
-      const data = await apiService.signup({ name, email, password });
+      const data = await apiService.signup({ name, email, password, referralCode });
       setUser(data.user);
       setToken(data.token);
       localStorage.setItem('token', data.token);
@@ -202,14 +203,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     ));
   };
 
-  const createOrder = async (orderData: any) => {
+  const createOrder = async (orderData: any): Promise<Order | undefined> => {
     if (!token) throw new Error('Authentication required');
     try {
       const data = await apiService.createOrder(orderData, token);
       if (data.success) {
         setOrders(prev => [data.order, ...prev]);
         setCart([]);
+        return data.order;
       }
+      return undefined;
     } catch (error) {
       console.error('Order error:', error);
       throw error;
@@ -261,6 +264,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     isInWishlist: (id: string) => wishlist.some(p => p._id === id),
     syncWishlist,
     user,
+    token,
     signup,
     login,
     logout,

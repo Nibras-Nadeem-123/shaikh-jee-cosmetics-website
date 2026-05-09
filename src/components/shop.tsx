@@ -1,23 +1,19 @@
 "use client"
-import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { Filter, X, ChevronDown, LayoutGrid, List, Search, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { Filter, X, ChevronDown, LayoutGrid, List, Search, Sparkles, ChevronLeft, ChevronRight, Loader2, ToggleLeft, ToggleRight } from 'lucide-react';
 import { ProductCard } from '@/components/ProductCard';
 import { SearchFilters } from '@/components/SearchFilters';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { QuickViewModal } from '@/components/QuickViewModal';
+import { useSearchParams } from 'next/navigation';
 import { apiService } from '@/services/api';
 import { Category, Product } from '@/types';
 import { ProductCardSkeleton } from '@/components/SkeletonLoader';
 import { useDebounce } from '@/hooks/useDebounce';
-
-interface SearchSuggestion {
-  name: string;
-  category: string;
-  results: number;
-}
+import { useInfiniteScrollTrigger } from '@/hooks/useIntersectionObserver';
+import { EnhancedSearch } from '@/components/EnhancedSearch';
 
 export const ShopPageComponent = () => {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const initialSearchQuery = searchParams?.get('search') || '';
   const initialCategoryParam = searchParams?.get('category') || '';
 
@@ -32,11 +28,6 @@ export const ShopPageComponent = () => {
   const [totalProducts, setTotalProducts] = useState(0);
   const productsPerPage = 12;
 
-  // Search suggestions state
-  const [searchSuggestions, setSearchSuggestions] = useState<SearchSuggestion[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [selectedCategory, setSelectedCategory] = useState<string>(initialCategoryParam);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
@@ -47,11 +38,36 @@ export const ShopPageComponent = () => {
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [activeFilters, setActiveFilters] = useState<any>(null);
 
+  // Infinite scroll state
+  const [scrollMode, setScrollMode] = useState<'pagination' | 'infinite'>('pagination');
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+
+  // Quick View Modal state
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
+
+  const handleQuickView = useCallback((product: Product) => {
+    setQuickViewProduct(product);
+    setIsQuickViewOpen(true);
+  }, []);
+
+  const handleCloseQuickView = useCallback(() => {
+    setIsQuickViewOpen(false);
+    // Delay clearing product to allow close animation
+    setTimeout(() => setQuickViewProduct(null), 200);
+  }, []);
+
   // Debounced search query for API calls
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
-  const fetchProducts = useCallback(async (page: number = 1) => {
-    setLoading(true);
+  const fetchProducts = useCallback(async (page: number = 1, append: boolean = false) => {
+    if (append) {
+      setIsLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
     setError(null);
     try {
       const params = new URLSearchParams();
@@ -65,14 +81,26 @@ export const ShopPageComponent = () => {
       if (debouncedSearchQuery) params.append('search', debouncedSearchQuery);
 
       const data = await apiService.getProducts(params.toString());
-      setProducts(data.products || []);
+      const newProducts = data.products || [];
+
+      if (append) {
+        // Infinite scroll: append to existing products
+        setAllProducts(prev => [...prev, ...newProducts]);
+        setProducts(prev => [...prev, ...newProducts]);
+      } else {
+        // Pagination or initial load: replace products
+        setProducts(newProducts);
+        setAllProducts(newProducts);
+      }
+
       setTotalPages(data.totalPages || 1);
       setTotalProducts(data.totalProducts || 0);
       setCurrentPage(data.currentPage || 1);
+      setHasMore(page < (data.totalPages || 1));
 
       // Extract unique categories
-      if (data.products && data.products.length > 0 && categories.length === 0) {
-        const uniqueCategories = Array.from(new Set(data.products.map((p: Product) => p.category)))
+      if (newProducts.length > 0 && categories.length === 0) {
+        const uniqueCategories = Array.from(new Set(newProducts.map((p: Product) => p.category)))
           .map((catName: any) => ({ id: catName.toLowerCase(), name: catName, image: "" }));
         setCategories(uniqueCategories);
       }
@@ -80,43 +108,55 @@ export const ShopPageComponent = () => {
       setError(err.message || 'Failed to fetch products');
     } finally {
       setLoading(false);
+      setIsLoadingMore(false);
     }
   }, [selectedCategory, selectedSubcategory, priceRange, sortBy, debouncedSearchQuery, categories.length]);
 
-  // Fetch search suggestions
-  const fetchSearchSuggestions = useCallback(async (query: string) => {
-    if (!query || query.length < 2) {
-      setSearchSuggestions([]);
-      setShowSuggestions(false);
-      return;
+  // Load more products for infinite scroll
+  const loadMoreProducts = useCallback(() => {
+    if (!isLoadingMore && hasMore && scrollMode === 'infinite') {
+      fetchProducts(currentPage + 1, true);
     }
+  }, [isLoadingMore, hasMore, scrollMode, currentPage, fetchProducts]);
 
-    try {
-      setSuggestionsLoading(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/products/search/suggestions?query=${encodeURIComponent(query)}`);
-      const data = await response.json();
-      setSearchSuggestions(data.suggestions || []);
-      setShowSuggestions(true);
-    } catch (error) {
-      console.error('Failed to fetch search suggestions:', error);
-    } finally {
-      setSuggestionsLoading(false);
-    }
+  // Infinite scroll trigger
+  const sentinelRef = useInfiniteScrollTrigger(loadMoreProducts, {
+    enabled: scrollMode === 'infinite' && hasMore && !isLoadingMore,
+    rootMargin: '200px',
+  });
+
+  // Reset products when switching modes or filters change
+  const resetProducts = useCallback(() => {
+    setAllProducts([]);
+    setProducts([]);
+    setCurrentPage(1);
+    setHasMore(true);
   }, []);
 
-  useEffect(() => {
-    fetchProducts(currentPage);
-  }, [fetchProducts, currentPage]);
 
-  // Fetch search suggestions when debounced search query changes
+  // Initial load effect - only runs once on mount
   useEffect(() => {
-    if (debouncedSearchQuery) {
-      fetchSearchSuggestions(debouncedSearchQuery);
-    } else {
-      setSearchSuggestions([]);
-      setShowSuggestions(false);
+    fetchProducts(1, false);
+  }, []);
+
+  // Handle filter changes - reset and refetch
+  useEffect(() => {
+    if (scrollMode === 'infinite') {
+      setAllProducts([]);
+      setProducts([]);
+      setHasMore(true);
     }
-  }, [debouncedSearchQuery, fetchSearchSuggestions]);
+    setCurrentPage(1);
+    fetchProducts(1, false);
+  }, [selectedCategory, selectedSubcategory, priceRange, sortBy, debouncedSearchQuery]);
+
+  // Handle page changes in pagination mode
+  useEffect(() => {
+    if (scrollMode === 'pagination' && currentPage > 1) {
+      fetchProducts(currentPage, false);
+    }
+  }, [currentPage, scrollMode]);
+
 
   // Update controlled search query when URL params change
   useEffect(() => {
@@ -128,30 +168,6 @@ export const ShopPageComponent = () => {
     }
   }, [searchParams, searchQuery, selectedCategory]);
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchQuery(value);
-    if (value.length >= 2) {
-      fetchSearchSuggestions(value);
-    } else {
-      setSearchSuggestions([]);
-      setShowSuggestions(false);
-    }
-  };
-
-  const handleSearchSelect = (suggestion: string) => {
-    setSearchQuery(suggestion);
-    setShowSuggestions(false);
-    setCurrentPage(1);
-    fetchProducts(1);
-  };
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setCurrentPage(1);
-    fetchProducts(1);
-  };
-
   const clearFilters = () => {
     setSelectedCategory('');
     setSelectedSubcategory('');
@@ -162,9 +178,27 @@ export const ShopPageComponent = () => {
   };
 
   const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
+    if (page >= 1 && page <= totalPages && scrollMode === 'pagination') {
       setCurrentPage(page);
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  // Toggle between pagination and infinite scroll
+  const toggleScrollMode = () => {
+    const newMode = scrollMode === 'pagination' ? 'infinite' : 'pagination';
+    setScrollMode(newMode);
+    if (newMode === 'infinite') {
+      // Reset for infinite scroll
+      setAllProducts([]);
+      setProducts([]);
+      setCurrentPage(1);
+      setHasMore(true);
+      fetchProducts(1, false);
+    } else {
+      // Reset for pagination
+      setCurrentPage(1);
+      fetchProducts(1, false);
     }
   };
 
@@ -232,61 +266,15 @@ export const ShopPageComponent = () => {
                 <p className="italic text-muted-foreground">Curation of premium beauty essentials tailored for you.</p>
               )}
             </div>
-            <div className="relative w-full md:w-96 group">
-              <form onSubmit={handleSearchSubmit} className="relative">
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  placeholder="Search for products..."
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  onFocus={() => searchQuery.length >= 2 && setShowSuggestions(true)}
-                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                  className="w-full py-4 pr-6 text-sm font-medium transition-all border-2 border-transparent rounded-full shadow-sm pl-14 bg-muted focus:outline-none focus:bg-white focus:border-primary hover:shadow-md"
-                />
-                <button type="submit" className="absolute transition-colors -translate-y-1/2 right-6 top-1/2 text-muted-foreground hover:text-primary"><Search size={20} /></button>
-              </form>
-
-              {/* Search Suggestions Dropdown */}
-              {showSuggestions && (
-                <div className="absolute left-0 right-0 z-50 mt-2 overflow-hidden duration-200 bg-white border shadow-xl top-full rounded-2xl border-border animate-in fade-in slide-in-from-top">
-                  {suggestionsLoading ? (
-                    <div className="p-4 text-sm text-center text-muted-foreground">
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="w-4 h-4 border-2 rounded-full border-primary border-t-transparent animate-spin" />
-                        <span>Searching...</span>
-                      </div>
-                    </div>
-                  ) : searchSuggestions.length > 0 ? (
-                    <div className="overflow-y-auto max-h-80">
-                      <div className="p-2 text-xs font-bold tracking-widest uppercase border-b text-muted-foreground border-border">
-                        Suggestions
-                      </div>
-                      {searchSuggestions.map((suggestion, index) => (
-                        <button
-                          key={index}
-                          onClick={() => handleSearchSelect(suggestion.name)}
-                          className="flex items-center justify-between w-full px-4 py-3 transition-colors hover:bg-muted/50 group"
-                        >
-                          <div className="flex items-center gap-3">
-                            <Search size={16} className="transition-colors text-muted-foreground group-hover:text-primary" />
-                            <div className="text-left">
-                              <div className="text-sm font-medium text-foreground group-hover:text-primary">{suggestion.name}</div>
-                              <div className="text-xs text-muted-foreground">{suggestion.category}</div>
-                            </div>
-                          </div>
-                          <div className="text-xs text-muted-foreground">{suggestion.results} products</div>
-                        </button>
-                      ))}
-                    </div>
-                  ) : searchQuery.length >= 2 && !suggestionsLoading ? (
-                    <div className="p-4 text-sm text-center text-muted-foreground">
-                      No suggestions found for "{searchQuery}"
-                    </div>
-                  ) : null}
-                </div>
-              )}
-            </div>
+            <EnhancedSearch
+              initialQuery={searchQuery}
+              onSearch={(query) => {
+                setSearchQuery(query);
+                setCurrentPage(1);
+                fetchProducts(1);
+              }}
+              className="w-full md:w-96"
+            />
           </div>
         </div>
       </div>
@@ -331,7 +319,7 @@ export const ShopPageComponent = () => {
 
               {/* Price Range */}
               <div className="space-y-4">
-                <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">Investment (₹)</h4>
+                <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">Investment (Rs.)</h4>
                 <div className="px-2 pt-6">
                   <input
                     type="range"
@@ -343,14 +331,14 @@ export const ShopPageComponent = () => {
                     className="w-full accent-primary h-1.5 bg-muted rounded-full cursor-pointer appearance-none"
                   />
                   <div className="flex justify-between text-[11px] font-bold text-muted-foreground mt-4 uppercase tracking-widest">
-                    <span>₹{priceRange[0]}</span>
-                    <span className="text-primary">Up to ₹{priceRange[1]}</span>
+                    <span>Rs.{priceRange[0]}</span>
+                    <span className="text-primary">Up to Rs.{priceRange[1]}</span>
                   </div>
                 </div>
               </div>
 
               <div className="p-5 border bg-secondary/50 rounded-2xl border-primary/10">
-                <p className="text-[10px] italic text-primary font-medium text-center">Free premium delivery on all selections above <span className="font-bold">₹999</span></p>
+                <p className="text-[10px] italic text-primary font-medium text-center">Free premium delivery on all selections above <span className="font-bold">Rs.999</span></p>
               </div>
             </div>
           </aside>
@@ -369,7 +357,8 @@ export const ShopPageComponent = () => {
               <div className="flex items-center gap-6">
                 <p className="text-sm font-medium text-muted-foreground">
                   <span className="font-bold text-foreground">{totalProducts}</span> signature products
-                  {debouncedSearchQuery && <span className="ml-2 text-xs">(Page {currentPage} of {totalPages})</span>}
+                  {scrollMode === 'pagination' && <span className="ml-2 text-xs">(Page {currentPage} of {totalPages})</span>}
+                  {scrollMode === 'infinite' && <span className="ml-2 text-xs">({products.length} loaded)</span>}
                 </p>
                 <div className="items-center hidden gap-2 p-1 border rounded-full sm:flex bg-muted border-border">
                   <button onClick={() => setViewMode('grid')} className={`p-2 rounded-full transition-all ${viewMode === 'grid' ? 'bg-white text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}><LayoutGrid size={16} /></button>
@@ -378,6 +367,25 @@ export const ShopPageComponent = () => {
               </div>
 
               <div className="flex items-center gap-4">
+                {/* Scroll Mode Toggle */}
+                <button
+                  onClick={toggleScrollMode}
+                  className="items-center hidden gap-2 px-4 py-2 text-xs font-bold tracking-wider uppercase transition-all border rounded-full sm:flex border-border hover:border-primary hover:bg-muted"
+                  title={scrollMode === 'pagination' ? 'Switch to Infinite Scroll' : 'Switch to Pagination'}
+                >
+                  {scrollMode === 'pagination' ? (
+                    <>
+                      <ToggleLeft size={16} className="text-muted-foreground" />
+                      <span>Pages</span>
+                    </>
+                  ) : (
+                    <>
+                      <ToggleRight size={16} className="text-primary" />
+                      <span>Infinite</span>
+                    </>
+                  )}
+                </button>
+
                 <div className="relative group">
                   <select
                     value={sortBy}
@@ -401,12 +409,47 @@ export const ShopPageComponent = () => {
               <>
                 <div className={`grid gap-8 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'}`}>
                   {products.map((product) => (
-                    <ProductCard key={product._id} product={product} />
+                    <ProductCard key={product._id} product={product} onQuickView={handleQuickView} />
                   ))}
                 </div>
 
-                {/* Pagination */}
-                {totalPages > 1 && (
+                {/* Infinite Scroll Sentinel & Loading */}
+                {scrollMode === 'infinite' && (
+                  <>
+                    {/* Sentinel element for triggering load more */}
+                    <div ref={sentinelRef} className="h-4" />
+
+                    {/* Loading indicator */}
+                    {isLoadingMore && (
+                      <div className="flex items-center justify-center gap-3 py-8">
+                        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                        <span className="text-sm font-medium text-muted-foreground">Loading more products...</span>
+                      </div>
+                    )}
+
+                    {/* Load More button (fallback) */}
+                    {!isLoadingMore && hasMore && (
+                      <div className="flex justify-center mt-8">
+                        <button
+                          onClick={loadMoreProducts}
+                          className="px-8 py-3 text-sm font-bold tracking-wider uppercase transition-all border-2 rounded-full border-primary text-primary hover:bg-primary hover:text-white"
+                        >
+                          Load More Products
+                        </button>
+                      </div>
+                    )}
+
+                    {/* End of results */}
+                    {!hasMore && products.length > 0 && (
+                      <div className="py-8 text-center">
+                        <p className="text-sm italic text-muted-foreground">You've reached the end of the collection</p>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Traditional Pagination */}
+                {scrollMode === 'pagination' && totalPages > 1 && (
                   <div className="flex items-center justify-center gap-2 mt-12">
                     <button
                       onClick={() => handlePageChange(currentPage - 1)}
@@ -469,6 +512,13 @@ export const ShopPageComponent = () => {
           </div>
         </div>
       </div>
+
+      {/* Quick View Modal */}
+      <QuickViewModal
+        product={quickViewProduct}
+        isOpen={isQuickViewOpen}
+        onClose={handleCloseQuickView}
+      />
 
       {/* Mobile Filters Modal */}
       {showFilters && (

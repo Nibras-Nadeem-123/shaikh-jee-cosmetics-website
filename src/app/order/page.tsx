@@ -177,7 +177,7 @@ export default function OrderProcessPage() {
                         value={shippingAddress.phone}
                         onChange={(e) => setShippingAddress({ ...shippingAddress, phone: e.target.value })}
                         className="input-luxury"
-                        placeholder="+91 98765 43210"
+                        placeholder="+92 321 1234567"
                         required
                       />
                     </div>
@@ -275,7 +275,7 @@ export default function OrderProcessPage() {
                       <div className="flex-1">
                         <p className="font-medium text-sm line-clamp-2">{item.product.name}</p>
                         <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
-                        <p className="font-semibold text-primary">₹{item.product.price * item.quantity}</p>
+                        <p className="font-semibold text-primary">Rs.{item.product.price * item.quantity}</p>
                       </div>
                     </div>
                   ))}
@@ -284,7 +284,7 @@ export default function OrderProcessPage() {
                 <div className="border-t pt-4 space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span className="font-medium">₹{cartTotal}</span>
+                    <span className="font-medium">Rs.{cartTotal}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Shipping</span>
@@ -292,7 +292,7 @@ export default function OrderProcessPage() {
                   </div>
                   <div className="border-t pt-3 flex justify-between font-bold text-lg">
                     <span>Total</span>
-                    <span className="text-primary">₹{cartTotal}</span>
+                    <span className="text-primary">Rs.{cartTotal}</span>
                   </div>
                 </div>
               </div>
@@ -371,7 +371,7 @@ export default function OrderProcessPage() {
               <div className="bg-muted/50 rounded-xl p-6 space-y-3">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Order Total</span>
-                  <span className="font-bold text-lg">₹{cartTotal}</span>
+                  <span className="font-bold text-lg">Rs.{cartTotal}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Delivery Address</span>
@@ -384,7 +384,7 @@ export default function OrderProcessPage() {
                 disabled={paymentLoading}
                 className="w-full btn-primary py-4 text-lg disabled:opacity-50"
               >
-                {paymentLoading ? 'Processing...' : `Pay ₹${cartTotal}`}
+                {paymentLoading ? 'Processing...' : `Pay Rs.${cartTotal}`}
               </button>
 
               <p className="text-xs text-center text-muted-foreground">
@@ -439,7 +439,7 @@ export default function OrderProcessPage() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Total Amount</p>
-                  <p className="font-bold text-primary">₹{orderDetails.totalPrice}</p>
+                  <p className="font-bold text-primary">Rs.{orderDetails.totalPrice}</p>
                 </div>
               </div>
             </div>

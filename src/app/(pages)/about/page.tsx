@@ -38,7 +38,7 @@ const AboutPage = () => {
                     <li>100% Authentic products from trusted brands</li>
                     <li>Safe, dermatologically tested formulations</li>
                     <li>Affordable pricing without compromising quality</li>
-                    <li>Free shipping on orders above ₹999</li>
+                    <li>Free shipping on orders above Rs.999</li>
                     <li>Easy returns and dedicated customer support</li>
                     <li>Cruelty-free and sustainable practices</li>
                 </ul>

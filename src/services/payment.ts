@@ -1,5 +1,6 @@
-// Payment Service - Integration ready for Razorpay/Stripe
-// Currently returns mock data - integrate with actual payment gateway
+// Payment Service - Razorpay Integration
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export interface PaymentOrder {
   items: any[];
@@ -24,50 +25,122 @@ export interface PaymentResponse {
   message?: string;
 }
 
-export const paymentService = {
-  // Create payment order (for Razorpay/Stripe)
-  createPaymentOrder: async (orderData: PaymentOrder): Promise<PaymentResponse> => {
-    try {
-      // TODO: Replace with actual Razorpay/Stripe integration
-      // const response = await fetch('/api/payment/create', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(orderData),
-      // });
+export interface RazorpayConfig {
+  configured: boolean;
+  keyId?: string;
+}
 
-      // Mock response for now
+export interface RazorpayOrderResponse {
+  success: boolean;
+  razorpayOrderId: string;
+  amount: number;
+  currency: string;
+  keyId: string;
+}
+
+interface PaymentMethod {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  enabled: boolean;
+}
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
+export const paymentService = {
+  // Check if Razorpay is configured
+  checkRazorpayConfig: async (): Promise<RazorpayConfig> => {
+    try {
+      const response = await fetch(`${API_URL}/payment/razorpay-key`);
+      const data = await response.json();
       return {
-        success: true,
-        paymentId: 'pay_' + Date.now(),
-        orderId: 'ord_' + Date.now(),
-        amount: orderData.total,
-        message: 'Payment order created successfully'
+        configured: data.configured || false,
+        keyId: data.keyId
       };
     } catch (error) {
-      return {
-        success: false,
-        amount: 0,
-        message: 'Failed to create payment order'
-      };
+      console.error('Failed to check Razorpay config:', error);
+      return { configured: false };
     }
   },
 
-  // Verify payment (webhook handler)
-  verifyPayment: async (paymentId: string): Promise<PaymentResponse> => {
-    try {
-      // TODO: Add webhook verification logic
-      // const response = await fetch('/api/payment/verify', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ paymentId }),
-      // });
+  // Load Razorpay script
+  loadRazorpayScript: (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
 
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  },
+
+  // Create Razorpay order
+  createRazorpayOrder: async (amount: number, orderId: string, token: string): Promise<RazorpayOrderResponse | null> => {
+    try {
+      const response = await fetch(`${API_URL}/payment/razorpay-order`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ amount, orderId }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create payment order');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Create Razorpay order error:', error);
+      return null;
+    }
+  },
+
+  // Verify Razorpay payment
+  verifyRazorpayPayment: async (
+    razorpay_order_id: string,
+    razorpay_payment_id: string,
+    razorpay_signature: string,
+    orderId: string,
+    token: string
+  ): Promise<PaymentResponse> => {
+    try {
+      const response = await fetch(`${API_URL}/payment/razorpay-verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          razorpay_order_id,
+          razorpay_payment_id,
+          razorpay_signature,
+          orderId
+        }),
+      });
+
+      const data = await response.json();
       return {
-        success: true,
+        success: data.success,
+        paymentId: razorpay_payment_id,
+        orderId,
         amount: 0,
-        message: 'Payment verified successfully'
+        message: data.message
       };
     } catch (error) {
+      console.error('Verify payment error:', error);
       return {
         success: false,
         amount: 0,
@@ -76,14 +149,77 @@ export const paymentService = {
     }
   },
 
-  // Get payment status
-  getPaymentStatus: async (paymentId: string): Promise<string> => {
-    // TODO: Implement status check
-    // For now, return 'success' as default
-    return 'success';
+  // Open Razorpay checkout
+  openRazorpayCheckout: async (
+    razorpayOrderId: string,
+    amount: number,
+    keyId: string,
+    orderId: string,
+    customerInfo: {
+      name: string;
+      email: string;
+      phone: string;
+    },
+    token: string,
+    onSuccess: (response: any) => void,
+    onError: (error: any) => void
+  ): Promise<void> => {
+    const scriptLoaded = await paymentService.loadRazorpayScript();
+
+    if (!scriptLoaded) {
+      onError({ message: 'Failed to load payment gateway' });
+      return;
+    }
+
+    const options = {
+      key: keyId,
+      amount: amount,
+      currency: 'PKR',
+      name: 'Shaikh Jee Cosmetics',
+      description: 'Order Payment',
+      order_id: razorpayOrderId,
+      prefill: {
+        name: customerInfo.name,
+        email: customerInfo.email,
+        contact: customerInfo.phone
+      },
+      theme: {
+        color: '#D4AF87'
+      },
+      handler: async function (response: any) {
+        // Verify the payment on backend
+        const verifyResult = await paymentService.verifyRazorpayPayment(
+          response.razorpay_order_id,
+          response.razorpay_payment_id,
+          response.razorpay_signature,
+          orderId,
+          token
+        );
+
+        if (verifyResult.success) {
+          onSuccess(response);
+        } else {
+          onError({ message: verifyResult.message || 'Payment verification failed' });
+        }
+      },
+      modal: {
+        ondismiss: function() {
+          onError({ message: 'Payment cancelled by user' });
+        }
+      }
+    };
+
+    const razorpay = new window.Razorpay(options);
+    razorpay.on('payment.failed', function (response: any) {
+      onError({
+        message: response.error.description || 'Payment failed',
+        code: response.error.code
+      });
+    });
+    razorpay.open();
   },
 
-  // Calculate payment processing fee (example: 2% + ₹2)
+  // Calculate payment processing fee (example: 2% + Rs.2)
   calculateProcessingFee: (amount: number): number => {
     return Math.max(2, Math.ceil(amount * 0.02));
   },
@@ -93,36 +229,23 @@ export const paymentService = {
     return paymentMethod.toLowerCase() === 'cod';
   },
 
+  // Get available payment methods
+  getPaymentMethods: async (): Promise<PaymentMethod[]> => {
+    const config = await paymentService.checkRazorpayConfig();
+
+    return paymentService.paymentMethods.map(method => {
+      if (method.id === 'razorpay' || method.id === 'upi') {
+        return { ...method, enabled: config.configured };
+      }
+      return method;
+    });
+  },
+
   // Supported payment methods
   paymentMethods: [
-    { id: 'razorpay', name: 'Razorpay', icon: '💳', enabled: false },
-    { id: 'stripe', name: 'Credit/Debit Card', icon: '💳', enabled: false },
-    { id: 'cod', name: 'Cash on Delivery', icon: '💵', enabled: true },
-    { id: 'upi', name: 'UPI', icon: '📱', enabled: false },
+    { id: 'razorpay', name: 'Pay Online', description: 'Cards, UPI, Net Banking, Wallets', icon: '💳', enabled: false },
+    { id: 'cod', name: 'Cash on Delivery', description: 'Pay when you receive', icon: '💵', enabled: true },
   ],
 };
 
-// Example Razorpay integration (commented out until ready)
-/*
-import Razorpay from 'razorpay';
-
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
-
-export const createRazorpayOrder = async (orderData: any) => {
-  const options = {
-    amount: orderData.total * 100, // Razorpay expects amount in paise
-    currency: 'INR',
-    receipt: 'ord_' + Date.now(),
-    payment_capture: '1',
-    notes: {
-      order_items: JSON.stringify(orderData.items),
-    shipping_address: orderData.shippingAddress
-    }
-  };
-
-  return await razorpay.orders.create(options);
-};
-*/
+export default paymentService;

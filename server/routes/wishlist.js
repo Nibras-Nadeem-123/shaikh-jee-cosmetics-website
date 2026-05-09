@@ -5,13 +5,32 @@ import {
   addToWishlist,
   removeFromWishlist,
   isInWishlist,
-  clearWishlist
+  clearWishlist,
+  createSharedWishlist,
+  getSharedWishlist,
+  getMySharedWishlists,
+  updateSharedWishlist,
+  deleteSharedWishlist
 } from '../controllers/wishlistController.js';
 import { isAuthenticatedUser } from '../middleware/auth.js';
-import { userCache, invalidateCache } from '../middleware/cache.js';
+import { userCache, invalidateCache, cache } from '../middleware/cache.js';
 import { CACHE_TTL } from '../services/cacheService.js';
 
-// All routes require authentication
+// ============================================
+// PUBLIC ROUTES (No authentication required)
+// ============================================
+
+// Get a shared wishlist by shareId (PUBLIC)
+router.get('/shared/:shareId',
+  cache({ ttl: CACHE_TTL.SHORT, prefix: 'shared-wishlist', tags: ['wishlist'] }),
+  getSharedWishlist
+);
+
+// ============================================
+// PROTECTED ROUTES (Authentication required)
+// ============================================
+
+// Apply authentication to all routes below
 router.use(isAuthenticatedUser);
 
 // Get user's wishlist (user-specific cache)
@@ -61,5 +80,21 @@ router.delete('/clear',
   }),
   clearWishlist
 );
+
+// ============================================
+// SHARED WISHLIST ROUTES (Protected)
+// ============================================
+
+// Create a shareable wishlist
+router.post('/share', createSharedWishlist);
+
+// Get all shared wishlists created by current user
+router.get('/shared', getMySharedWishlists);
+
+// Update a shared wishlist
+router.put('/shared/:shareId', updateSharedWishlist);
+
+// Delete a shared wishlist
+router.delete('/shared/:shareId', deleteSharedWishlist);
 
 export default router;

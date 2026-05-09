@@ -2,6 +2,7 @@ import express from 'express';
 import StockAlert from '../models/StockAlert.js';
 import Product from '../models/Product.js';
 import { isAuthenticatedUser, isAdmin } from '../middleware/auth.js';
+import { getLowStockProducts, getLowStockStats, checkAllProductsLowStock } from '../utils/lowStockService.js';
 
 const router = express.Router();
 
@@ -196,6 +197,68 @@ router.get('/stats', isAuthenticatedUser, isAdmin, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch alert statistics'
+    });
+  }
+});
+
+/* =========================
+   LOW STOCK ADMIN ENDPOINTS
+========================= */
+
+// Get low stock products (admin only)
+router.get('/low-stock/products', isAuthenticatedUser, isAdmin, async (req, res) => {
+  try {
+    const products = await getLowStockProducts();
+
+    res.json({
+      success: true,
+      count: products.length,
+      products
+    });
+  } catch (error) {
+    console.error('Get low stock products error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch low stock products'
+    });
+  }
+});
+
+// Get low stock statistics (admin only)
+router.get('/low-stock/stats', isAuthenticatedUser, isAdmin, async (req, res) => {
+  try {
+    const stats = await getLowStockStats();
+
+    res.json({
+      success: true,
+      stats
+    });
+  } catch (error) {
+    console.error('Get low stock stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch low stock statistics'
+    });
+  }
+});
+
+// Trigger manual low stock check (admin only)
+router.post('/low-stock/check', isAuthenticatedUser, isAdmin, async (req, res) => {
+  try {
+    const results = await checkAllProductsLowStock();
+
+    res.json({
+      success: true,
+      message: results.notificationSent
+        ? `Alert sent for ${results.lowStockCount} low stock products`
+        : 'Check completed, no alerts needed',
+      results
+    });
+  } catch (error) {
+    console.error('Manual low stock check error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to run low stock check'
     });
   }
 });

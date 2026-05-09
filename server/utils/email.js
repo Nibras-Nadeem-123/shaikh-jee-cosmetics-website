@@ -39,9 +39,9 @@
 
 // const formatCurrency = (value) => {
 //   if (typeof value !== 'number') value = Number(value) || 0;
-//   return new Intl.NumberFormat('en-IN', {
+//   return new Intl.NumberFormat('en-PK', {
 //     style: 'currency',
-//     currency: 'INR',
+//     currency: 'PKR',
 //     maximumFractionDigits: 2,
 //   }).format(value);
 // };
@@ -358,9 +358,9 @@ const sendEmail = async ({ to, subject, html }) => {
 
 const formatCurrency = (value) => {
   value = typeof value === "number" ? value : Number(value) || 0;
-  return new Intl.NumberFormat("en-IN", {
+  return new Intl.NumberFormat("en-PK", {
     style: "currency",
-    currency: "INR",
+    currency: "PKR",
   }).format(value);
 };
 
@@ -507,5 +507,373 @@ export const sendOrderStatusUpdateEmail = async (order, newStatus) => {
       order,
       recipientName: order.shippingAddress.name,
     }),
+  });
+};
+
+/* =========================
+   ABANDONED CART EMAIL
+========================= */
+
+const getAbandonedCartSubject = (reminderNumber) => {
+  switch (reminderNumber) {
+    case 1:
+      return "You left something behind! 🛒";
+    case 2:
+      return "Your cart misses you! 💝";
+    case 3:
+      return "Last chance! Your cart is expiring soon ⏰";
+    default:
+      return "Complete your purchase at Shaikh Jee Cosmetics";
+  }
+};
+
+const getAbandonedCartIntro = (reminderNumber) => {
+  switch (reminderNumber) {
+    case 1:
+      return "We noticed you left some amazing products in your cart. Don't worry, we've saved them for you!";
+    case 2:
+      return "Your cart is still waiting for you! These beautiful products are calling your name.";
+    case 3:
+      return "This is your last reminder! Your cart items are about to expire. Don't miss out on these gorgeous products!";
+    default:
+      return "You have items waiting in your cart!";
+  }
+};
+
+const getAbandonedCartOutro = (reminderNumber) => {
+  switch (reminderNumber) {
+    case 1:
+      return "Need help? Feel free to reply to this email or contact our customer support.";
+    case 2:
+      return "Having second thoughts? Our team is here to help you choose the perfect products!";
+    case 3:
+      return "Act now before your cart expires! Contact us if you have any questions.";
+    default:
+      return "Thank you for shopping with us!";
+  }
+};
+
+const buildAbandonedCartTemplate = ({ userName, items, cartTotal, recoveryUrl, reminderNumber }) => {
+  const itemsHtml = items.map(item => `
+    <tr>
+      <td style="padding:12px;border-bottom:1px solid #eee">
+        <img src="${item.product?.images?.[0] || item.product?.image || '/placeholder.png'}"
+             alt="${item.product?.name || 'Product'}"
+             style="width:60px;height:60px;object-fit:cover;border-radius:8px">
+      </td>
+      <td style="padding:12px;border-bottom:1px solid #eee">
+        <strong>${item.product?.name || 'Product'}</strong>
+        ${item.shade ? `<br><small style="color:#666">Shade: ${item.shade.name}</small>` : ''}
+      </td>
+      <td style="padding:12px;border-bottom:1px solid #eee;text-align:center">${item.quantity}</td>
+      <td style="padding:12px;border-bottom:1px solid #eee;text-align:right">${formatCurrency((item.product?.price || 0) * item.quantity)}</td>
+    </tr>
+  `).join('');
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Complete Your Purchase</title>
+</head>
+<body style="font-family:Arial,sans-serif;background:#f7f7fb;padding:20px;margin:0">
+  <div style="max-width:600px;margin:auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1)">
+
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#D4AF87,#E8C9A0);padding:30px;text-align:center">
+      <h1 style="color:#fff;margin:0;font-size:28px">Shaikh Jee Cosmetics</h1>
+    </div>
+
+    <!-- Content -->
+    <div style="padding:30px">
+      <h2 style="color:#333;margin-top:0">Hi ${userName || 'there'},</h2>
+
+      <p style="color:#555;font-size:16px;line-height:1.6">
+        ${getAbandonedCartIntro(reminderNumber)}
+      </p>
+
+      <!-- Cart Items -->
+      <table style="width:100%;border-collapse:collapse;margin:25px 0">
+        <thead>
+          <tr style="background:#f8f8f8">
+            <th style="padding:12px;text-align:left;font-size:14px;color:#666">Product</th>
+            <th style="padding:12px;text-align:left;font-size:14px;color:#666">Name</th>
+            <th style="padding:12px;text-align:center;font-size:14px;color:#666">Qty</th>
+            <th style="padding:12px;text-align:right;font-size:14px;color:#666">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsHtml}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3" style="padding:15px;text-align:right;font-weight:bold;font-size:16px">Total:</td>
+            <td style="padding:15px;text-align:right;font-weight:bold;font-size:18px;color:#D4AF87">${formatCurrency(cartTotal)}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <!-- CTA Button -->
+      <div style="text-align:center;margin:30px 0">
+        <a href="${recoveryUrl}"
+           style="display:inline-block;background:#D4AF87;color:#fff;padding:16px 40px;text-decoration:none;border-radius:50px;font-weight:bold;font-size:16px;box-shadow:0 4px 15px rgba(212,175,135,0.4)">
+          Complete Your Purchase
+        </a>
+      </div>
+
+      <p style="color:#888;font-size:14px;line-height:1.6">
+        ${getAbandonedCartOutro(reminderNumber)}
+      </p>
+
+      <!-- Benefits -->
+      <div style="background:#faf8f5;border-radius:12px;padding:20px;margin-top:25px">
+        <p style="margin:0 0 10px;font-weight:bold;color:#333">Why shop with us?</p>
+        <p style="margin:5px 0;color:#666;font-size:14px">✓ 100% Authentic Products</p>
+        <p style="margin:5px 0;color:#666;font-size:14px">✓ Free Delivery Above Rs. 999</p>
+        <p style="margin:5px 0;color:#666;font-size:14px">✓ Easy 7-Day Returns</p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="background:#f8f8f8;padding:20px;text-align:center">
+      <p style="color:#999;font-size:12px;margin:0">
+        If you no longer wish to receive these emails, you can update your preferences in your account settings.
+      </p>
+      <p style="color:#999;font-size:12px;margin:10px 0 0">
+        © ${new Date().getFullYear()} Shaikh Jee Cosmetics. All rights reserved.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+};
+
+export const sendAbandonedCartEmail = async ({ to, userName, items, cartTotal, recoveryUrl, reminderNumber }) => {
+  return sendEmail({
+    to,
+    subject: getAbandonedCartSubject(reminderNumber),
+    html: buildAbandonedCartTemplate({
+      userName,
+      items,
+      cartTotal,
+      recoveryUrl,
+      reminderNumber
+    }),
+  });
+};
+
+/* =========================
+   LOW STOCK ALERT EMAIL (Admin)
+========================= */
+
+const buildLowStockAlertTemplate = ({ products, totalLowStock, criticalCount }) => {
+  const adminUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+
+  const productRowsHtml = products.map(product => {
+    const stockLevel = product.inventory?.quantity || product.quantity || 0;
+    const threshold = product.inventory?.lowStockThreshold || 10;
+    const isCritical = stockLevel <= Math.floor(threshold / 2);
+
+    return `
+      <tr style="background:${isCritical ? '#fef2f2' : '#fff'}">
+        <td style="padding:12px;border-bottom:1px solid #eee">
+          <div style="display:flex;align-items:center;gap:10px">
+            <img src="${product.images?.[0] || product.image || '/placeholder.png'}"
+                 alt="${product.name}"
+                 style="width:50px;height:50px;object-fit:cover;border-radius:8px">
+            <div>
+              <strong style="color:#333">${product.name}</strong>
+              <br>
+              <small style="color:#666">SKU: ${product.sku || product._id}</small>
+            </div>
+          </div>
+        </td>
+        <td style="padding:12px;border-bottom:1px solid #eee;text-align:center">
+          <span style="padding:4px 12px;border-radius:20px;font-weight:bold;font-size:14px;
+                       background:${isCritical ? '#fee2e2' : '#fef3c7'};
+                       color:${isCritical ? '#dc2626' : '#d97706'}">
+            ${stockLevel}
+          </span>
+        </td>
+        <td style="padding:12px;border-bottom:1px solid #eee;text-align:center;color:#666">
+          ${threshold}
+        </td>
+        <td style="padding:12px;border-bottom:1px solid #eee;text-align:center">
+          <span style="color:${isCritical ? '#dc2626' : '#d97706'};font-weight:bold">
+            ${isCritical ? 'CRITICAL' : 'LOW'}
+          </span>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Low Stock Alert</title>
+</head>
+<body style="font-family:Arial,sans-serif;background:#f7f7fb;padding:20px;margin:0">
+  <div style="max-width:700px;margin:auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1)">
+
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#dc2626,#ef4444);padding:30px;text-align:center">
+      <h1 style="color:#fff;margin:0;font-size:24px">Low Stock Alert</h1>
+      <p style="color:#fecaca;margin:10px 0 0;font-size:14px">Shaikh Jee Cosmetics Inventory</p>
+    </div>
+
+    <!-- Summary -->
+    <div style="padding:20px 30px;background:#fef2f2;border-bottom:1px solid #fecaca">
+      <div style="display:flex;justify-content:space-around;text-align:center">
+        <div>
+          <p style="margin:0;font-size:32px;font-weight:bold;color:#dc2626">${totalLowStock}</p>
+          <p style="margin:5px 0 0;color:#666;font-size:14px">Products Low</p>
+        </div>
+        <div style="border-left:1px solid #fecaca;padding-left:30px">
+          <p style="margin:0;font-size:32px;font-weight:bold;color:#991b1b">${criticalCount}</p>
+          <p style="margin:5px 0 0;color:#666;font-size:14px">Critical Stock</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div style="padding:30px">
+      <h2 style="color:#333;margin-top:0;font-size:18px">Products Requiring Attention</h2>
+
+      <table style="width:100%;border-collapse:collapse;margin:20px 0">
+        <thead>
+          <tr style="background:#f8f8f8">
+            <th style="padding:12px;text-align:left;font-size:14px;color:#666">Product</th>
+            <th style="padding:12px;text-align:center;font-size:14px;color:#666">Current Stock</th>
+            <th style="padding:12px;text-align:center;font-size:14px;color:#666">Threshold</th>
+            <th style="padding:12px;text-align:center;font-size:14px;color:#666">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${productRowsHtml}
+        </tbody>
+      </table>
+
+      <!-- CTA Button -->
+      <div style="text-align:center;margin:30px 0">
+        <a href="${adminUrl}/admin/products"
+           style="display:inline-block;background:#D4AF87;color:#fff;padding:14px 32px;text-decoration:none;border-radius:50px;font-weight:bold;font-size:14px">
+          Manage Inventory
+        </a>
+      </div>
+
+      <!-- Tips -->
+      <div style="background:#f8f8f8;border-radius:12px;padding:20px;margin-top:20px">
+        <p style="margin:0 0 10px;font-weight:bold;color:#333;font-size:14px">Recommended Actions:</p>
+        <p style="margin:5px 0;color:#666;font-size:13px">• Review and reorder critical stock items immediately</p>
+        <p style="margin:5px 0;color:#666;font-size:13px">• Update product availability if items are discontinued</p>
+        <p style="margin:5px 0;color:#666;font-size:13px">• Consider enabling backorders for popular items</p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="background:#f8f8f8;padding:20px;text-align:center">
+      <p style="color:#999;font-size:12px;margin:0">
+        This is an automated inventory alert from Shaikh Jee Cosmetics.
+      </p>
+      <p style="color:#999;font-size:12px;margin:10px 0 0">
+        © ${new Date().getFullYear()} Shaikh Jee Cosmetics. All rights reserved.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+};
+
+export const sendLowStockAlertEmail = async (products) => {
+  const adminEmail = process.env.ADMIN_EMAIL || SENDER_EMAIL;
+
+  // Calculate critical count (stock at or below half of threshold)
+  const criticalCount = products.filter(p => {
+    const stock = p.inventory?.quantity || p.quantity || 0;
+    const threshold = p.inventory?.lowStockThreshold || 10;
+    return stock <= Math.floor(threshold / 2);
+  }).length;
+
+  return sendEmail({
+    to: adminEmail,
+    subject: `⚠️ Low Stock Alert: ${products.length} Products Need Attention`,
+    html: buildLowStockAlertTemplate({
+      products,
+      totalLowStock: products.length,
+      criticalCount
+    }),
+  });
+};
+
+/* =========================
+   SINGLE PRODUCT LOW STOCK ALERT
+========================= */
+
+export const sendSingleProductLowStockAlert = async (product) => {
+  const adminEmail = process.env.ADMIN_EMAIL || SENDER_EMAIL;
+  const adminUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+
+  const stockLevel = product.inventory?.quantity || product.quantity || 0;
+  const threshold = product.inventory?.lowStockThreshold || 10;
+  const isCritical = stockLevel <= Math.floor(threshold / 2);
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <title>Low Stock Alert</title>
+</head>
+<body style="font-family:Arial,sans-serif;background:#f7f7fb;padding:20px;margin:0">
+  <div style="max-width:500px;margin:auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1)">
+
+    <div style="background:${isCritical ? '#dc2626' : '#f59e0b'};padding:20px;text-align:center">
+      <h1 style="color:#fff;margin:0;font-size:20px">
+        ${isCritical ? '🚨 Critical Stock Alert' : '⚠️ Low Stock Alert'}
+      </h1>
+    </div>
+
+    <div style="padding:25px;text-align:center">
+      <img src="${product.images?.[0] || product.image || '/placeholder.png'}"
+           alt="${product.name}"
+           style="width:120px;height:120px;object-fit:cover;border-radius:12px;margin-bottom:15px">
+
+      <h2 style="color:#333;margin:0 0 10px;font-size:18px">${product.name}</h2>
+      <p style="color:#666;margin:0 0 20px;font-size:14px">SKU: ${product.sku || product._id}</p>
+
+      <div style="background:${isCritical ? '#fef2f2' : '#fffbeb'};border-radius:12px;padding:20px;margin-bottom:20px">
+        <p style="margin:0;font-size:48px;font-weight:bold;color:${isCritical ? '#dc2626' : '#d97706'}">
+          ${stockLevel}
+        </p>
+        <p style="margin:5px 0 0;color:#666;font-size:14px">units remaining (threshold: ${threshold})</p>
+      </div>
+
+      <a href="${adminUrl}/admin/products"
+         style="display:inline-block;background:#D4AF87;color:#fff;padding:12px 28px;text-decoration:none;border-radius:50px;font-weight:bold;font-size:14px">
+        Update Inventory
+      </a>
+    </div>
+
+    <div style="background:#f8f8f8;padding:15px;text-align:center">
+      <p style="color:#999;font-size:11px;margin:0">
+        Automated alert from Shaikh Jee Cosmetics Inventory System
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+
+  return sendEmail({
+    to: adminEmail,
+    subject: `${isCritical ? '🚨 CRITICAL' : '⚠️ Low Stock'}: ${product.name} - Only ${stockLevel} left`,
+    html
   });
 };

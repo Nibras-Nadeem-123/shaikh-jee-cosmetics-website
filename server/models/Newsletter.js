@@ -32,7 +32,7 @@ const newsletterSchema = new mongoose.Schema({
   timestamps: true
 });
 
-newsletterSchema.index({ email: 1 });
+// Note: email already has unique index from schema definition
 newsletterSchema.index({ subscribed: 1 });
 
 export default mongoose.model('Newsletter', newsletterSchema);

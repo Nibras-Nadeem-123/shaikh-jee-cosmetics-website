@@ -46,7 +46,7 @@ export const Header = () => {
     <>
       <div className="px-4 py-2 text-center text-white bg-primary">
         <p className="text-sm font-medium tracking-wide">
-          ✨ New Year Sale: Up to 50% Off on Selected Items | Free Shipping on Orders Above ₹999
+          ✨ New Year Sale: Up to 50% Off on Selected Items | Free Shipping on Orders Above Rs.999
         </p>
       </div>
 

@@ -6,11 +6,17 @@ import {
   updateCartItem,
   removeFromCart,
   clearCart,
-  mergeCart
+  mergeCart,
+  getRecoveryCart,
+  recoverAbandonedCart
 } from '../controllers/cartController.js';
-import { isAuthenticatedUser } from '../middleware/auth.js';
+import { isAuthenticatedUser, optionalAuth } from '../middleware/auth.js';
 
-// All cart routes require authentication
+// Public routes for cart recovery (no auth required)
+router.get('/recover/:token', getRecoveryCart);
+router.post('/recover/:token', optionalAuth, recoverAbandonedCart);
+
+// Protected routes (require authentication)
 router.use(isAuthenticatedUser);
 
 router.get('/', getCart);

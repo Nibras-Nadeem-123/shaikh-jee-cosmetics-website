@@ -73,7 +73,7 @@ export const apiService = {
     }
   },
 
-  signup: async (userData: { name: string; email: string; password: string }) => {
+  signup: async (userData: { name: string; email: string; password: string; referralCode?: string }) => {
     try {
       const response = await fetch(`${API_URL}/auth/signup`, {
         method: 'POST',
@@ -126,6 +126,26 @@ export const apiService = {
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Failed to fetch product');
+      }
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Unexpected response format. Server did not return JSON.');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server. Please check if backend is running.');
+      }
+      throw error;
+    }
+  },
+
+  getRelatedProducts: async (slug: string, limit: number = 8) => {
+    try {
+      const response = await fetch(`${API_URL}/products/${slug}/related?limit=${limit}`, { credentials: 'include' });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to fetch related products');
       }
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
@@ -446,6 +466,88 @@ export const apiService = {
     }
   },
 
+  // Shared Wishlist
+  createSharedWishlist: async (data: { title?: string; message?: string; expiresInDays?: number }, token: string) => {
+    try {
+      const response = await fetch(`${API_URL}/wishlist/share`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create shared wishlist');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server. Please check if backend is running.');
+      }
+      throw error;
+    }
+  },
+
+  getSharedWishlist: async (shareId: string) => {
+    try {
+      const response = await fetch(`${API_URL}/wishlist/shared/${shareId}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Shared wishlist not found');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server. Please check if backend is running.');
+      }
+      throw error;
+    }
+  },
+
+  getMySharedWishlists: async (token: string) => {
+    try {
+      const response = await fetch(`${API_URL}/wishlist/shared`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to fetch shared wishlists');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server. Please check if backend is running.');
+      }
+      throw error;
+    }
+  },
+
+  deleteSharedWishlist: async (shareId: string, token: string) => {
+    try {
+      const response = await fetch(`${API_URL}/wishlist/shared/${shareId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to delete shared wishlist');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server. Please check if backend is running.');
+      }
+      throw error;
+    }
+  },
+
   // Discount
   validateDiscountCode: async (data: { code: string; orderAmount: number }) => {
     try {
@@ -744,6 +846,109 @@ export const apiService = {
     } catch (error) {
       if (error instanceof TypeError && error.message === 'Failed to fetch') {
         throw new Error('Unable to connect to server. Please check if backend is running.');
+      }
+      throw error;
+    }
+  },
+
+  // Referral System
+  getMyReferralCode: async (token: string) => {
+    try {
+      const response = await fetch(`${API_URL}/referral/code`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: response.statusText }));
+        throw new Error(error.message || 'Failed to get referral code');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server.');
+      }
+      throw error;
+    }
+  },
+
+  getReferralStats: async (token: string) => {
+    try {
+      const response = await fetch(`${API_URL}/referral/stats`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: response.statusText }));
+        throw new Error(error.message || 'Failed to get referral stats');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server.');
+      }
+      throw error;
+    }
+  },
+
+  validateReferralCode: async (code: string) => {
+    try {
+      const response = await fetch(`${API_URL}/referral/validate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ code })
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: response.statusText }));
+        throw new Error(error.message || 'Invalid referral code');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server.');
+      }
+      throw error;
+    }
+  },
+
+  getRefereeDiscount: async (token: string) => {
+    try {
+      const response = await fetch(`${API_URL}/referral/discount`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: response.statusText }));
+        throw new Error(error.message || 'Failed to check referral discount');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server.');
+      }
+      throw error;
+    }
+  },
+
+  calculateReferralDiscount: async (orderAmount: number, token: string) => {
+    try {
+      const response = await fetch(`${API_URL}/referral/calculate-discount`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include',
+        body: JSON.stringify({ orderAmount })
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: response.statusText }));
+        throw new Error(error.message || 'Failed to calculate referral discount');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server.');
       }
       throw error;
     }

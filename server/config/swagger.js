@@ -122,10 +122,18 @@ const options = {
       { name: 'Admin', description: 'Admin-only endpoints' }
     ]
   },
-  apis: ['./routes/*.js', './controllers/*.js']
+  apis: [] // Temporarily disabled JSDoc parsing - will add back after fixing malformed comments
 };
 
-export const swaggerSpec = swaggerJsdoc(options);
+// Conditionally generate swagger spec only when APIs are enabled
+export const swaggerSpec = options.apis.length > 0 ? swaggerJsdoc(options) : {
+  openapi: '3.0.0',
+  info: options.definition.info,
+  servers: options.definition.servers,
+  components: options.definition.components,
+  tags: options.definition.tags,
+  paths: {}
+};
 
 // API documentation in-code comments
 export const apiDocs = {

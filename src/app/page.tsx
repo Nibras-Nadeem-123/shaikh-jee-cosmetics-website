@@ -91,7 +91,7 @@ export default function HomePage() {
         <div className="container px-4 mx-auto lg:px-8">
           <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { icon: TruckIcon, title: "Free Shipping", desc: "On orders above ₹999" },
+              { icon: TruckIcon, title: "Free Shipping", desc: "On orders above Rs.999" },
               { icon: ShieldCheck, title: "100% Authentic", desc: "Genuine products from top brands" },
               { icon: HeadphonesIcon, title: "24/7 Support", desc: "Dedicated beauty consultants" },
               { icon: Sparkles, title: "Vegan & Safe", desc: "Dermatologically tested formulas" }

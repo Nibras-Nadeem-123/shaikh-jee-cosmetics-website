@@ -224,3 +224,78 @@ export const deleteProduct = catchAsyncErrors(async (req, res) => {
     message: 'Product deleted successfully',
   });
 });
+
+// Search autocomplete - returns products with images for instant search
+export const searchAutocomplete = catchAsyncErrors(async (req, res) => {
+  const { query = '', limit = 5 } = req.query;
+
+  if (!query || query.length < 2) {
+    return res.status(200).json({ success: true, products: [] });
+  }
+
+  // Find products matching the search query
+  const products = await Product.find({
+    $or: [
+      { name: { $regex: query, $options: 'i' } },
+      { category: { $regex: query, $options: 'i' } },
+      { brand: { $regex: query, $options: 'i' } }
+    ]
+  })
+    .select('_id name slug category price images rating')
+    .limit(parseInt(limit))
+    .sort({ isBestSeller: -1, rating: -1 });
+
+  res.status(200).json({
+    success: true,
+    count: products.length,
+    products
+  });
+});
+
+// Get popular search terms based on recent search patterns
+export const getPopularSearches = catchAsyncErrors(async (req, res) => {
+  const { limit = 8 } = req.query;
+
+  // Get categories and common product keywords as popular searches
+  const categories = await Product.distinct('category');
+  const brands = await Product.distinct('brand');
+
+  // Combine and limit
+  const popularSearches = [
+    ...categories.slice(0, 4),
+    ...brands.filter(b => b).slice(0, 4)
+  ].slice(0, parseInt(limit));
+
+  res.status(200).json({
+    success: true,
+    searches: popularSearches
+  });
+});
+
+// Get related products (same category, excluding current product)
+export const getRelatedProducts = catchAsyncErrors(async (req, res, next) => {
+  const { slug } = req.params;
+  const { limit = 8 } = req.query;
+
+  // Find the current product to get its category
+  const currentProduct = await Product.findOne({ slug });
+
+  if (!currentProduct) {
+    return next(new ErrorHandler('Product not found', 404));
+  }
+
+  // Find related products from the same category, excluding the current product
+  const relatedProducts = await Product.find({
+    category: currentProduct.category,
+    _id: { $ne: currentProduct._id },
+    inStock: true
+  })
+    .sort({ isBestSeller: -1, rating: -1, reviewCount: -1 })
+    .limit(parseInt(limit));
+
+  res.status(200).json({
+    success: true,
+    count: relatedProducts.length,
+    products: relatedProducts
+  });
+});

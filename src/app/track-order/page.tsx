@@ -252,15 +252,15 @@ export default function TrackOrderPage() {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Items Total</span>
-                      <span>₹{order.itemsPrice?.toLocaleString()}</span>
+                      <span>Rs.{order.itemsPrice?.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Shipping</span>
-                      <span>{order.shippingPrice === 0 ? 'FREE' : `₹${order.shippingPrice}`}</span>
+                      <span>{order.shippingPrice === 0 ? 'FREE' : `Rs.${order.shippingPrice}`}</span>
                     </div>
                     <div className="flex justify-between font-bold text-lg pt-2 border-t">
                       <span>Total</span>
-                      <span className="text-primary">₹{order.totalPrice?.toLocaleString()}</span>
+                      <span className="text-primary">Rs.{order.totalPrice?.toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
@@ -285,7 +285,7 @@ export default function TrackOrderPage() {
                         <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold">₹{(item.price * item.quantity).toLocaleString()}</p>
+                        <p className="font-bold">Rs.{(item.price * item.quantity).toLocaleString()}</p>
                       </div>
                     </div>
                   ))}
@@ -338,10 +338,10 @@ export default function TrackOrderPage() {
                     <p className="text-sm text-muted-foreground mb-4">
                       Speak directly with our customer care team.
                     </p>
-                    <a href="tel:+91-9876543210" className="text-primary font-medium hover:underline text-sm">
-                      +91-9876543210
+                    <a href="tel:+92-321-1234567" className="text-primary font-medium hover:underline text-sm">
+                      +92 321 1234567
                     </a>
-                    <p className="text-xs text-muted-foreground mt-2">Mon-Sat, 10AM-7PM IST</p>
+                    <p className="text-xs text-muted-foreground mt-2">Mon-Sat, 10AM-7PM PKT</p>
                   </div>
                 </div>
               </div>

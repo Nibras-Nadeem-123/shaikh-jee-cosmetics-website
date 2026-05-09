@@ -1,6 +1,7 @@
 import ProductPageClient from "./ProductPageClient";
 import { notFound } from "next/navigation";
 import { Product } from "@/types";
+import { ProductJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -122,7 +123,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       // Other meta tags
       other: {
         'product:price:amount': product.price?.toString() || '',
-        'product:price:currency': 'INR',
+        'product:price:currency': 'PKR',
         'product:availability': product.inStock ? 'in stock' : 'out of stock',
         'product:category': product.category || '',
         'product:brand': 'Shaikh Jee Cosmetics',
@@ -139,5 +140,55 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  return <ProductPageClient slug={slug} />;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://shaikhjee.com';
+
+  // Fetch product for JSON-LD (server-side)
+  let product: Product | null = null;
+  let reviews: any[] = [];
+
+  try {
+    const productRes = await fetch(`${API_URL}/products/${slug}`, {
+      cache: 'no-store'
+    });
+
+    if (productRes.ok) {
+      const productData = await productRes.json();
+      product = productData.product;
+
+      // Fetch reviews for aggregate rating
+      try {
+        const reviewsRes = await fetch(`${API_URL}/reviews/product/${product?._id}?limit=5`, {
+          cache: 'no-store'
+        });
+        if (reviewsRes.ok) {
+          const reviewsData = await reviewsRes.json();
+          reviews = reviewsData.reviews || [];
+        }
+      } catch (e) {
+        // Reviews are optional
+      }
+    }
+  } catch (error) {
+    console.error("Error fetching product for JSON-LD:", error);
+  }
+
+  return (
+    <>
+      {/* JSON-LD Structured Data for SEO */}
+      {product && (
+        <>
+          <ProductJsonLd product={product} reviews={reviews} />
+          <BreadcrumbJsonLd
+            items={[
+              { name: "Home", url: "/" },
+              { name: "Shop", url: "/shop" },
+              { name: product.category, url: `/shop?category=${product.category.toLowerCase()}` },
+              { name: product.name, url: `/product/${product.slug}` }
+            ]}
+          />
+        </>
+      )}
+      <ProductPageClient slug={slug} />
+    </>
+  );
 }

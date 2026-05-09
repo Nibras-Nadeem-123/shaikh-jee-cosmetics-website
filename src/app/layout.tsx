@@ -7,6 +7,7 @@ import { Footer } from "@/components/Footer";
 import { ToastProvider, ToastContainer } from "@/hooks/useToast";
 import { MobileNav } from "@/components/MobileNav";
 import { PWAInstall } from "@/components/PWAInstall";
+import { OrganizationJsonLd, WebsiteJsonLd } from "@/components/seo/JsonLd";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -16,8 +17,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Shaikh Jee Cosmetics | Premium Beauty & Skincare",
-  description: "Discover luxurious cosmetics and premium skincare at Shaikh Jee. 100% authentic products, free shipping on orders above ₹999, and cruelty-free beauty essentials.",
-  keywords: ["cosmetics", "skincare", "beauty", "makeup", "luxury beauty", "Indian cosmetics", "organic skincare"],
+  description: "Discover luxurious cosmetics and premium skincare at Shaikh Jee. 100% authentic products, free shipping on orders above Rs.999, and cruelty-free beauty essentials.",
+  keywords: ["cosmetics", "skincare", "beauty", "makeup", "luxury beauty", "Pakistani cosmetics", "organic skincare"],
   authors: [{ name: "Shaikh Jee Cosmetics" }],
   creator: "Shaikh Jee Cosmetics",
   publisher: "Shaikh Jee Cosmetics",
@@ -46,7 +47,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://shaikhjee.com",
     title: "Shaikh Jee Cosmetics | Premium Beauty & Skincare",
-    description: "Discover luxurious cosmetics and premium skincare at Shaikh Jee. 100% authentic products, free shipping on orders above ₹999.",
+    description: "Discover luxurious cosmetics and premium skincare at Shaikh Jee. 100% authentic products, free shipping on orders above Rs.999.",
     siteName: "Shaikh Jee Cosmetics",
     images: [
       {
@@ -85,6 +86,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* Global JSON-LD Structured Data */}
+        <OrganizationJsonLd />
+        <WebsiteJsonLd />
+      </head>
       <body
         className={`${inter.variable} antialiased`}
       >

@@ -50,7 +50,7 @@ const loyaltyPointSchema = new mongoose.Schema({
 });
 
 // Indexes
-loyaltyPointSchema.index({ userId: 1 });
+// Note: userId already has unique index from schema definition
 loyaltyPointSchema.index({ tier: 1 });
 loyaltyPointSchema.index({ points: -1 });
 
@@ -115,7 +115,7 @@ loyaltyPointSchema.methods.redeemPoints = function(points, description) {
 
 // Points earning rules
 loyaltyPointSchema.statics.calculatePoints = function(orderAmount, tier = 'bronze') {
-  const baseRate = 1; // 1 point per ₹10
+  const baseRate = 1; // 1 point per Rs.10
   const tierMultipliers = {
     bronze: 1,
     silver: 1.25,

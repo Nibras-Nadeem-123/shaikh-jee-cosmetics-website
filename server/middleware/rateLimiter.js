@@ -53,7 +53,9 @@ export const createRateLimiter = (windowMs = 15 * 60 * 1000, max = 100, name = '
 
 // Different rate limits for different routes
 // Global limiter - applied to all routes
-export const limiter = createRateLimiter(15 * 60 * 1000, 100, 'global');
+// Higher limit in development for hot reload
+const isDev = process.env.NODE_ENV !== 'production';
+export const limiter = createRateLimiter(15 * 60 * 1000, isDev ? 1000 : 100, 'global');
 
 // Auth endpoints - strict limits
 export const authLimiter = createRateLimiter(15 * 60 * 1000, 5, 'auth-login'); // 5 login attempts per 15 minutes

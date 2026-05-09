@@ -31,7 +31,7 @@ if (SENTRY_DSN) {
 
       // Scrub sensitive data
       if (event.request?.cookies) {
-        event.request.cookies = '[REDACTED]';
+        event.request.cookies = {};
       }
 
       return event;
@@ -72,17 +72,7 @@ if (SENTRY_DSN) {
       }),
       // Browser tracing for performance
       Sentry.browserTracingIntegration({
-        // Track navigation
         enableInp: true,
-      }),
-      // Feedback widget (optional)
-      Sentry.feedbackIntegration({
-        colorScheme: 'system',
-        showBranding: false,
-        buttonLabel: 'Report an Issue',
-        submitButtonLabel: 'Send Report',
-        formTitle: 'Report an Issue',
-        messagePlaceholder: 'Describe what happened...',
       }),
     ],
   });

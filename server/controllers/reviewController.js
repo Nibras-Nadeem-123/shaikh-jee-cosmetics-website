@@ -50,7 +50,7 @@ export const getProductReviews = catchAsyncErrors(async (req, res, next) => {
 
 // Create a new review
 export const createReview = catchAsyncErrors(async (req, res) => {
-  const { productId, rating, comment } = req.body;
+  const { productId, rating, comment, images } = req.body;
 
   // Check if product exists
   const product = await Product.findById(productId);
@@ -68,12 +68,18 @@ export const createReview = catchAsyncErrors(async (req, res) => {
     throw new ErrorHandler('You have already reviewed this product', 400);
   }
 
+  // Validate images array (max 5 images)
+  const validImages = Array.isArray(images)
+    ? images.filter(url => typeof url === 'string' && url.trim()).slice(0, 5)
+    : [];
+
   const review = new Review({
     productId,
     userId: req.user._id,
     userName: req.user.name,
     rating,
     comment,
+    images: validImages,
     verified: true // Set to true if purchased
   });
 
@@ -108,7 +114,7 @@ export const createReview = catchAsyncErrors(async (req, res) => {
 // Update a review
 export const updateReview = catchAsyncErrors(async (req, res) => {
   const { reviewId } = req.params;
-  const { rating, comment } = req.body;
+  const { rating, comment, images } = req.body;
 
   let review = await Review.findById(reviewId);
   if (!review) {
@@ -120,9 +126,17 @@ export const updateReview = catchAsyncErrors(async (req, res) => {
     throw new ErrorHandler('You can only update your own reviews', 403);
   }
 
+  // Validate images array (max 5 images)
+  const updateData = { rating, comment, updatedAt: new Date() };
+  if (images !== undefined) {
+    updateData.images = Array.isArray(images)
+      ? images.filter(url => typeof url === 'string' && url.trim()).slice(0, 5)
+      : [];
+  }
+
   review = await Review.findByIdAndUpdate(
     reviewId,
-    { rating, comment, updatedAt: new Date() },
+    updateData,
     { new: true, runValidators: true }
   );
 

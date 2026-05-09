@@ -1,18 +1,25 @@
 "use client"
 import React from 'react';
-import { Heart, ShoppingCart, Star } from 'lucide-react';
+import { Heart, ShoppingCart, Star, Eye } from 'lucide-react';
 import { Product } from '@/types';
 import { useApp } from '../contexts/AppContext';
-import Image from 'next/image';
+import CdnImage from './CdnImage';
 import Link from 'next/link';
 
 interface ProductCardProps {
     product: Product;
+    onQuickView?: (product: Product) => void;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product, }) => {
+export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }) => {
     const { addToCart, addToWishlist, removeFromWishlist, isInWishlist } = useApp();
     const inWishlist = isInWishlist(product._id);
+
+    const handleQuickView = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onQuickView?.(product);
+    };
 
     const handleAddToCart = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -37,17 +44,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, }) => {
                 <Link
                     href={`/product/${product.slug}`}>
 
-                    <Image
+                    <CdnImage
                         src={product.images?.[0] || '/placeholder.png'}
-                        alt={product.name || 'Product Image'} // Ensure fallback for alt
+                        alt={product.name || 'Product Image'}
                         width={500}
                         height={500}
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                        placeholder="blur"
-                        blurDataURL="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 500'%3E%3Crect fill='%23f3f4f6' width='500' height='500'/%3E%3C/svg%3E"
-                        onError={(e) => { e.currentTarget.src = '/placeholder.png'; }}
+                        fallbackSrc="/placeholder.png"
                     />
                 </Link>
 
@@ -76,14 +80,28 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, }) => {
                     />
                 </button>
 
-                {/* Quick Add to Cart */}
-                <button
-                    onClick={handleAddToCart}
-                    className="absolute bottom-2 left-1/2 -translate-x-1/2 px-4 py-2 bg-[#D4AF87] text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2"
-                >
-                    <ShoppingCart size={16} />
-                    <span className="text-sm">Add to Cart</span>
-                </button>
+                {/* Action Buttons */}
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {/* Quick View Button */}
+                    {onQuickView && (
+                        <button
+                            onClick={handleQuickView}
+                            className="p-2 bg-white text-gray-700 rounded-full shadow-md hover:bg-gray-100 transition-colors"
+                            aria-label="Quick view"
+                            title="Quick View"
+                        >
+                            <Eye size={16} />
+                        </button>
+                    )}
+                    {/* Quick Add to Cart */}
+                    <button
+                        onClick={handleAddToCart}
+                        className="px-4 py-2 bg-[#D4AF87] text-white rounded-full flex items-center gap-2 hover:bg-[#C49B6D] transition-colors"
+                    >
+                        <ShoppingCart size={16} />
+                        <span className="text-sm">Add to Cart</span>
+                    </button>
+                </div>
             </div>
 
             {/* Product Info */}
@@ -107,9 +125,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, }) => {
 
                 {/* Price */}
                 <div className="flex items-center gap-2">
-                    <span className="text-gray-900">₹{product.price}</span>
+                    <span className="text-gray-900">Rs.{product.price}</span>
                     {product.originalPrice && (
-                        <span className="text-sm text-gray-500 line-through">₹{product.originalPrice}</span>
+                        <span className="text-sm text-gray-500 line-through">Rs.{product.originalPrice}</span>
                     )}
                 </div>
 

@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Heart, Star, Truck, RefreshCw, Shield, Loader2, ThumbsUp, Filter } from 'lucide-react';
+import { ShoppingCart, Heart, Star, Truck, RefreshCw, Shield, Loader2, ThumbsUp, Filter, Camera, X, HelpCircle } from 'lucide-react';
 import { Product, Shade, Review } from '../types';
 import { useApp } from '@/contexts/AppContext';
 import { apiService } from '@/services/api';
@@ -9,6 +9,8 @@ import { useToast } from '@/hooks/useToast';
 import { useRouter, usePathname } from 'next/navigation';
 import { SocialShareButtons } from './SocialShareButtons';
 import { BackInStockAlert } from './BackInStockAlert';
+import { ProductRecommendations } from './ProductRecommendations';
+import { ShadeGuide } from './ShadeGuide';
 
 interface ProductDetailsPageProps {
   product: Product;
@@ -35,6 +37,7 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [sortBy, setSortBy] = useState<'newest' | 'highest' | 'lowest' | 'helpful'>('newest');
   const [helpfulReviews, setHelpfulReviews] = useState<Set<string>>(new Set());
+  const [isShadeGuideOpen, setIsShadeGuideOpen] = useState(false);
 
 
   // Fetch reviews dynamically
@@ -128,6 +131,86 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
   const [reviewImages, setReviewImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [submittingReview, setSubmittingReview] = useState(false);
+
+  // Handle image selection for review
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const newFiles = Array.from(files);
+    const totalFiles = reviewImages.length + newFiles.length;
+
+    if (totalFiles > 5) {
+      showToast("Maximum 5 images allowed", "error");
+      return;
+    }
+
+    // Validate file sizes (max 5MB each)
+    const validFiles = newFiles.filter(file => {
+      if (file.size > 5 * 1024 * 1024) {
+        showToast(`${file.name} is too large (max 5MB)`, "error");
+        return false;
+      }
+      return true;
+    });
+
+    // Create previews
+    validFiles.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreviews(prev => [...prev, e.target?.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    setReviewImages(prev => [...prev, ...validFiles]);
+  };
+
+  // Remove image from review
+  const removeReviewImage = (index: number) => {
+    setReviewImages(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Upload images to Cloudinary
+  const uploadReviewImages = async (): Promise<string[]> => {
+    if (reviewImages.length === 0) return [];
+
+    setUploadingImages(true);
+    try {
+      const token = localStorage.getItem('token');
+      const formData = new FormData();
+
+      reviewImages.forEach(file => {
+        formData.append('images', file);
+      });
+      formData.append('folder', 'shaikhjee/reviews');
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/images/upload-multiple`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to upload images');
+      }
+
+      const data = await response.json();
+      return data.images.map((img: { url: string }) => img.url);
+    } catch (error) {
+      console.error('Image upload error:', error);
+      throw error;
+    } finally {
+      setUploadingImages(false);
+    }
+  };
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,7 +222,19 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
       return;
     }
 
+    setSubmittingReview(true);
+
     try {
+      // Upload images first if any
+      let imageUrls: string[] = [];
+      if (reviewImages.length > 0) {
+        try {
+          imageUrls = await uploadReviewImages();
+        } catch {
+          showToast("Failed to upload images. Submitting review without images.", "error");
+        }
+      }
+
       const token = localStorage.getItem('token');
       // Use correct API URL format
       const endpoint = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/reviews/create`;
@@ -155,7 +250,8 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
         body: JSON.stringify({
           productId: product._id,
           rating: reviewForm.rating,
-          comment: reviewForm.comment
+          comment: reviewForm.comment,
+          images: imageUrls
         })
       });
 
@@ -204,6 +300,8 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
 
       // Reset form
       setReviewForm({ rating: 5, comment: '', name: '' });
+      setReviewImages([]);
+      setImagePreviews([]);
 
       // Also fetch fresh reviews in background to ensure consistency
       setTimeout(async () => {
@@ -220,6 +318,8 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
       console.error("Review submission error:", error);
       const errorMessage = (error as Error).message || "Failed to submit review. Please try again.";
       showToast(errorMessage, "error");
+    } finally {
+      setSubmittingReview(false);
     }
   };
 
@@ -323,11 +423,11 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
 
               {/* Price */}
               <div className="flex items-center gap-4 mb-6">
-                <span className="text-3xl">₹{product.price}</span>
+                <span className="text-3xl">Rs.{product.price}</span>
                 {product.originalPrice && (
                   <>
                     <span className="text-xl text-gray-500 line-through">
-                      ₹{product.originalPrice}
+                      Rs.{product.originalPrice}
                     </span>
                     <span className="px-3 py-1 text-white bg-red-500 rounded-full">
                       {product.discount}% OFF
@@ -340,18 +440,27 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
             {/* Shades */}
             {product.shades && product.shades.length > 0 && (
               <div className="mb-6">
-                <h3 className="mb-3">
-                  Select Shade: {selectedShade?.name}
-                </h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3>
+                    Select Shade: <span className="font-medium text-primary">{selectedShade?.name}</span>
+                  </h3>
+                  <button
+                    onClick={() => setIsShadeGuideOpen(true)}
+                    className="flex items-center gap-1.5 text-sm text-primary hover:underline"
+                  >
+                    <HelpCircle size={16} />
+                    Shade Guide
+                  </button>
+                </div>
                 <div className="flex flex-wrap gap-3">
                   {product.shades.map((shade) => (
                     <button
                       key={shade._id}
                       onClick={() => setSelectedShade(shade)}
                       className={`w-12 h-12 rounded-full border-2 ${selectedShade?._id === shade._id
-                        ? 'border-primary scale-110'
-                        : 'border-gray-300'
-                        } transition-transform`}
+                        ? 'border-primary scale-110 ring-2 ring-primary/30'
+                        : 'border-gray-300 hover:border-gray-400'
+                        } transition-all`}
                       style={{ backgroundColor: shade.color }}
                       title={shade.name}
                     />))}
@@ -433,7 +542,7 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
                 <Truck className="w-5 h-5 text-primary" />
                 <div>
                   <p className="text-sm">Free Delivery</p>
-                  <p className="text-xs text-gray-500">Above ₹999</p>
+                  <p className="text-xs text-gray-500">Above Rs.999</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -453,6 +562,9 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Product Recommendations */}
+        <ProductRecommendations product={product} />
 
         {/* Tabs */}
         <div className="pt-8 border-t border-gray-200">
@@ -564,13 +676,59 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
                           className="w-full px-4 py-3 transition-all bg-white border border-gray-200 resize-none rounded-xl focus:outline-none focus:border-primary"
                         />
                       </div>
+
+                      {/* Image Upload */}
+                      <div className="space-y-2 md:col-span-3">
+                        <label className="px-1 text-xs font-bold tracking-widest uppercase text-muted-foreground">
+                          Add Photos (Optional)
+                        </label>
+                        <div className="flex flex-wrap gap-3">
+                          {/* Image Previews */}
+                          {imagePreviews.map((preview, index) => (
+                            <div key={index} className="relative w-20 h-20 group">
+                              <Image
+                                src={preview}
+                                alt={`Review image ${index + 1}`}
+                                fill
+                                className="object-cover border border-gray-200 rounded-lg"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeReviewImage(index)}
+                                className="absolute flex items-center justify-center w-5 h-5 text-white transition-opacity bg-red-500 rounded-full opacity-0 -top-2 -right-2 group-hover:opacity-100"
+                              >
+                                <X size={12} />
+                              </button>
+                            </div>
+                          ))}
+
+                          {/* Add Image Button */}
+                          {imagePreviews.length < 5 && (
+                            <label className="flex flex-col items-center justify-center w-20 h-20 transition-all border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:border-primary hover:bg-primary/5">
+                              <Camera size={20} className="mb-1 text-gray-400" />
+                              <span className="text-xs text-gray-400">Add</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                onChange={handleImageSelect}
+                                className="hidden"
+                              />
+                            </label>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Up to 5 images, max 5MB each
+                        </p>
+                      </div>
                     </div>
                     <button
                       type="submit"
-                      disabled={!reviewForm.comment.trim()}
-                      className="w-full py-4 font-bold text-white transition-all rounded-full bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={!reviewForm.comment.trim() || submittingReview || uploadingImages}
+                      className="flex items-center justify-center w-full gap-2 py-4 font-bold text-white transition-all rounded-full bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Submit Review
+                      {(submittingReview || uploadingImages) && <Loader2 className="w-5 h-5 animate-spin" />}
+                      {uploadingImages ? 'Uploading Images...' : submittingReview ? 'Submitting...' : 'Submit Review'}
                     </button>
                   </form>
                 ) : (
@@ -709,6 +867,29 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
 
                         <p className="mb-4 leading-relaxed text-foreground/80">{review.comment}</p>
 
+                        {/* Review Images */}
+                        {review.images && review.images.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mb-4">
+                            {review.images.map((img, imgIndex) => (
+                              <a
+                                key={imgIndex}
+                                href={img}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="relative w-16 h-16 overflow-hidden transition-transform border border-gray-200 rounded-lg sm:w-20 sm:h-20 hover:scale-105"
+                              >
+                                <Image
+                                  src={img}
+                                  alt={`Review photo ${imgIndex + 1}`}
+                                  fill
+                                  className="object-cover"
+                                  sizes="80px"
+                                />
+                              </a>
+                            ))}
+                          </div>
+                        )}
+
                         {/* Helpful Button */}
                         <div className="flex items-center gap-4">
                           <button
@@ -746,6 +927,18 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Shade Guide Modal */}
+      <ShadeGuide
+        isOpen={isShadeGuideOpen}
+        onClose={() => setIsShadeGuideOpen(false)}
+        productShades={product.shades}
+        productCategory={product.category}
+        onSelectShade={(shade) => {
+          setSelectedShade(shade);
+          setIsShadeGuideOpen(false);
+        }}
+      />
     </div>
   );
 };

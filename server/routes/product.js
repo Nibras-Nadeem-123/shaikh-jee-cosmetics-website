@@ -1,6 +1,6 @@
 import express from 'express';
 const router = express.Router();
-import { getProducts, getSingleProduct, newProduct, updateProduct, searchSuggestions, getFeaturedProducts, getBestSellers, getAllAdminProducts, deleteProduct } from '../controllers/productController.js';
+import { getProducts, getSingleProduct, newProduct, updateProduct, searchSuggestions, searchAutocomplete, getPopularSearches, getFeaturedProducts, getBestSellers, getAllAdminProducts, deleteProduct, getRelatedProducts } from '../controllers/productController.js';
 import { isAuthenticatedUser, authorizeRoles } from '../middleware/auth.js';
 import { cache, invalidateCache } from '../middleware/cache.js';
 import { CACHE_TTL } from '../services/cacheService.js';
@@ -9,6 +9,16 @@ import { CACHE_TTL } from '../services/cacheService.js';
 router.get('/search/suggestions',
   cache({ ttl: CACHE_TTL.MEDIUM, prefix: 'products:suggestions', tags: ['products'] }),
   searchSuggestions
+);
+
+router.get('/search/autocomplete',
+  cache({ ttl: CACHE_TTL.SHORT, prefix: 'products:autocomplete', tags: ['products'] }),
+  searchAutocomplete
+);
+
+router.get('/search/popular',
+  cache({ ttl: CACHE_TTL.LONG, prefix: 'products:popular-searches', tags: ['products'] }),
+  getPopularSearches
 );
 
 router.get('/featured',
@@ -24,6 +34,11 @@ router.get('/best-sellers',
 router.get('/',
   cache({ ttl: CACHE_TTL.MEDIUM, prefix: 'products:list', tags: ['products'] }),
   getProducts
+);
+
+router.get('/:slug/related',
+  cache({ ttl: CACHE_TTL.MEDIUM, prefix: 'products:related', tags: ['products'] }),
+  getRelatedProducts
 );
 
 router.get('/:slug',

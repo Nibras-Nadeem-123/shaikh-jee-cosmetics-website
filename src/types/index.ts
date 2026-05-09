@@ -25,6 +25,7 @@ export interface Product {
   rating?: number;
   reviewCount?: number;
   inStock?: boolean;
+  quantity?: number;
   isBestSeller?: boolean;
   isNew?: boolean;
   brand?: string;
@@ -66,7 +67,8 @@ export interface Address {
 }
 
 export interface Order {
-  id: string;
+  _id: string;
+  id?: string;
   userId: string;
   items: CartItem[];
   total: number;

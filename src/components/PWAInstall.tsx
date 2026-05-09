@@ -7,6 +7,9 @@ export function PWAInstall() {
   const [showInstall, setShowInstall] = useState(false);
 
   useEffect(() => {
+    // Register service worker on mount
+    registerServiceWorker();
+
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);

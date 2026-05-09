@@ -2,6 +2,7 @@ import Cart from '../models/Cart.js';
 import Product from '../models/Product.js';
 import { catchAsyncErrors, ErrorHandler } from '../middleware/errorHandler.js';
 import { getCachedCart, cacheCart, clearCartCache } from '../config/redis.js';
+import { recoverCart as recoverCartService, getCartByRecoveryToken } from '../utils/abandonedCartService.js';
 
 // Helper to format cart response
 const formatCartResponse = (cart) => {
@@ -252,4 +253,71 @@ export const mergeCart = catchAsyncErrors(async (req, res, next) => {
       count
     }
   });
+});
+
+// Get abandoned cart by recovery token (public - no auth required)
+export const getRecoveryCart = catchAsyncErrors(async (req, res, next) => {
+  const { token } = req.params;
+
+  const cart = await getCartByRecoveryToken(token);
+
+  if (!cart) {
+    return next(new ErrorHandler('Invalid or expired recovery link', 404));
+  }
+
+  // Populate products for display
+  await cart.populate('items.product');
+
+  const total = cart.items.reduce((sum, item) => {
+    return sum + ((item.product?.price || 0) * item.quantity);
+  }, 0);
+
+  const count = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+
+  res.status(200).json({
+    success: true,
+    cart: {
+      items: cart.items,
+      total,
+      count
+    },
+    recovered: cart.abandonedCart?.recovered || false
+  });
+});
+
+// Recover abandoned cart (public - no auth required, but can use auth if available)
+export const recoverAbandonedCart = catchAsyncErrors(async (req, res, next) => {
+  const { token } = req.params;
+  const userId = req.user?._id; // Optional - may or may not be logged in
+
+  try {
+    const { cart, merged } = await recoverCartService(token, userId);
+
+    // Populate products for response
+    await cart.populate('items.product');
+
+    const total = cart.items.reduce((sum, item) => {
+      return sum + ((item.product?.price || 0) * item.quantity);
+    }, 0);
+
+    const count = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+
+    // Update Redis cache if user is logged in
+    if (userId) {
+      await cacheCart(userId.toString(), { items: cart.items, total, count });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: merged ? 'Cart items merged with your current cart' : 'Cart recovered successfully',
+      cart: {
+        items: cart.items,
+        total,
+        count
+      },
+      merged
+    });
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 400));
+  }
 });

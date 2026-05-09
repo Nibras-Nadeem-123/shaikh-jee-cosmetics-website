@@ -51,10 +51,10 @@ export const redeemPoints = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler('Insufficient points', 400));
   }
   
-  // Calculate discount value (1 point = ₹1)
+  // Calculate discount value (1 point = Rs.1)
   const discountValue = points;
-  
-  loyalty.redeemPoints(points, `Redeemed for ₹${discountValue} discount`);
+
+  loyalty.redeemPoints(points, `Redeemed for Rs.${discountValue} discount`);
   await loyalty.save();
   
   res.status(200).json({
@@ -111,28 +111,28 @@ export const getTierInfo = catchAsyncErrors(async (req, res) => {
     bronze: {
       name: 'Bronze',
       multiplier: '1x',
-      benefits: ['Earn 1 point per ₹10', 'Birthday bonus: 50 points'],
+      benefits: ['Earn 1 point per Rs.10', 'Birthday bonus: 50 points'],
       nextTier: 'Silver',
       icon: '🥉'
     },
     silver: {
       name: 'Silver',
       multiplier: '1.25x',
-      benefits: ['Earn 1.25 points per ₹10', 'Free shipping on orders ₹499+', 'Birthday bonus: 100 points'],
+      benefits: ['Earn 1.25 points per Rs.10', 'Free shipping on orders Rs.499+', 'Birthday bonus: 100 points'],
       nextTier: 'Gold',
       icon: '🥈'
     },
     gold: {
       name: 'Gold',
       multiplier: '1.5x',
-      benefits: ['Earn 1.5 points per ₹10', 'Free shipping on all orders', 'Early access to sales', 'Birthday bonus: 200 points'],
+      benefits: ['Earn 1.5 points per Rs.10', 'Free shipping on all orders', 'Early access to sales', 'Birthday bonus: 200 points'],
       nextTier: 'Platinum',
       icon: '🥇'
     },
     platinum: {
       name: 'Platinum',
       multiplier: '2x',
-      benefits: ['Earn 2 points per ₹10', 'Priority customer support', 'Exclusive platinum-only deals', 'Birthday bonus: 500 points', 'Free gifts with purchase'],
+      benefits: ['Earn 2 points per Rs.10', 'Priority customer support', 'Exclusive platinum-only deals', 'Birthday bonus: 500 points', 'Free gifts with purchase'],
       nextTier: null,
       icon: '💎'
     }

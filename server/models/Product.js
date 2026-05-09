@@ -139,8 +139,7 @@ productSchema.pre('save', function(next) {
 });
 
 // Indexes for better query performance
-productSchema.index({ slug: 1 });
-productSchema.index({ sku: 1 });
+// Note: slug and sku already have unique indexes from schema definition
 productSchema.index({ category: 1 });
 productSchema.index({ price: 1 });
 productSchema.index({ rating: -1 });

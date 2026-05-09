@@ -128,8 +128,8 @@ const CartPage = () => {
                           </div>
 
                           <div className="text-right">
-                            <p className="text-2xl font-bold text-foreground tracking-tight">₹{item.product.price * item.quantity}</p>
-                            <p className="text-xs text-muted-foreground font-medium">₹{item.product.price} / item</p>
+                            <p className="text-2xl font-bold text-foreground tracking-tight">Rs.{item.product.price * item.quantity}</p>
+                            <p className="text-xs text-muted-foreground font-medium">Rs.{item.product.price} / item</p>
                           </div>
                         </div>
                       </div>
@@ -148,29 +148,29 @@ const CartPage = () => {
               <div className="space-y-5">
                 <div className="flex justify-between text-muted-foreground font-medium">
                   <span>Cart Subtotal</span>
-                  <span className="text-foreground font-bold">₹{cartTotal}</span>
+                  <span className="text-foreground font-bold">Rs.{cartTotal}</span>
                 </div>
 
                 <div className="flex justify-between items-center text-muted-foreground font-medium">
                   <div className="flex flex-col">
                     <span>Shipping Charges</span>
-                    {shipping === 0 && <span className="text-[10px] text-primary font-bold uppercase">Free for orders over ₹999</span>}
+                    {shipping === 0 && <span className="text-[10px] text-primary font-bold uppercase">Free for orders over Rs.999</span>}
                   </div>
                   <span className={shipping === 0 ? "text-primary font-bold italic" : "text-foreground font-bold"}>
-                    {shipping === 0 ? 'FREE' : `₹${shipping}`}
+                    {shipping === 0 ? 'FREE' : `Rs.${shipping}`}
                   </span>
                 </div>
 
                 {discount > 0 && (
                   <div className="flex justify-between text-destructive font-bold">
                     <span>Campaign Discount</span>
-                    <span>-₹{discount}</span>
+                    <span>-Rs.{discount}</span>
                   </div>
                 )}
 
                 {cartTotal < 999 && (
                   <div className="p-4 bg-secondary/50 border border-primary/20 text-primary-dark text-xs rounded-2xl font-medium leading-relaxed">
-                    🌟 Add items worth <span className="font-bold underline">₹{999 - cartTotal}</span> more to get <span className="font-bold">FREE</span> delivery!
+                    🌟 Add items worth <span className="font-bold underline">Rs.{999 - cartTotal}</span> more to get <span className="font-bold">FREE</span> delivery!
                   </div>
                 )}
               </div>
@@ -179,7 +179,7 @@ const CartPage = () => {
                 <div className="flex justify-between items-end">
                   <span className="text-lg font-bold text-foreground">Total Payable</span>
                   <div className="text-right">
-                    <span className="text-3xl font-bold text-primary tracking-tighter">₹{total}</span>
+                    <span className="text-3xl font-bold text-primary tracking-tighter">Rs.{total}</span>
                     <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-1">Includes all taxes</p>
                   </div>
                 </div>

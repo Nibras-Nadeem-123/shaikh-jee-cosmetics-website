@@ -38,7 +38,11 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: '*.cloudinary.com',
+        hostname: 'res.cloudinary.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.cloudinary.com',
       },
     ],
     // Optimize image formats

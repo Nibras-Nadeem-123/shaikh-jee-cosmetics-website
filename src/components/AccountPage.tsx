@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { User, Package, Heart, MapPin, LogOut, ChevronRight, Settings, Bell, CreditCard, ShieldCheck, X, Plus, Check, Gift } from 'lucide-react';
+import { User, Package, Heart, MapPin, LogOut, ChevronRight, Settings, Bell, CreditCard, ShieldCheck, X, Plus, Check, Gift, Share2 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { ProductCard } from '../components/ProductCard';
 import Image from 'next/image';
@@ -12,6 +12,7 @@ import { LoyaltyWidget } from './LoyaltyWidget';
 import { OrderTracking } from './OrderTracking';
 import LoadingSpinner from './LoadingSpinner';
 import { apiService } from '@/services/api';
+import { WishlistShareModal } from './WishlistShareModal';
 
  
 export const AccountPage = () => {
@@ -36,6 +37,9 @@ export const AccountPage = () => {
     phone: '',
     isDefault: false
   });
+
+  // Wishlist share modal state
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -219,12 +223,12 @@ export const AccountPage = () => {
                 ) : (
                   <div className="space-y-6">
                     {orders.map((order) => (
-                      <div key={order.id} className="overflow-hidden transition-all border border-border rounded-4xl group hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5">
+                      <div key={order._id} className="overflow-hidden transition-all border border-border rounded-4xl group hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5">
                         <div className="flex flex-wrap items-center justify-between gap-4 p-6 bg-muted/30">
                           <div className="flex gap-8">
                             <div>
                               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Order Ref</p>
-                              <p className="font-bold tracking-tight text-foreground">#{order.id}</p>
+                              <p className="font-bold tracking-tight text-foreground">#{order._id}</p>
                             </div>
                             <div>
                               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Dating From</p>
@@ -234,7 +238,7 @@ export const AccountPage = () => {
                             </div>
                             <div>
                               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Total Value</p>
-                              <p className="font-extrabold tracking-tight text-primary">₹{order.total}</p>
+                              <p className="font-extrabold tracking-tight text-primary">Rs.{order.total}</p>
                             </div>
                           </div>
                           <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-tighter border ${getStatusColor(order.status)}`}>
@@ -273,7 +277,7 @@ export const AccountPage = () => {
                             onClick={async () => {
                               try {
                                 showToast('Generating invoice...', 'info');
-                                await apiService.downloadInvoice(order.id);
+                                await apiService.downloadInvoice(order._id);
                                 showToast('Invoice downloaded!', 'success');
                               } catch (error) {
                                 showToast('Failed to download invoice', 'error');
@@ -300,9 +304,19 @@ export const AccountPage = () => {
                     <h2 className="text-3xl font-bold tracking-tight text-foreground">Wishlist Gallery</h2>
                     <p className="text-sm text-muted-foreground">Your favorite selections ready for acquisition</p>
                   </div>
-                  <button className="px-8 py-4 text-xs font-bold tracking-widest uppercase transition-all rounded-full shadow-sm bg-secondary text-primary hover:shadow-md">
-                    Add All to Cart
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setIsShareModalOpen(true)}
+                      disabled={wishlist.length === 0}
+                      className="flex items-center gap-2 px-6 py-4 text-xs font-bold tracking-widest uppercase transition-all rounded-full border border-primary text-primary hover:bg-primary hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Share2 size={16} />
+                      Share
+                    </button>
+                    <button className="px-8 py-4 text-xs font-bold tracking-widest uppercase transition-all rounded-full shadow-sm bg-secondary text-primary hover:shadow-md">
+                      Add All to Cart
+                    </button>
+                  </div>
                 </div>
 
                 {wishlist.length === 0 ? (
@@ -449,7 +463,7 @@ export const AccountPage = () => {
                           required
                           value={addressForm.phone}
                           onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })}
-                          placeholder="+91 9876543210"
+                          placeholder="+92 321 1234567"
                           className="w-full px-6 py-4 font-medium transition-all bg-white border border-border rounded-2xl focus:outline-none focus:border-primary"
                         />
                       </div>
@@ -615,7 +629,7 @@ export const AccountPage = () => {
                 {/* Account Activity / Stats Summary */}
                 <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
                   {[
-                    { icon: CreditCard, val: "₹15,400", label: "Lifetime Lush" },
+                    { icon: CreditCard, val: "Rs.15,400", label: "Lifetime Lush" },
                     { icon: Heart, val: "24", label: "Desired Items" },
                     { icon: Package, val: "12", label: "Orders Fulfilled" },
                     { icon: ShieldCheck, val: "Level 4", label: "Security Tier" }
@@ -636,6 +650,13 @@ export const AccountPage = () => {
           </main>
         </div>
       </div>
+
+      {/* Wishlist Share Modal */}
+      <WishlistShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        wishlistCount={wishlist.length}
+      />
     </div>
   );
 };

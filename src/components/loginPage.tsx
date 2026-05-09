@@ -1,11 +1,12 @@
 "use client"
 import React, { useState, useEffect } from "react";
 import { useApp } from "@/contexts/AppContext";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Eye, EyeOff, Sparkles, ArrowRight, Check, X, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Sparkles, ArrowRight, Check, X, AlertCircle, Gift } from "lucide-react";
 import { useToast } from "@/hooks/useToast";
 import { GoogleLoginButton } from "@/components/GoogleLogin";
+import { apiService } from "@/services/api";
 
 // Password validation requirements
 const PASSWORD_REQUIREMENTS = [
@@ -22,6 +23,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const LoginPage = () => {
   const { login, signup } = useApp();
   const { showToast } = useToast();
+  const searchParams = useSearchParams();
   const [isSignup, setIsSignup] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -29,6 +31,10 @@ export const LoginPage = () => {
     email: "",
     password: "",
   });
+  const [referralCode, setReferralCode] = useState("");
+  const [referralValid, setReferralValid] = useState<boolean | null>(null);
+  const [referralMessage, setReferralMessage] = useState("");
+  const [validatingReferral, setValidatingReferral] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; name?: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [touched, setTouched] = useState<{ email: boolean; password: boolean; name: boolean }>({
@@ -37,6 +43,37 @@ export const LoginPage = () => {
     name: false,
   });
   const router = useRouter();
+
+  // Check for referral code in URL
+  useEffect(() => {
+    const refCode = searchParams.get('ref');
+    if (refCode) {
+      setReferralCode(refCode);
+      setIsSignup(true);
+      validateReferralCode(refCode);
+    }
+  }, [searchParams]);
+
+  // Validate referral code
+  const validateReferralCode = async (code: string) => {
+    if (!code || code.length < 4) {
+      setReferralValid(null);
+      setReferralMessage("");
+      return;
+    }
+
+    setValidatingReferral(true);
+    try {
+      const result = await apiService.validateReferralCode(code);
+      setReferralValid(true);
+      setReferralMessage(result.message || `You'll get ${result.refereeBonus?.value}% off your first order!`);
+    } catch {
+      setReferralValid(false);
+      setReferralMessage("Invalid referral code");
+    } finally {
+      setValidatingReferral(false);
+    }
+  };
 
   // Validate email format
   const validateEmail = (email: string): string | undefined => {
@@ -163,9 +200,12 @@ export const LoginPage = () => {
 
     try {
       if (isSignup) {
-        const success = await signup(formData.name, formData.email, formData.password);
+        const success = await signup(formData.name, formData.email, formData.password, referralCode || undefined);
         if (success) {
-          showToast("Account created successfully! Redirecting...", "success");
+          const message = referralValid
+            ? "Account created! Your referral discount is ready to use."
+            : "Account created successfully! Redirecting...";
+          showToast(message, "success");
           router.push("/account");
         }
       } else {
@@ -336,6 +376,61 @@ export const LoginPage = () => {
                 </div>
               )}
             </div>
+
+            {/* Referral Code Input for Signup */}
+            {isSignup && (
+              <div className="space-y-2">
+                <label className="block text-sm font-bold text-foreground flex items-center gap-2">
+                  <Gift size={16} className="text-primary" />
+                  Referral Code (Optional)
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={referralCode}
+                    onChange={(e) => {
+                      const code = e.target.value.toUpperCase();
+                      setReferralCode(code);
+                      if (code.length >= 4) {
+                        validateReferralCode(code);
+                      } else {
+                        setReferralValid(null);
+                        setReferralMessage("");
+                      }
+                    }}
+                    className={`w-full px-6 py-4 bg-muted border rounded-2xl focus:outline-none focus:bg-white transition-all text-sm uppercase tracking-wider ${
+                      referralValid === true
+                        ? 'border-green-500 focus:border-green-500'
+                        : referralValid === false
+                        ? 'border-red-500 focus:border-red-500'
+                        : 'border-transparent focus:border-primary'
+                    }`}
+                    placeholder="Enter referral code"
+                    disabled={isSubmitting}
+                  />
+                  {validatingReferral && (
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                      <svg className="animate-spin h-5 w-5 text-primary" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                    </div>
+                  )}
+                  {!validatingReferral && referralValid === true && (
+                    <Check className="absolute right-4 top-1/2 -translate-y-1/2 text-green-500" size={20} />
+                  )}
+                  {!validatingReferral && referralValid === false && (
+                    <X className="absolute right-4 top-1/2 -translate-y-1/2 text-red-500" size={20} />
+                  )}
+                </div>
+                {referralMessage && (
+                  <p className={`text-sm flex items-center gap-2 mt-1 ${referralValid ? 'text-green-600' : 'text-red-500'}`}>
+                    {referralValid ? <Gift size={14} /> : <AlertCircle size={14} />}
+                    {referralMessage}
+                  </p>
+                )}
+              </div>
+            )}
 
             {!isSignup && (
               <label className="flex items-center gap-3 cursor-pointer group w-fit">

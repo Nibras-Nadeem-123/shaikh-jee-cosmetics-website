@@ -8,30 +8,42 @@ import { setTokenCookie } from '../middleware/auth.js';
 import { passwordResetLimiter } from '../middleware/rateLimiter.js';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
+import { applyReferralOnSignup } from '../controllers/referralController.js';
 // bcrypt not needed here - User model pre-save hook handles password hashing
 
 // Signup
 router.post('/signup', signupValidation, handleValidationErrors, catchAsyncErrors(async (req, res) => {
-  const { name, email, password } = req.body;
-  
+  const { name, email, password, referralCode } = req.body;
+
   // Check if user already exists
   let user = await User.findOne({ email });
   if (user) {
     throw new ErrorHandler('User with this email already exists', 400);
   }
-  
+
   user = await User.create({ name, email, password });
+
+  // Process referral code if provided
+  let referralBonus = null;
+  if (referralCode) {
+    const referralResult = await applyReferralOnSignup(user._id, referralCode);
+    if (referralResult.success) {
+      referralBonus = referralResult.refereeBonus;
+    }
+  }
+
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-  
-  res.status(201).json({ 
-    success: true, 
-    token, 
+
+  res.status(201).json({
+    success: true,
+    token,
     user: {
       id: user._id,
       name: user.name,
       email: user.email,
       role: user.role
-    }
+    },
+    referralBonus
   });
 }));
 

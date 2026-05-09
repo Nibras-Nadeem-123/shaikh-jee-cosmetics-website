@@ -4,9 +4,11 @@ import { Instagram, Facebook, Twitter, Mail, Phone, MapPin } from 'lucide-react'
 import Link from 'next/link';
 import Image from 'next/image';
 import { NewsletterSignup } from './NewsletterSignup';
+import { siteConfig, getShortAddress } from '@/config/siteConfig';
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const { contact, social } = siteConfig;
 
   return (
     <footer className="bg-secondary mt-auto border-t border-border">
@@ -33,15 +35,21 @@ export const Footer = () => {
               Your trusted destination for premium, safe, and affordable cosmetics that enhance natural beauty. Designed for your everyday luxury.
             </p>
             <div className="flex gap-5">
-              <a href="#" className="p-2 bg-white rounded-full text-primary hover:bg-primary hover:text-white transition-all shadow-sm">
-                <Instagram size={20} />
-              </a>
-              <a href="#" className="p-2 bg-white rounded-full text-primary hover:bg-primary hover:text-white transition-all shadow-sm">
-                <Facebook size={20} />
-              </a>
-              <a href="#" className="p-2 bg-white rounded-full text-primary hover:bg-primary hover:text-white transition-all shadow-sm">
-                <Twitter size={20} />
-              </a>
+              {social.instagram && (
+                <a href={social.instagram} target="_blank" rel="noopener noreferrer" className="p-2 bg-white rounded-full text-primary hover:bg-primary hover:text-white transition-all shadow-sm">
+                  <Instagram size={20} />
+                </a>
+              )}
+              {social.facebook && (
+                <a href={social.facebook} target="_blank" rel="noopener noreferrer" className="p-2 bg-white rounded-full text-primary hover:bg-primary hover:text-white transition-all shadow-sm">
+                  <Facebook size={20} />
+                </a>
+              )}
+              {social.twitter && (
+                <a href={social.twitter} target="_blank" rel="noopener noreferrer" className="p-2 bg-white rounded-full text-primary hover:bg-primary hover:text-white transition-all shadow-sm">
+                  <Twitter size={20} />
+                </a>
+              )}
             </div>
           </div>
 
@@ -49,11 +57,16 @@ export const Footer = () => {
           <div>
             <h4 className="text-lg font-bold text-foreground mb-6">Quick Links</h4>
             <ul className="space-y-4">
-              {['About Us', 'Shop All', 'Contact Us', 'FAQ'].map((link) => (
-                <li key={link}>
-                  <Link href={`/${link.toLowerCase().replace(' ', '-')}`} className="text-foreground/70 hover:text-primary transition-colors flex items-center gap-2 group">
+              {[
+                { name: 'About Us', href: '/about' },
+                { name: 'Shop All', href: '/shop' },
+                { name: 'Contact Us', href: '/contact' },
+                { name: 'FAQ', href: '/faq' },
+              ].map((link) => (
+                <li key={link.name}>
+                  <Link href={link.href} className="text-foreground/70 hover:text-primary transition-colors flex items-center gap-2 group">
                     <span className="w-0 group-hover:w-2 h-[2px] bg-primary transition-all"></span>
-                    {link}
+                    {link.name}
                   </Link>
                 </li>
               ))}
@@ -64,11 +77,17 @@ export const Footer = () => {
           <div>
             <h4 className="text-lg font-bold text-foreground mb-6">Customer Service</h4>
             <ul className="space-y-4">
-              {['Track Order', 'Return Policy', 'Privacy Policy', 'Terms & Conditions'].map((link) => (
-                <li key={link}>
-                  <Link href={`/${link.toLowerCase().replace(' ', '-')}`} className="text-foreground/70 hover:text-primary transition-colors flex items-center gap-2 group">
+              {[
+                { name: 'Track Order', href: '/track' },
+                { name: 'Shipping Info', href: '/shipping' },
+                { name: 'Return Policy', href: '/return-policy' },
+                { name: 'Privacy Policy', href: '/privacy-policy' },
+                { name: 'Terms & Conditions', href: '/terms-conditions' },
+              ].map((link) => (
+                <li key={link.name}>
+                  <Link href={link.href} className="text-foreground/70 hover:text-primary transition-colors flex items-center gap-2 group">
                     <span className="w-0 group-hover:w-2 h-[2px] bg-primary transition-all"></span>
-                    {link}
+                    {link.name}
                   </Link>
                 </li>
               ))}
@@ -83,19 +102,19 @@ export const Footer = () => {
                 <div className="p-2 bg-primary/10 rounded-lg text-primary">
                     <Phone size={18} />
                 </div>
-                <span>+91 9876543210</span>
+                <span>{contact.phone}</span>
               </li>
               <li className="flex items-start gap-4 text-foreground/80">
                 <div className="p-2 bg-primary/10 rounded-lg text-primary">
                     <Mail size={18} />
                 </div>
-                <span>support@shaikhjee.com</span>
+                <span>{contact.email}</span>
               </li>
               <li className="flex items-start gap-4 text-foreground/80">
                 <div className="p-2 bg-primary/10 rounded-lg text-primary">
                     <MapPin size={18} />
                 </div>
-                <span>Mumbai, Maharashtra, India</span>
+                <span>{getShortAddress()}</span>
               </li>
             </ul>
           </div>

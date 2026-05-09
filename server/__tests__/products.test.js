@@ -164,7 +164,7 @@ describe('Product Routes', () => {
     });
 
     it('should return search suggestions', async () => {
-      const res = await request(app).get('/api/products/search/suggestions?q=matte');
+      const res = await request(app).get('/api/products/search/suggestions?query=matte');
 
       expect(res.statusCode).toBe(200);
       expect(res.body.success).toBe(true);
@@ -172,7 +172,7 @@ describe('Product Routes', () => {
     });
 
     it('should return empty for no matches', async () => {
-      const res = await request(app).get('/api/products/search/suggestions?q=xyz123');
+      const res = await request(app).get('/api/products/search/suggestions?query=xyz123');
 
       expect(res.statusCode).toBe(200);
       expect(res.body.suggestions).toHaveLength(0);
@@ -188,12 +188,13 @@ describe('Product Model', () => {
       price: 799,
       category: 'skincare',
       description: 'A new skincare product',
-      image: 'https://example.com/new.jpg'
+      image: 'https://example.com/new.jpg',
+      inventory: { quantity: 10 } // provide inventory for inStock to be true
     });
 
     expect(product._id).toBeDefined();
     expect(product.name).toBe('New Product');
-    expect(product.inStock).toBe(true); // default value
+    expect(product.inStock).toBe(true); // set by pre-save hook based on inventory
   });
 
   it('should fail without required fields', async () => {

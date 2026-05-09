@@ -30,7 +30,7 @@ export const getOptimizedCloudinaryUrl = (
     height?: number;
     quality?: number;
     format?: 'auto' | 'webp' | 'avif' | 'jpg' | 'png';
-    fit?: 'fill' | 'scale' | 'fit' | 'crop';
+    fit?: 'fill' | 'scale' | 'fit' | 'crop' | 'thumb';
   } = {}
 ): string => {
   if (!url || !url.includes('cloudinary.com')) {
@@ -239,4 +239,119 @@ export const createLazyImageObserver = (
       }
     });
   }, defaultOptions);
+};
+
+// Cloudinary cloud name from environment
+const CLOUDINARY_CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || '';
+
+/**
+ * Get CDN-optimized URL for any image
+ * Supports Cloudinary URLs and external URLs via Cloudinary fetch
+ */
+export const getCdnUrl = (
+  imageUrl: string,
+  options: {
+    width?: number;
+    height?: number;
+    quality?: number | 'auto';
+    format?: 'auto' | 'webp' | 'avif' | 'jpg' | 'png';
+    crop?: 'fill' | 'scale' | 'fit' | 'crop' | 'thumb';
+    gravity?: 'auto' | 'center' | 'face' | 'faces';
+  } = {}
+): string => {
+  if (!imageUrl) return '';
+
+  const {
+    width,
+    height,
+    quality = 'auto',
+    format = 'auto',
+    crop = 'fill',
+    gravity = 'auto',
+  } = options;
+
+  // If it's already a Cloudinary URL, optimize it directly
+  if (imageUrl.includes('cloudinary.com')) {
+    return getOptimizedCloudinaryUrl(imageUrl, {
+      width,
+      height,
+      quality: typeof quality === 'number' ? quality : 80,
+      format,
+      fit: crop,
+    });
+  }
+
+  // For external URLs, use Cloudinary's fetch feature if configured
+  if (CLOUDINARY_CLOUD_NAME) {
+    const transforms: string[] = [];
+
+    if (width) transforms.push(`w_${width}`);
+    if (height) transforms.push(`h_${height}`);
+    transforms.push(`q_${quality}`);
+    transforms.push(`f_${format}`);
+    if (width || height) {
+      transforms.push(`c_${crop}`);
+      transforms.push(`g_${gravity}`);
+    }
+
+    const transformString = transforms.join(',');
+    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/fetch/${transformString}/${encodeURIComponent(imageUrl)}`;
+  }
+
+  // Return original URL if Cloudinary is not configured
+  return imageUrl;
+};
+
+/**
+ * Generate responsive srcset using CDN
+ */
+export const getCdnSrcSet = (
+  imageUrl: string,
+  widths: number[] = [320, 640, 768, 1024, 1280, 1536]
+): string => {
+  if (!imageUrl) return '';
+
+  return widths
+    .map((w) => `${getCdnUrl(imageUrl, { width: w })} ${w}w`)
+    .join(', ');
+};
+
+/**
+ * Get blur placeholder URL from CDN
+ */
+export const getCdnBlurPlaceholder = (imageUrl: string): string => {
+  if (!imageUrl) return '';
+
+  return getCdnUrl(imageUrl, {
+    width: 20,
+    quality: 30,
+    format: 'webp',
+  });
+};
+
+/**
+ * CDN image props helper for Next.js Image component
+ */
+export const getCdnImageProps = (
+  src: string,
+  options: {
+    width?: number;
+    height?: number;
+    quality?: number;
+    priority?: boolean;
+  } = {}
+): {
+  src: string;
+  blurDataURL?: string;
+  placeholder?: 'blur' | 'empty';
+} => {
+  const { width, height, quality = 80 } = options;
+
+  const optimizedSrc = getCdnUrl(src, { width, height, quality });
+
+  return {
+    src: optimizedSrc,
+    blurDataURL: getCdnBlurPlaceholder(src),
+    placeholder: 'blur' as const,
+  };
 };

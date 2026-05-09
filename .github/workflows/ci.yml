@@ -10,7 +10,7 @@ env:
   NODE_VERSION: '20'
 
 jobs:
-  # Lint and Type Check Frontend
+  # Lint Frontend
   lint-frontend:
     name: Lint Frontend
     runs-on: ubuntu-latest
@@ -33,10 +33,34 @@ jobs:
       - name: Run TypeScript check
         run: npx tsc --noEmit
 
+  # Lint Backend
+  lint-backend:
+    name: Lint Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./server
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: ./server
+        run: npm run lint
+
   # Test Backend
   test-backend:
     name: Test Backend
     runs-on: ubuntu-latest
+    needs: lint-backend
     services:
       mongodb:
         image: mongo:7.0
@@ -64,12 +88,15 @@ jobs:
           MONGO_URI: mongodb://localhost:27017/test
           JWT_SECRET: test-secret-key-for-ci-testing
           NODE_ENV: test
+          BREVO_API_KEY: test-api-key
+          RAZORPAY_WEBHOOK_SECRET: test-webhook-secret
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           directory: ./server/coverage
           fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   # Build Frontend
   build-frontend:
@@ -92,7 +119,7 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          NEXT_PUBLIC_API_URL: http://localhost:5000/api
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api' }}
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -100,39 +127,6 @@ jobs:
           name: nextjs-build
           path: .next
           retention-days: 7
-
-  # Build Docker Images (only on main branch)
-  build-docker:
-    name: Build Docker Images
-    runs-on: ubuntu-latest
-    needs: [lint-frontend, test-backend]
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Frontend Image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          push: false
-          tags: shaikhjee-frontend:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build Backend Image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./server
-          file: ./server/Dockerfile
-          push: false
-          tags: shaikhjee-backend:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
   # Security Scan
   security-scan:
@@ -157,9 +151,9 @@ jobs:
         run: npm audit --audit-level=high
         continue-on-error: true
 
-  # Deploy (placeholder - customize for your deployment target)
-  deploy:
-    name: Deploy
+  # Deploy to Vercel (Frontend)
+  deploy-vercel:
+    name: Deploy Frontend to Vercel
     runs-on: ubuntu-latest
     needs: [build-frontend, test-backend]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -168,18 +162,61 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
         with:
-          name: nextjs-build
-          path: .next
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: ./
 
-      # Add your deployment steps here
-      # Examples:
-      # - Deploy to Vercel
-      # - Deploy to AWS
-      # - Deploy to DigitalOcean
-      # - Deploy via SSH
+  # Deploy to Railway (Backend)
+  deploy-railway:
+    name: Deploy Backend to Railway
+    runs-on: ubuntu-latest
+    needs: [build-frontend, test-backend]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Deploy notification
-        run: echo "Deployment would happen here - configure your deployment target"
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway
+        run: railway up --service ${{ secrets.RAILWAY_SERVICE_ID }}
+        working-directory: ./server
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+  # Alternative: Deploy to Render (Backend)
+  # Uncomment this job and comment out deploy-railway if using Render
+  # deploy-render:
+  #   name: Deploy Backend to Render
+  #   runs-on: ubuntu-latest
+  #   needs: [build-frontend, test-backend]
+  #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+  #   environment: production
+  #   steps:
+  #     - name: Deploy to Render
+  #       run: |
+  #         curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+
+  # Notify on deployment
+  notify:
+    name: Deployment Notification
+    runs-on: ubuntu-latest
+    needs: [deploy-vercel, deploy-railway]
+    if: always() && github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Check deployment status
+        run: |
+          if [ "${{ needs.deploy-vercel.result }}" == "success" ] && [ "${{ needs.deploy-railway.result }}" == "success" ]; then
+            echo "✅ All deployments successful!"
+          else
+            echo "⚠️ Some deployments may have failed"
+            echo "Frontend (Vercel): ${{ needs.deploy-vercel.result }}"
+            echo "Backend (Railway): ${{ needs.deploy-railway.result }}"
+          fi

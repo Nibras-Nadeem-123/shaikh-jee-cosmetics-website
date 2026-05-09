@@ -1,3 +1,12 @@
+// Set test environment variables BEFORE any imports
+process.env.NODE_ENV = 'test';
+process.env.JWT_SECRET = 'test-jwt-secret-key-for-testing-purposes';
+process.env.BREVO_API_KEY = 'test-brevo-api-key';
+process.env.RAZORPAY_WEBHOOK_SECRET = 'test-webhook-secret';
+process.env.EMAIL_USER = 'test@example.com';
+process.env.EMAIL_PASS = 'testpass';
+process.env.ADMIN_EMAIL = 'admin@example.com';
+
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
 

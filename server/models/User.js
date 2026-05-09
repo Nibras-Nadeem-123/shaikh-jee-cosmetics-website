@@ -54,6 +54,21 @@ const userSchema = new mongoose.Schema({
     default: false
   },
 
+  // Referral fields
+  referredBy: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  referralCodeUsed: {
+    type: String,
+    default: null
+  },
+  hasUsedReferralDiscount: {
+    type: Boolean,
+    default: false
+  },
+
   createdAt: {
     type: Date,
     default: Date.now

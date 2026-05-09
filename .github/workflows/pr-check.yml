@@ -1,0 +1,94 @@
+name: PR Check
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+env:
+  NODE_VERSION: '20'
+
+# This workflow runs required checks before allowing PR merges
+jobs:
+  lint-and-test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      # Frontend checks
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Lint frontend
+        run: npm run lint
+
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
+      - name: Build frontend
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:5000/api
+
+      # Backend checks
+      - name: Install backend dependencies
+        working-directory: ./server
+        run: npm ci
+
+      - name: Lint backend
+        working-directory: ./server
+        run: npm run lint
+
+      - name: Run backend tests
+        working-directory: ./server
+        run: npm run test:ci
+        env:
+          MONGO_URI: mongodb://localhost:27017/test
+          JWT_SECRET: test-secret-key-for-ci-testing
+          NODE_ENV: test
+          BREVO_API_KEY: test-api-key
+          RAZORPAY_WEBHOOK_SECRET: test-webhook-secret
+
+      - name: Upload test coverage
+        uses: codecov/codecov-action@v4
+        with:
+          directory: ./server/coverage
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  # Check for security vulnerabilities
+  security:
+    name: Security Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd server && npm ci
+
+      - name: Check for high severity vulnerabilities
+        run: |
+          npm audit --audit-level=high || true
+          cd server && npm audit --audit-level=high || true

@@ -22,8 +22,10 @@ import {
     Phone,
     Mail,
     Calendar,
-    CreditCard
+    CreditCard,
+    Shield
 } from "lucide-react";
+import { RateLimitDashboard } from "./RateLimitDashboard";
 import { useApp } from "../contexts/AppContext";
 import { apiService } from "../services/api";
 import { useRouter } from "next/navigation";
@@ -33,7 +35,7 @@ import LoadingSpinner from "./LoadingSpinner";
 
 export const AdminDashboard = () => {
     const { user } = useApp();
-    const [activeTab, setActiveTab] = useState<"overview" | "products" | "orders" | "users">("overview");
+    const [activeTab, setActiveTab] = useState<"overview" | "products" | "orders" | "users" | "ratelimits">("overview");
     const [searchQuery, setSearchQuery] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [products, setProducts] = useState<any[]>([]);
@@ -308,7 +310,7 @@ export const AdminDashboard = () => {
     const pendingOrders = orders.filter(o => o.orderStatus === 'pending' || o.orderStatus === 'processing').length;
 
     const stats = [
-        { label: "Gross Revenue", value: `₹${totalRevenue.toLocaleString()}`, icon: DollarSign, trend: `${deliveredOrders} delivered`, color: "bg-green-50 text-green-600" },
+        { label: "Gross Revenue", value: `Rs.${totalRevenue.toLocaleString()}`, icon: DollarSign, trend: `${deliveredOrders} delivered`, color: "bg-green-50 text-green-600" },
         { label: "Order Volume", value: orders.length, icon: ShoppingBag, trend: `${pendingOrders} pending`, color: "bg-blue-50 text-blue-600" },
         { label: "Boutique Items", value: products.length, icon: Package, trend: "Live", color: "bg-amber-50 text-amber-600" },
         { label: "Registered Users", value: users.length.toLocaleString(), icon: Users, trend: "Active", color: "bg-primary/10 text-primary" },
@@ -368,6 +370,7 @@ export const AdminDashboard = () => {
                         { id: "products", label: "Products", icon: Package },
                         { id: "orders", label: "Orders", icon: ShoppingBag },
                         { id: "users", label: "Users", icon: Users },
+                        { id: "ratelimits", label: "API Limits", icon: Shield },
                     ].map((tab) => (
                         <button
                             key={tab.id}
@@ -446,7 +449,7 @@ export const AdminDashboard = () => {
                                                                 {o.orderStatus}
                                                             </span>
                                                         </td>
-                                                        <td className="px-6 text-right font-extrabold rounded-r-3xl">₹{o.totalPrice}</td>
+                                                        <td className="px-6 text-right font-extrabold rounded-r-3xl">Rs.{o.totalPrice}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -492,7 +495,7 @@ export const AdminDashboard = () => {
                                                         </div>
                                                     </td>
                                                     <td className="py-4 px-6 font-bold text-primary italic">{product.category}</td>
-                                                    <td className="py-4 px-6 font-extrabold">₹{product.price}</td>
+                                                    <td className="py-4 px-6 font-extrabold">Rs.{product.price}</td>
                                                     <td className="py-4 px-6 text-center">
                                                         <select
                                                             value={product.status}
@@ -616,7 +619,7 @@ export const AdminDashboard = () => {
                                             <div className="bg-green-50 rounded-2xl p-4 text-center">
                                                 <DollarSign size={20} className="mx-auto mb-2 text-green-600" />
                                                 <p className="text-xs text-muted-foreground">Total</p>
-                                                <p className="font-bold text-sm text-green-600">₹{selectedOrder.totalPrice?.toLocaleString()}</p>
+                                                <p className="font-bold text-sm text-green-600">Rs.{selectedOrder.totalPrice?.toLocaleString()}</p>
                                             </div>
                                         </div>
 
@@ -639,8 +642,8 @@ export const AdminDashboard = () => {
                                                             <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
                                                         </div>
                                                         <div className="text-right">
-                                                            <p className="font-bold">₹{(item.price * item.quantity).toLocaleString()}</p>
-                                                            <p className="text-xs text-muted-foreground">₹{item.price} each</p>
+                                                            <p className="font-bold">Rs.{(item.price * item.quantity).toLocaleString()}</p>
+                                                            <p className="text-xs text-muted-foreground">Rs.{item.price} each</p>
                                                         </div>
                                                     </div>
                                                 ))}
@@ -652,21 +655,21 @@ export const AdminDashboard = () => {
                                             <div className="space-y-3">
                                                 <div className="flex justify-between text-sm">
                                                     <span className="text-muted-foreground">Subtotal</span>
-                                                    <span>₹{selectedOrder.itemsPrice?.toLocaleString() || selectedOrder.totalPrice?.toLocaleString()}</span>
+                                                    <span>Rs.{selectedOrder.itemsPrice?.toLocaleString() || selectedOrder.totalPrice?.toLocaleString()}</span>
                                                 </div>
                                                 <div className="flex justify-between text-sm">
                                                     <span className="text-muted-foreground">Shipping</span>
-                                                    <span>{selectedOrder.shippingPrice === 0 ? 'FREE' : `₹${selectedOrder.shippingPrice?.toLocaleString()}`}</span>
+                                                    <span>{selectedOrder.shippingPrice === 0 ? 'FREE' : `Rs.${selectedOrder.shippingPrice?.toLocaleString()}`}</span>
                                                 </div>
                                                 {selectedOrder.discount?.amount > 0 && (
                                                     <div className="flex justify-between text-sm text-green-600">
                                                         <span>Discount ({selectedOrder.discount.code})</span>
-                                                        <span>-₹{selectedOrder.discount.amount.toLocaleString()}</span>
+                                                        <span>-Rs.{selectedOrder.discount.amount.toLocaleString()}</span>
                                                     </div>
                                                 )}
                                                 <div className="border-t border-border pt-3 flex justify-between font-bold text-lg">
                                                     <span>Total</span>
-                                                    <span className="text-primary">₹{selectedOrder.totalPrice?.toLocaleString()}</span>
+                                                    <span className="text-primary">Rs.{selectedOrder.totalPrice?.toLocaleString()}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -778,7 +781,7 @@ export const AdminDashboard = () => {
                                                             <option value="cancelled">Cancelled</option>
                                                         </select>
                                                     </td>
-                                                    <td className="py-6 px-6 font-extrabold">₹{o.totalPrice?.toLocaleString()}</td>
+                                                    <td className="py-6 px-6 font-extrabold">Rs.{o.totalPrice?.toLocaleString()}</td>
                                                     <td className="py-6 px-6 text-right rounded-r-3xl">
                                                         <button
                                                             onClick={() => setSelectedOrder(o)}
@@ -892,6 +895,13 @@ export const AdminDashboard = () => {
                                 </div>
                             </div>
                         )}
+
+                        {/* Rate Limits Tab */}
+                        {activeTab === "ratelimits" && (
+                            <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-primary/5 animate-in fade-in slide-in-from-bottom duration-500">
+                                <RateLimitDashboard />
+                            </div>
+                        )}
                     </>
                 )}
             </div>
@@ -909,11 +919,11 @@ export const AdminDashboard = () => {
                                     <input type="text" required value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value, slug: e.target.value.toLowerCase().replace(/ /g, '-') })} className="w-full px-6 py-4 bg-muted/50 rounded-2xl focus:bg-white border-transparent focus:border-primary border transition-all outline-none" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Valuation (₹)</label>
+                                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Valuation (Rs.)</label>
                                     <input type="number" required value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: parseInt(e.target.value) })} className="w-full px-6 py-4 bg-muted/50 rounded-2xl focus:bg-white border-transparent focus:border-primary border transition-all outline-none" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Original Price (₹)</label>
+                                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Original Price (Rs.)</label>
                                     <input type="number" value={newProduct.originalPrice} onChange={(e) => setNewProduct({ ...newProduct, originalPrice: parseInt(e.target.value) })} className="w-full px-6 py-4 bg-muted/50 rounded-2xl focus:bg-white border-transparent focus:border-primary border transition-all outline-none" placeholder="0" />
                                 </div>
                                 <div className="space-y-2">

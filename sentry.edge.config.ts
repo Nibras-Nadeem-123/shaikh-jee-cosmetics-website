@@ -1,6 +1,6 @@
 /**
- * Sentry Edge Configuration
- * This file configures error tracking for Edge runtime (middleware)
+ * Sentry Edge Runtime Configuration
+ * This file configures error tracking for edge functions
  */
 
 import * as Sentry from '@sentry/nextjs';
@@ -17,13 +17,6 @@ if (SENTRY_DSN) {
 
     // Debug mode for development
     debug: process.env.NODE_ENV === 'development',
-
-    // Filter out noisy errors
-    ignoreErrors: [
-      'ECONNREFUSED',
-      'ECONNRESET',
-      'ETIMEDOUT',
-    ],
   });
 }
 

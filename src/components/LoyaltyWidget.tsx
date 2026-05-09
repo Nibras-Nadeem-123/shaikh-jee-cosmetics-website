@@ -82,7 +82,7 @@ export function LoyaltyWidget() {
       if (!token) return;
 
       const data = await loyaltyApi.redeemPoints(points, token);
-      showToast(`Successfully redeemed ${points} points for ₹${data.discount} off!`, 'success');
+      showToast(`Successfully redeemed ${points} points for Rs.${data.discount} off!`, 'success');
       setRedeemAmount('');
       setShowRedeemModal(false);
       fetchLoyalty();
@@ -209,7 +209,7 @@ export function LoyaltyWidget() {
           <div className="bg-white rounded-2xl p-6 max-w-md w-full">
             <h3 className="text-xl font-bold text-foreground mb-4">Redeem Points</h3>
             <p className="text-muted-foreground mb-4">
-              Available: {loyalty?.points || 0} points (₹{loyalty?.points || 0})
+              Available: {loyalty?.points || 0} points (Rs.{loyalty?.points || 0})
             </p>
             
             <form onSubmit={handleRedeem}>

@@ -161,15 +161,15 @@ export default function TrackOrderPage({ params }: { params: { orderId: string }
                 <div className="pt-4 border-t border-border">
                   <div className="flex justify-between text-sm mb-2">
                     <span className="text-muted-foreground">Items</span>
-                    <span>₹{order.itemsPrice?.toLocaleString()}</span>
+                    <span>Rs.{order.itemsPrice?.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-sm mb-2">
                     <span className="text-muted-foreground">Shipping</span>
-                    <span>{order.shippingPrice === 0 ? 'FREE' : `₹${order.shippingPrice}`}</span>
+                    <span>{order.shippingPrice === 0 ? 'FREE' : `Rs.${order.shippingPrice}`}</span>
                   </div>
                   <div className="flex justify-between font-bold text-lg pt-2 border-t border-dashed">
                     <span>Total</span>
-                    <span className="text-primary">₹{order.totalPrice?.toLocaleString()}</span>
+                    <span className="text-primary">Rs.{order.totalPrice?.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
@@ -258,7 +258,7 @@ export default function TrackOrderPage({ params }: { params: { orderId: string }
                       <div className="flex items-center gap-4 text-sm text-foreground/70 mt-1">
                         <span>Quantity: {item.quantity}</span>
                         <span>•</span>
-                        <span>Price: ₹{item.price}</span>
+                        <span>Price: Rs.{item.price}</span>
                       </div>
                       {item.selectedShade?.name && (
                         <p className="text-sm text-muted-foreground mt-1">Shade: {item.selectedShade.name}</p>
@@ -266,7 +266,7 @@ export default function TrackOrderPage({ params }: { params: { orderId: string }
                     </div>
 
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-primary">₹{(item.price * item.quantity).toLocaleString()}</p>
+                      <p className="text-2xl font-bold text-primary">Rs.{(item.price * item.quantity).toLocaleString()}</p>
                     </div>
                   </div>
                 ))}

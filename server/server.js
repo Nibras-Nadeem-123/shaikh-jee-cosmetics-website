@@ -12,6 +12,8 @@ import cookieParser from 'cookie-parser';
 import logger, { requestLogger } from './utils/logger.js';
 import swaggerSpec from './config/swagger.js';
 import { initSentry, sentryErrorHandler, isSentryEnabled } from './config/sentry.js';
+import { processAbandonedCarts } from './utils/abandonedCartService.js';
+import { checkAllProductsLowStock } from './utils/lowStockService.js';
 
 const app = express();
 
@@ -109,6 +111,9 @@ app.get('/api/csrf-token', getCSRFToken);
 // Apply global rate limiting middleware BEFORE routes
 app.use(limiter);
 
+// API usage tracking (for rate limit dashboard)
+app.use(apiTracker);
+
 // Import Routes
 import productRoutes from './routes/product.js';
 import orderRoutes from './routes/order.js';
@@ -126,7 +131,14 @@ import cartRoutes from './routes/cart.js';
 import stockAlertRoutes from './routes/stockAlert.js';
 import backupRoutes from './routes/backup.js';
 import cacheRoutes from './routes/cache.js';
+import imageRoutes from './routes/image.js';
+import referralRoutes from './routes/referral.js';
+import rateLimitDashboardRoutes from './routes/rateLimitDashboard.js';
+import contactRoutes from './routes/contact.js';
 // import analyticsRoutes from './routes/analytics.js'; // Temporarily disabled
+
+// API Usage Tracking
+import { apiTracker } from './middleware/apiTracker.js';
 
 // Apply specific rate limits to auth routes BEFORE mounting routes
 app.use('/api/auth/login', authLimiter);
@@ -149,6 +161,10 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/stock-alerts', stockAlertRoutes);
 app.use('/api/admin/backups', backupRoutes);
 app.use('/api/admin/cache', cacheRoutes);
+app.use('/api/images', imageRoutes);
+app.use('/api/referral', referralRoutes);
+app.use('/api/admin/rate-limits', rateLimitDashboardRoutes);
+app.use('/api/contact', contactRoutes);
 // app.use('/api/analytics', analyticsRoutes); // Temporarily disabled
 
 // Swagger API Documentation
@@ -280,4 +296,59 @@ app.listen(PORT, () => {
   console.log(`✅ Shaikh Jee Server running on port ${PORT}`);
   console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`✅ Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
+
+  // Start abandoned cart email scheduler (runs every 30 minutes)
+  const ABANDONED_CART_INTERVAL = 30 * 60 * 1000; // 30 minutes
+  setInterval(async () => {
+    try {
+      console.log('[Scheduler] Running abandoned cart processor...');
+      const results = await processAbandonedCarts();
+      if (results.emailsSent > 0) {
+        console.log(`[Scheduler] Abandoned cart emails sent: ${results.emailsSent}`);
+      }
+    } catch (error) {
+      console.error('[Scheduler] Abandoned cart processor error:', error.message);
+    }
+  }, ABANDONED_CART_INTERVAL);
+
+  // Run once on startup (after 1 minute delay to allow DB connection)
+  setTimeout(async () => {
+    try {
+      console.log('[Scheduler] Initial abandoned cart check...');
+      await processAbandonedCarts();
+    } catch (error) {
+      console.error('[Scheduler] Initial abandoned cart check error:', error.message);
+    }
+  }, 60 * 1000);
+
+  console.log(`✅ Abandoned cart scheduler started (every 30 minutes)`);
+
+  // Start low stock alert scheduler (runs every 6 hours)
+  const LOW_STOCK_INTERVAL = 6 * 60 * 60 * 1000; // 6 hours
+  setInterval(async () => {
+    try {
+      console.log('[Scheduler] Running low stock check...');
+      const results = await checkAllProductsLowStock();
+      if (results.notificationSent) {
+        console.log(`[Scheduler] Low stock alert sent: ${results.lowStockCount} products low, ${results.criticalCount} critical`);
+      }
+    } catch (error) {
+      console.error('[Scheduler] Low stock check error:', error.message);
+    }
+  }, LOW_STOCK_INTERVAL);
+
+  // Run initial low stock check (after 2 minutes to allow DB connection)
+  setTimeout(async () => {
+    try {
+      console.log('[Scheduler] Initial low stock check...');
+      const results = await checkAllProductsLowStock();
+      if (results.lowStockCount > 0) {
+        console.log(`[Scheduler] Found ${results.lowStockCount} low stock products`);
+      }
+    } catch (error) {
+      console.error('[Scheduler] Initial low stock check error:', error.message);
+    }
+  }, 2 * 60 * 1000);
+
+  console.log(`✅ Low stock alert scheduler started (every 6 hours)`);
 });

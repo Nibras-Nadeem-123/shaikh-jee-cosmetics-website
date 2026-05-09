@@ -89,6 +89,37 @@ export const isAdminOrOwner = (userIdField = 'userId') => {
 };
 
 /**
+ * Optional authentication middleware
+ * Attaches user to request if valid token is provided, but doesn't require it
+ * Useful for routes that can work with or without authentication
+ */
+export const optionalAuth = catchAsyncErrors(async (req, res, next) => {
+  const token = req.headers.authorization?.startsWith('Bearer')
+    ? req.headers.authorization.split(' ')[1]
+    : null;
+
+  if (!token) {
+    // No token provided, continue without user
+    req.user = null;
+    return next();
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = await User.findById(decoded.id);
+    // Continue even if user not found, just set to null
+    if (!req.user) {
+      req.user = null;
+    }
+  } catch (error) {
+    // Token invalid or expired, continue without user
+    req.user = null;
+  }
+
+  next();
+});
+
+/**
  * Middleware to verify token without requiring user to be in database
  * Useful for checking token validity
  */

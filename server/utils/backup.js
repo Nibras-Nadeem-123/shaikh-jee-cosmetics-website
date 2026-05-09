@@ -70,7 +70,7 @@ const ensureBackupDir = () => {
 /**
  * Clean up old backups, keeping only the most recent ones
  */
-const cleanupOldBackups = async () => {
+export const cleanupOldBackups = async () => {
   try {
     const files = fs.readdirSync(BACKUP_CONFIG.backupDir);
     const backups = files

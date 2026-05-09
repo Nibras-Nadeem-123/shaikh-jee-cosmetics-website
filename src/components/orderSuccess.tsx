@@ -30,7 +30,7 @@ const OrderSuccessPage = () => {
                 </div>
                 <div className="text-right">
                   <div className="mb-1 text-sm text-gray-600">Order Total</div>
-                  <div className="text-lg">₹{latestOrder.total}</div>
+                  <div className="text-lg">Rs.{latestOrder.total}</div>
                 </div>
               </div>
 

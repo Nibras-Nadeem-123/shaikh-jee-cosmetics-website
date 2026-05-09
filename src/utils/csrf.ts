@@ -57,7 +57,7 @@ export async function getCSRFToken(): Promise<string> {
     const data = await response.json();
     if (data.csrfToken) {
       cachedToken = data.csrfToken;
-      return cachedToken;
+      return data.csrfToken;
     }
 
     throw new Error('No CSRF token received');

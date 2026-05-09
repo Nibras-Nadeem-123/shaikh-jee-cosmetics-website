@@ -1,6 +1,6 @@
 import React from 'react';
 import { Category } from '@/types';
-import Image from 'next/image';
+import CdnImage from './CdnImage';
 
 interface CategoryCardProps {
   category: Category;
@@ -14,12 +14,13 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category, onClick })
       className="group bg-white border border-(--color-border) rounded-lg overflow-hidden hover:shadow-lg transition-all"
     >
       <div className="relative aspect-square overflow-hidden">
-        <Image
+        <CdnImage
           src={category.image}
-                  alt={category.name}
-                  height={500}
-                  width={500}
+          alt={category.name}
+          height={500}
+          width={500}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+          fallbackSrc="/placeholder.png"
         />
         <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent flex items-end p-6">
           <div className="text-white">

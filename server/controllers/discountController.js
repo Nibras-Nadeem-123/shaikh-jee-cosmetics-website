@@ -66,7 +66,7 @@ export const validateDiscountCode = catchAsyncErrors(async (req, res) => {
   }
 
   if (orderAmount < discountCode.minOrderValue) {
-    throw new ErrorHandler(`Minimum order value should be ₹${discountCode.minOrderValue}`, 400);
+    throw new ErrorHandler(`Minimum order value should be Rs.${discountCode.minOrderValue}`, 400);
   }
 
   // Calculate discount

@@ -55,7 +55,7 @@ export const jsonLdProductSchema = (product: {
         offers: {
             '@type': 'Offer',
             url: `https://shaikhjee.com/product/${product._id}`,
-            priceCurrency: 'INR',
+            priceCurrency: 'PKR',
             price: product.price.toString(),
             availability: product.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
         },
@@ -80,7 +80,7 @@ export const jsonLdOrganization = {
     ],
     contactPoint: {
         '@type': 'ContactPoint',
-        telephone: '+91-XXXXXXXXXX',
+        telephone: '+92-321-1234567',
         contactType: 'Customer Service',
     },
 };

@@ -129,7 +129,7 @@ export function OrderTracking({ order }: OrderTrackingProps) {
               <div className="flex-1">
                 <p className="font-medium">{item.name}</p>
                 <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
-                <p className="font-semibold text-primary mt-1">₹{item.price * item.quantity}</p>
+                <p className="font-semibold text-primary mt-1">Rs.{item.price * item.quantity}</p>
               </div>
             </div>
           ))}

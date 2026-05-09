@@ -234,7 +234,7 @@ export function SearchFilters({ onFilterChange, categories = [], brands = [] }: 
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm text-muted-foreground">Min</span>
-                    <span className="text-sm font-medium">₹{filters.priceMin}</span>
+                    <span className="text-sm font-medium">Rs.{filters.priceMin}</span>
                   </div>
                   <input
                     type="range"
@@ -249,7 +249,7 @@ export function SearchFilters({ onFilterChange, categories = [], brands = [] }: 
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm text-muted-foreground">Max</span>
-                    <span className="text-sm font-medium">₹{filters.priceMax}</span>
+                    <span className="text-sm font-medium">Rs.{filters.priceMax}</span>
                   </div>
                   <input
                     type="range"
