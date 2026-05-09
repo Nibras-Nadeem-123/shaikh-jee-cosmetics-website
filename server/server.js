@@ -45,6 +45,9 @@ const allowedOrigins = [
   'http://localhost:3001',
   'https://shaikhjee.com',
   'https://www.shaikhjee.com',
+  'https://shaikh-jee-cosmetics-website.vercel.app',
+  // Allow all Vercel preview deployments
+  /^https:\/\/shaikh-jee-cosmetics-website.*\.vercel\.app$/,
   process.env.FRONTEND_URL
 ].filter(Boolean);
 
@@ -61,7 +64,16 @@ const corsOptions = {
     }
 
     // In production, check against allowed origins
-    if (allowedOrigins.includes(origin)) {
+    const isAllowed = allowedOrigins.some(allowedOrigin => {
+      if (typeof allowedOrigin === 'string') {
+        return allowedOrigin === origin;
+      } else if (allowedOrigin instanceof RegExp) {
+        return allowedOrigin.test(origin);
+      }
+      return false;
+    });
+
+    if (isAllowed) {
       return callback(null, true);
     }
 
