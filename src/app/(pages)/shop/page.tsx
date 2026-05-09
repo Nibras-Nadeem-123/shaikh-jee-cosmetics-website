@@ -6,6 +6,9 @@ import { CollectionJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://shaikhjee.com';
 
+// Force dynamic rendering for shop page (needs fresh product data)
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Shop All Products | Shaikh Jee Cosmetics',
   description: 'Browse our complete collection of premium cosmetics, skincare, and beauty products. Find the perfect products for your beauty routine.',
@@ -21,7 +24,7 @@ export default async function ShopPage() {
   let products: any[] = [];
   try {
     const res = await fetch(`${API_URL}/products?limit=10&featured=true`, {
-      cache: 'no-store'
+      next: { revalidate: 0 } // Force fresh data for dynamic page
     });
     if (res.ok) {
       const data = await res.json();
