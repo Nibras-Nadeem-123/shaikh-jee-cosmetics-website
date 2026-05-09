@@ -294,11 +294,11 @@ export const AdminDashboard = () => {
 
     if (!user || user.role !== "admin") {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-muted/20">
-                <div className="text-center space-y-4">
+            <div className="flex items-center justify-center min-h-screen bg-muted/20">
+                <div className="space-y-4 text-center">
                     <h2 className="text-2xl font-bold">Unauthorized Access</h2>
                     <p>Only administrators may enter the Vault.</p>
-                    <button onClick={() => router.push('/login')} className="px-8 py-3 bg-primary text-white rounded-full">Sign In as Admin</button>
+                    <button onClick={() => router.push('/login')} className="px-8 py-3 text-white rounded-full bg-primary">Sign In as Admin</button>
                 </div>
             </div>
         );
@@ -332,28 +332,28 @@ export const AdminDashboard = () => {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
+            <div className="flex items-center justify-center min-h-screen">
                 <LoadingSpinner />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-muted/20 pb-20">
+        <div className="min-h-screen pb-20 bg-muted/20">
             {/* Management Header Banner */}
-            <div className="bg-foreground text-white pt-12 pb-24 relative overflow-hidden">
+            <div className="relative pt-12 pb-24 overflow-hidden text-white bg-foreground">
                 <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 rounded-full blur-[150px] translate-x-1/2 -translate-y-1/2" />
-                <div className="container mx-auto px-4 lg:px-8 relative z-10">
-                    <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+                <div className="container relative z-10 px-4 mx-auto lg:px-8">
+                    <div className="flex flex-col items-center justify-between gap-8 md:flex-row">
                         <div className="space-y-2 text-center md:text-left">
                             <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] border border-white/10 mb-2 leading-none">
                                 Administrator Vault
                             </div>
-                            <h1 className="text-4xl lg:text-5xl font-bold tracking-tight">Shaikh Jee <span className="text-primary italic">Control</span></h1>
-                            <p className="opacity-70 font-medium italic">Overseeing the legacy of luxury beauty and commerce.</p>
+                            <h1 className="text-4xl font-bold tracking-tight lg:text-5xl">Shaikh Jee <span className="italic text-primary">Control</span></h1>
+                            <p className="italic font-medium opacity-70">Overseeing the legacy of luxury beauty and commerce.</p>
                         </div>
                         <div className="flex gap-4">
-                            <button onClick={() => { resetProductForm(); setIsModalOpen(true); }} className="px-8 py-4 bg-primary text-white font-bold rounded-full text-xs uppercase tracking-widest shadow-xl shadow-primary/20 flex items-center gap-2 hover:scale-105 transition-all">
+                            <button onClick={() => { resetProductForm(); setIsModalOpen(true); }} className="flex items-center gap-2 px-8 py-4 text-xs font-bold tracking-widest text-white uppercase transition-all rounded-full shadow-xl bg-primary shadow-primary/20 hover:scale-105">
                                 <Plus size={16} />
                                 New Product
                             </button>
@@ -362,9 +362,9 @@ export const AdminDashboard = () => {
                 </div>
             </div>
 
-            <div className="container mx-auto px-4 lg:px-8 -mt-12">
+            <div className="container px-4 mx-auto -mt-12 lg:px-8">
                 {/* Navigation Tabs */}
-                <div className="bg-white rounded-full p-2 shadow-2xl shadow-black/5 border border-border flex flex-wrap gap-2 mb-12 max-w-fit mx-auto md:mx-0">
+                <div className="flex flex-wrap gap-2 p-2 mx-auto mb-12 bg-white border rounded-full shadow-2xl shadow-black/5 border-border max-w-fit md:mx-0">
                     {[
                         { id: "overview", label: "Overview", icon: BarChart3 },
                         { id: "products", label: "Products", icon: Package },
@@ -377,7 +377,7 @@ export const AdminDashboard = () => {
                             onClick={() => setActiveTab(tab.id as any)}
                             className={`flex items-center gap-2 px-8 py-3.5 rounded-full transition-all text-xs font-bold uppercase tracking-widest ${activeTab === tab.id
                                 ? "bg-primary text-white shadow-lg shadow-primary/20 scale-105"
-                                : "bg-transparent text-muted-foreground hover:bg-muted"
+                                : "bg-gray-500 text-white shadow-lg shadow-primary/20 scale-105"
                                 }`}
                         >
                             <tab.icon size={16} />
@@ -389,15 +389,15 @@ export const AdminDashboard = () => {
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center py-32 space-y-4">
                         <Loader2 className="animate-spin text-primary" size={48} />
-                        <p className="font-bold italic text-muted-foreground">Accessing the Vault...</p>
+                        <p className="italic font-bold text-muted-foreground">Accessing the Vault...</p>
                     </div>
                 ) : (
                     <>
                         {/* Overview Tab */}
                         {activeTab === "overview" && (
-                            <div className="space-y-12 animate-in fade-in slide-in-from-bottom duration-500">
+                            <div className="space-y-12 duration-500 animate-in fade-in slide-in-from-bottom">
                                 {/* Stats Grid */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                                <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
                                     {stats.map((stat, index) => (
                                         <div
                                             key={index}
@@ -408,17 +408,17 @@ export const AdminDashboard = () => {
                                                     <stat.icon size={26} />
                                                 </div>
                                                 <div className="flex flex-col items-end">
-                                                    <div className="flex items-center gap-1 text-green-500 text-xs font-bold bg-green-50 px-2 py-1 rounded-full border border-green-100">
+                                                    <div className="flex items-center gap-1 px-2 py-1 text-xs font-bold text-green-500 border border-green-100 rounded-full bg-green-50">
                                                         <TrendingUp size={12} />
                                                         {stat.trend}
                                                     </div>
                                                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-2 px-1">Live data</p>
                                                 </div>
                                             </div>
-                                            <div className="text-4xl font-extrabold text-foreground tracking-tighter mb-1">
+                                            <div className="mb-1 text-4xl font-extrabold tracking-tighter text-foreground">
                                                 {stat.value}
                                             </div>
-                                            <div className="text-sm font-bold text-muted-foreground uppercase tracking-widest">
+                                            <div className="text-sm font-bold tracking-widest uppercase text-muted-foreground">
                                                 {stat.label}
                                             </div>
                                             <ArrowUpRight className="absolute bottom-6 right-6 text-muted-foreground opacity-20" size={32} />
@@ -428,7 +428,7 @@ export const AdminDashboard = () => {
 
                                 {/* Recent Orders Table */}
                                 <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-primary/5">
-                                    <h2 className="text-2xl font-bold text-foreground tracking-tight mb-8">Recent Acquisitions</h2>
+                                    <h2 className="mb-8 text-2xl font-bold tracking-tight text-foreground">Recent Acquisitions</h2>
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-left border-separate border-spacing-y-4">
                                             <thead>
@@ -441,15 +441,15 @@ export const AdminDashboard = () => {
                                             </thead>
                                             <tbody>
                                                 {orders.slice(0, 5).map((o) => (
-                                                    <tr key={o._id} className="bg-muted/10 hover:bg-white transition-all">
-                                                        <td className="py-4 px-6 font-bold rounded-l-3xl">#{o._id.slice(-6).toUpperCase()}</td>
+                                                    <tr key={o._id} className="transition-all bg-muted/10 hover:bg-white">
+                                                        <td className="px-6 py-4 font-bold rounded-l-3xl">#{o._id.slice(-6).toUpperCase()}</td>
                                                         <td className="px-6">{o.shippingAddress?.name}</td>
                                                         <td className="px-6">
                                                             <span className={`px-4 py-1 rounded-full text-[10px] font-bold uppercase ${getStatusColor(o.orderStatus)}`}>
                                                                 {o.orderStatus}
                                                             </span>
                                                         </td>
-                                                        <td className="px-6 text-right font-extrabold rounded-r-3xl">Rs.{o.totalPrice}</td>
+                                                        <td className="px-6 font-extrabold text-right rounded-r-3xl">Rs.{o.totalPrice}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -462,10 +462,10 @@ export const AdminDashboard = () => {
                         {/* Products Tab */}
                         {activeTab === "products" && (
                             <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-primary/5 animate-in fade-in slide-in-from-bottom duration-500">
-                                <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-12">
+                                <div className="flex flex-col items-center justify-between gap-8 mb-12 md:flex-row">
                                     <div className="space-y-1 text-center md:text-left">
-                                        <h2 className="text-3xl font-bold text-foreground tracking-tight">The Boutique Registry</h2>
-                                        <p className="text-muted-foreground text-sm font-medium italic">Managing {products.length} signature premium items</p>
+                                        <h2 className="text-3xl font-bold tracking-tight text-foreground">The Boutique Registry</h2>
+                                        <p className="text-sm italic font-medium text-muted-foreground">Managing {products.length} signature premium items</p>
                                     </div>
                                 </div>
 
@@ -473,34 +473,34 @@ export const AdminDashboard = () => {
                                     <table className="w-full text-left border-separate border-spacing-y-6">
                                         <thead>
                                             <tr className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">
-                                                <th className="pb-4 px-6">Product Item</th>
-                                                <th className="pb-4 px-6">Category</th>
-                                                <th className="pb-4 px-6">Price</th>
-                                                <th className="pb-4 px-6 text-center">Availability</th>
-                                                <th className="pb-4 px-6 text-right">Management</th>
+                                                <th className="px-6 pb-4">Product Item</th>
+                                                <th className="px-6 pb-4">Category</th>
+                                                <th className="px-6 pb-4">Price</th>
+                                                <th className="px-6 pb-4 text-center">Availability</th>
+                                                <th className="px-6 pb-4 text-right">Management</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {products.map((product) => (
-                                                <tr key={product._id} className="group bg-muted/10 hover:bg-white hover:shadow-2xl transition-all text-sm rounded-3xl">
-                                                    <td className="py-4 px-6 rounded-l-3xl">
+                                                <tr key={product._id} className="text-sm transition-all group bg-muted/10 hover:bg-white hover:shadow-2xl rounded-3xl">
+                                                    <td className="px-6 py-4 rounded-l-3xl">
                                                         <div className="flex items-center gap-6">
-                                                            <div className="w-16 h-16 relative rounded-2xl overflow-hidden bg-white shrink-0">
+                                                            <div className="relative w-16 h-16 overflow-hidden bg-white rounded-2xl shrink-0">
                                                                 {product.images?.[0] && <Image src={product.images[0]} alt={product.name} fill className="object-cover" />}
                                                             </div>
                                                             <div className="space-y-1">
-                                                                <p className="font-bold text-foreground text-base tracking-tight">{product.name}</p>
+                                                                <p className="text-base font-bold tracking-tight text-foreground">{product.name}</p>
                                                                 <p className="text-[10px] text-muted-foreground font-bold tracking-widest uppercase">ID: {product._id.slice(-8).toUpperCase()}</p>
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="py-4 px-6 font-bold text-primary italic">{product.category}</td>
-                                                    <td className="py-4 px-6 font-extrabold">Rs.{product.price}</td>
-                                                    <td className="py-4 px-6 text-center">
+                                                    <td className="px-6 py-4 italic font-bold text-primary">{product.category}</td>
+                                                    <td className="px-6 py-4 font-extrabold">Rs.{product.price}</td>
+                                                    <td className="px-6 py-4 text-center">
                                                         <select
                                                             value={product.status}
                                                             onChange={(e) => handleUpdateProductStatus(product._id, e.target.value)}
-                                                            className="border rounded px-2 py-1"
+                                                            className="px-2 py-1 border rounded"
                                                             disabled={isSubmitting}
                                                         >
                                                             <option value="active">Active</option>
@@ -508,10 +508,10 @@ export const AdminDashboard = () => {
                                                             <option value="archived">Archived</option>
                                                         </select>
                                                     </td>
-                                                    <td className="py-4 px-6 text-right rounded-r-3xl">
+                                                    <td className="px-6 py-4 text-right rounded-r-3xl">
                                                         <div className="flex items-center justify-end gap-2">
-                                                            <button onClick={() => handleEditProduct(product)} className="p-2 text-muted-foreground hover:text-primary transition-colors"><Edit size={16} /></button>
-                                                            <button onClick={() => handleDeleteProduct(product._id, product.name)} className="p-2 text-destructive hover:text-red-600 transition-colors"><Trash2 size={16} /></button>
+                                                            <button onClick={() => handleEditProduct(product)} className="p-2 transition-colors text-muted-foreground hover:text-primary"><Edit size={16} /></button>
+                                                            <button onClick={() => handleDeleteProduct(product._id, product.name)} className="p-2 transition-colors text-destructive hover:text-red-600"><Trash2 size={16} /></button>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -524,14 +524,14 @@ export const AdminDashboard = () => {
 
                         {/* Delete Confirmation Modal */}
                         {deleteConfirmation && (
-                            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+                            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
                                 <div className="bg-white w-full max-w-md rounded-[3rem] p-10 relative animate-in zoom-in duration-300 text-center space-y-6">
-                                    <AlertCircle size={48} className="text-destructive mx-auto" />
+                                    <AlertCircle size={48} className="mx-auto text-destructive" />
                                     <h2 className="text-2xl font-bold tracking-tight text-foreground">Confirm Deletion</h2>
                                     <p className="text-muted-foreground">Are you sure you want to delete {deleteConfirmation.type === 'user' ? 'user' : 'product'} <span className="font-bold">"{deleteConfirmation.name}"</span>? This action cannot be undone.</p>
-                                    <div className="flex gap-4 justify-center">
-                                        <button onClick={() => setDeleteConfirmation(null)} className="flex-1 py-4 border-2 border-border text-foreground font-bold rounded-full hover:bg-muted transition-all">Cancel</button>
-                                        <button onClick={confirmDelete} disabled={isSubmitting} className="flex-1 py-4 bg-destructive text-white font-bold rounded-full hover:bg-red-600 transition-all disabled:opacity-50">
+                                    <div className="flex justify-center gap-4">
+                                        <button onClick={() => setDeleteConfirmation(null)} className="flex-1 py-4 font-bold transition-all border-2 rounded-full border-border text-foreground hover:bg-muted">Cancel</button>
+                                        <button onClick={confirmDelete} disabled={isSubmitting} className="flex-1 py-4 font-bold text-white transition-all rounded-full bg-destructive hover:bg-red-600 disabled:opacity-50">
                                             {isSubmitting ? <Loader2 className="animate-spin" /> : "Delete"}
                                         </button>
                                     </div>
@@ -541,9 +541,9 @@ export const AdminDashboard = () => {
 
                         {/* Order Details Modal */}
                         {selectedOrder && (
-                            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+                            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
                                 <div className="bg-white w-full max-w-3xl rounded-[3rem] p-10 relative animate-in zoom-in duration-300 max-h-[90vh] overflow-y-auto">
-                                    <button onClick={() => setSelectedOrder(null)} className="absolute top-8 right-8 p-2 hover:bg-muted rounded-full">
+                                    <button onClick={() => setSelectedOrder(null)} className="absolute p-2 rounded-full top-8 right-8 hover:bg-muted">
                                         <X size={24} />
                                     </button>
 
@@ -552,7 +552,7 @@ export const AdminDashboard = () => {
                                         <div className="flex items-start justify-between">
                                             <div>
                                                 <h2 className="text-3xl font-bold tracking-tight">Order Details</h2>
-                                                <p className="text-muted-foreground text-sm mt-1">
+                                                <p className="mt-1 text-sm text-muted-foreground">
                                                     {selectedOrder.orderNumber || `ORD-${selectedOrder._id.slice(-8).toUpperCase()}`}
                                                 </p>
                                             </div>
@@ -562,14 +562,14 @@ export const AdminDashboard = () => {
                                         </div>
 
                                         {/* Order Info Grid */}
-                                        <div className="grid md:grid-cols-2 gap-6">
+                                        <div className="grid gap-6 md:grid-cols-2">
                                             {/* Customer Info */}
-                                            <div className="bg-muted/30 rounded-2xl p-6 space-y-4">
-                                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                                            <div className="p-6 space-y-4 bg-muted/30 rounded-2xl">
+                                                <h3 className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-muted-foreground">
                                                     <Users size={14} /> Customer Information
                                                 </h3>
                                                 <div className="space-y-3">
-                                                    <p className="font-bold text-lg">{selectedOrder.shippingAddress?.name}</p>
+                                                    <p className="text-lg font-bold">{selectedOrder.shippingAddress?.name}</p>
                                                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                                         <Mail size={14} />
                                                         {selectedOrder.shippingAddress?.email}
@@ -582,8 +582,8 @@ export const AdminDashboard = () => {
                                             </div>
 
                                             {/* Shipping Address */}
-                                            <div className="bg-muted/30 rounded-2xl p-6 space-y-4">
-                                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                                            <div className="p-6 space-y-4 bg-muted/30 rounded-2xl">
+                                                <h3 className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-muted-foreground">
                                                     <MapPin size={14} /> Shipping Address
                                                 </h3>
                                                 <div className="space-y-1 text-sm">
@@ -598,38 +598,38 @@ export const AdminDashboard = () => {
                                         </div>
 
                                         {/* Order Meta */}
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                            <div className="bg-primary/5 rounded-2xl p-4 text-center">
+                                        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                                            <div className="p-4 text-center bg-primary/5 rounded-2xl">
                                                 <Calendar size={20} className="mx-auto mb-2 text-primary" />
                                                 <p className="text-xs text-muted-foreground">Order Date</p>
-                                                <p className="font-bold text-sm">
+                                                <p className="text-sm font-bold">
                                                     {new Date(selectedOrder.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                                                 </p>
                                             </div>
-                                            <div className="bg-primary/5 rounded-2xl p-4 text-center">
+                                            <div className="p-4 text-center bg-primary/5 rounded-2xl">
                                                 <CreditCard size={20} className="mx-auto mb-2 text-primary" />
                                                 <p className="text-xs text-muted-foreground">Payment</p>
-                                                <p className="font-bold text-sm">{selectedOrder.paymentMethod}</p>
+                                                <p className="text-sm font-bold">{selectedOrder.paymentMethod}</p>
                                             </div>
-                                            <div className="bg-primary/5 rounded-2xl p-4 text-center">
+                                            <div className="p-4 text-center bg-primary/5 rounded-2xl">
                                                 <Package size={20} className="mx-auto mb-2 text-primary" />
                                                 <p className="text-xs text-muted-foreground">Items</p>
-                                                <p className="font-bold text-sm">{selectedOrder.orderItems?.length || 0}</p>
+                                                <p className="text-sm font-bold">{selectedOrder.orderItems?.length || 0}</p>
                                             </div>
-                                            <div className="bg-green-50 rounded-2xl p-4 text-center">
+                                            <div className="p-4 text-center bg-green-50 rounded-2xl">
                                                 <DollarSign size={20} className="mx-auto mb-2 text-green-600" />
                                                 <p className="text-xs text-muted-foreground">Total</p>
-                                                <p className="font-bold text-sm text-green-600">Rs.{selectedOrder.totalPrice?.toLocaleString()}</p>
+                                                <p className="text-sm font-bold text-green-600">Rs.{selectedOrder.totalPrice?.toLocaleString()}</p>
                                             </div>
                                         </div>
 
                                         {/* Order Items */}
                                         <div>
-                                            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">Order Items</h3>
+                                            <h3 className="mb-4 text-xs font-bold tracking-widest uppercase text-muted-foreground">Order Items</h3>
                                             <div className="space-y-3">
                                                 {selectedOrder.orderItems?.map((item: any, idx: number) => (
-                                                    <div key={idx} className="flex items-center gap-4 bg-muted/20 rounded-2xl p-4">
-                                                        <div className="w-16 h-16 bg-white rounded-xl overflow-hidden flex-shrink-0">
+                                                    <div key={idx} className="flex items-center gap-4 p-4 bg-muted/20 rounded-2xl">
+                                                        <div className="flex-shrink-0 w-16 h-16 overflow-hidden bg-white rounded-xl">
                                                             {item.image && (
                                                                 <Image src={item.image} alt={item.name} width={64} height={64} className="object-cover w-full h-full" />
                                                             )}
@@ -651,7 +651,7 @@ export const AdminDashboard = () => {
                                         </div>
 
                                         {/* Price Summary */}
-                                        <div className="bg-muted/30 rounded-2xl p-6">
+                                        <div className="p-6 bg-muted/30 rounded-2xl">
                                             <div className="space-y-3">
                                                 <div className="flex justify-between text-sm">
                                                     <span className="text-muted-foreground">Subtotal</span>
@@ -667,7 +667,7 @@ export const AdminDashboard = () => {
                                                         <span>-Rs.{selectedOrder.discount.amount.toLocaleString()}</span>
                                                     </div>
                                                 )}
-                                                <div className="border-t border-border pt-3 flex justify-between font-bold text-lg">
+                                                <div className="flex justify-between pt-3 text-lg font-bold border-t border-border">
                                                     <span>Total</span>
                                                     <span className="text-primary">Rs.{selectedOrder.totalPrice?.toLocaleString()}</span>
                                                 </div>
@@ -675,7 +675,7 @@ export const AdminDashboard = () => {
                                         </div>
 
                                         {/* Update Status */}
-                                        <div className="flex items-center justify-between bg-muted/30 rounded-2xl p-6">
+                                        <div className="flex items-center justify-between p-6 bg-muted/30 rounded-2xl">
                                             <div>
                                                 <h3 className="font-bold">Update Order Status</h3>
                                                 <p className="text-sm text-muted-foreground">Change the status and notify customer</p>
@@ -706,19 +706,19 @@ export const AdminDashboard = () => {
                         {/* Orders Tab */}
                         {activeTab === "orders" && (
                             <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-primary/5 animate-in fade-in slide-in-from-bottom duration-500">
-                                <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-8">
+                                <div className="flex flex-col items-center justify-between gap-8 mb-8 md:flex-row">
                                     <div className="space-y-1 text-center md:text-left">
-                                        <h2 className="text-3xl font-bold text-foreground tracking-tight">Order Chronicles</h2>
-                                        <p className="text-muted-foreground text-sm font-medium italic">Managing {orders.length} customer orders</p>
+                                        <h2 className="text-3xl font-bold tracking-tight text-foreground">Order Chronicles</h2>
+                                        <p className="text-sm italic font-medium text-muted-foreground">Managing {orders.length} customer orders</p>
                                     </div>
                                     <div className="relative">
-                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+                                        <Search className="absolute -translate-y-1/2 left-4 top-1/2 text-muted-foreground" size={18} />
                                         <input
                                             type="text"
                                             placeholder="Search orders..."
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
-                                            className="pl-12 pr-6 py-3 bg-muted/50 rounded-full w-64 focus:bg-white border border-transparent focus:border-primary transition-all outline-none text-sm"
+                                            className="w-64 py-3 pl-12 pr-6 text-sm transition-all border border-transparent rounded-full outline-none bg-muted/50 focus:bg-white focus:border-primary"
                                         />
                                     </div>
                                 </div>
@@ -743,8 +743,8 @@ export const AdminDashboard = () => {
                                                     o._id.toLowerCase().includes(searchQuery.toLowerCase())
                                                 )
                                                 .map((o) => (
-                                                <tr key={o._id} className="bg-muted/10 hover:bg-white hover:shadow-lg transition-all text-sm">
-                                                    <td className="py-6 px-6 font-bold rounded-l-3xl">
+                                                <tr key={o._id} className="text-sm transition-all bg-muted/10 hover:bg-white hover:shadow-lg">
+                                                    <td className="px-6 py-6 font-bold rounded-l-3xl">
                                                         <div>
                                                             <p className="font-bold">ORD-{o._id.slice(-8).toUpperCase()}</p>
                                                             <p className="text-[10px] text-muted-foreground">{o.orderNumber || ''}</p>
@@ -781,11 +781,11 @@ export const AdminDashboard = () => {
                                                             <option value="cancelled">Cancelled</option>
                                                         </select>
                                                     </td>
-                                                    <td className="py-6 px-6 font-extrabold">Rs.{o.totalPrice?.toLocaleString()}</td>
-                                                    <td className="py-6 px-6 text-right rounded-r-3xl">
+                                                    <td className="px-6 py-6 font-extrabold">Rs.{o.totalPrice?.toLocaleString()}</td>
+                                                    <td className="px-6 py-6 text-right rounded-r-3xl">
                                                         <button
                                                             onClick={() => setSelectedOrder(o)}
-                                                            className="p-2 text-primary hover:bg-primary/10 rounded-full transition-colors"
+                                                            className="p-2 transition-colors rounded-full text-primary hover:bg-primary/10"
                                                             title="View Order Details"
                                                         >
                                                             <Eye size={18} />
@@ -796,7 +796,7 @@ export const AdminDashboard = () => {
                                         </tbody>
                                     </table>
                                     {orders.length === 0 && (
-                                        <div className="text-center py-12 text-muted-foreground">
+                                        <div className="py-12 text-center text-muted-foreground">
                                             <ShoppingBag className="mx-auto mb-4 opacity-50" size={48} />
                                             <p className="font-medium">No orders yet</p>
                                         </div>
@@ -808,19 +808,19 @@ export const AdminDashboard = () => {
                         {/* Users Tab */}
                         {activeTab === "users" && (
                             <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-primary/5 animate-in fade-in slide-in-from-bottom duration-500">
-                                <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-8">
+                                <div className="flex flex-col items-center justify-between gap-8 mb-8 md:flex-row">
                                     <div className="space-y-1 text-center md:text-left">
-                                        <h2 className="text-3xl font-bold text-foreground tracking-tight">User Management</h2>
-                                        <p className="text-muted-foreground text-sm font-medium italic">Managing {users.length} registered users</p>
+                                        <h2 className="text-3xl font-bold tracking-tight text-foreground">User Management</h2>
+                                        <p className="text-sm italic font-medium text-muted-foreground">Managing {users.length} registered users</p>
                                     </div>
                                     <div className="relative">
-                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+                                        <Search className="absolute -translate-y-1/2 left-4 top-1/2 text-muted-foreground" size={18} />
                                         <input
                                             type="text"
                                             placeholder="Search users..."
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
-                                            className="pl-12 pr-6 py-3 bg-muted/50 rounded-full w-64 focus:bg-white border border-transparent focus:border-primary transition-all outline-none text-sm"
+                                            className="w-64 py-3 pl-12 pr-6 text-sm transition-all border border-transparent rounded-full outline-none bg-muted/50 focus:bg-white focus:border-primary"
                                         />
                                     </div>
                                 </div>
@@ -842,10 +842,10 @@ export const AdminDashboard = () => {
                                                     u.email?.toLowerCase().includes(searchQuery.toLowerCase())
                                                 )
                                                 .map((u) => (
-                                                <tr key={u._id} className="bg-muted/10 hover:bg-white hover:shadow-lg transition-all text-sm">
-                                                    <td className="py-6 px-6 font-bold rounded-l-3xl">
+                                                <tr key={u._id} className="text-sm transition-all bg-muted/10 hover:bg-white hover:shadow-lg">
+                                                    <td className="px-6 py-6 font-bold rounded-l-3xl">
                                                         <div className="flex items-center gap-4">
-                                                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                                                            <div className="flex items-center justify-center w-10 h-10 font-bold rounded-full bg-primary/10 text-primary">
                                                                 {u.name?.charAt(0)?.toUpperCase() || '?'}
                                                             </div>
                                                             <div>
@@ -871,11 +871,11 @@ export const AdminDashboard = () => {
                                                     <td className="px-6 text-xs text-muted-foreground">
                                                         {new Date(u.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                                                     </td>
-                                                    <td className="py-6 px-6 text-right rounded-r-3xl">
+                                                    <td className="px-6 py-6 text-right rounded-r-3xl">
                                                         {u._id !== user?.id && (
                                                             <button
                                                                 onClick={() => handleDeleteUser(u._id, u.name)}
-                                                                className="p-2 text-destructive hover:text-red-600 transition-colors"
+                                                                className="p-2 transition-colors text-destructive hover:text-red-600"
                                                                 disabled={isSubmitting}
                                                             >
                                                                 <Trash2 size={16} />
@@ -887,7 +887,7 @@ export const AdminDashboard = () => {
                                         </tbody>
                                     </table>
                                     {users.length === 0 && (
-                                        <div className="text-center py-12 text-muted-foreground">
+                                        <div className="py-12 text-center text-muted-foreground">
                                             <Users className="mx-auto mb-4 opacity-50" size={48} />
                                             <p className="font-medium">No users found</p>
                                         </div>
@@ -908,40 +908,40 @@ export const AdminDashboard = () => {
 
             {/* Product Modal (Add/Edit) */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
                     <div className="bg-white w-full max-w-2xl rounded-[3rem] p-10 relative animate-in zoom-in duration-300 max-h-full overflow-y-auto">
-                        <button onClick={() => { setIsModalOpen(false); resetProductForm(); }} className="absolute top-8 right-8 p-2 hover:bg-muted rounded-full"><X size={24} /></button>
-                        <h2 className="text-3xl font-bold mb-8 tracking-tight">{editingProduct ? 'Edit Product' : 'Add Signature Item'}</h2>
+                        <button onClick={() => { setIsModalOpen(false); resetProductForm(); }} className="absolute p-2 rounded-full top-8 right-8 hover:bg-muted"><X size={24} /></button>
+                        <h2 className="mb-8 text-3xl font-bold tracking-tight">{editingProduct ? 'Edit Product' : 'Add Signature Item'}</h2>
                         <form onSubmit={handleSaveProduct} className="space-y-6">
-                            <div className="grid md:grid-cols-2 gap-6">
+                            <div className="grid gap-6 md:grid-cols-2">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Luxe Name</label>
-                                    <input type="text" required value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value, slug: e.target.value.toLowerCase().replace(/ /g, '-') })} className="w-full px-6 py-4 bg-muted/50 rounded-2xl focus:bg-white border-transparent focus:border-primary border transition-all outline-none" />
+                                    <input type="text" required value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value, slug: e.target.value.toLowerCase().replace(/ /g, '-') })} className="w-full px-6 py-4 transition-all border border-transparent outline-none bg-muted/50 rounded-2xl focus:bg-white focus:border-primary" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Valuation (Rs.)</label>
-                                    <input type="number" required value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: parseInt(e.target.value) })} className="w-full px-6 py-4 bg-muted/50 rounded-2xl focus:bg-white border-transparent focus:border-primary border transition-all outline-none" />
+                                    <input type="number" required value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: parseInt(e.target.value) })} className="w-full px-6 py-4 transition-all border border-transparent outline-none bg-muted/50 rounded-2xl focus:bg-white focus:border-primary" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Original Price (Rs.)</label>
-                                    <input type="number" value={newProduct.originalPrice} onChange={(e) => setNewProduct({ ...newProduct, originalPrice: parseInt(e.target.value) })} className="w-full px-6 py-4 bg-muted/50 rounded-2xl focus:bg-white border-transparent focus:border-primary border transition-all outline-none" placeholder="0" />
+                                    <input type="number" value={newProduct.originalPrice} onChange={(e) => setNewProduct({ ...newProduct, originalPrice: parseInt(e.target.value) })} className="w-full px-6 py-4 transition-all border border-transparent outline-none bg-muted/50 rounded-2xl focus:bg-white focus:border-primary" placeholder="0" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Discount (%)</label>
-                                    <input type="number" value={newProduct.discount} onChange={(e) => setNewProduct({ ...newProduct, discount: parseInt(e.target.value) })} className="w-full px-6 py-4 bg-muted/50 rounded-2xl focus:bg-white border-transparent focus:border-primary border transition-all outline-none" placeholder="0" />
+                                    <input type="number" value={newProduct.discount} onChange={(e) => setNewProduct({ ...newProduct, discount: parseInt(e.target.value) })} className="w-full px-6 py-4 transition-all border border-transparent outline-none bg-muted/50 rounded-2xl focus:bg-white focus:border-primary" placeholder="0" />
                                 </div>
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Subcategory</label>
-                                <input type="text" value={newProduct.subcategory} onChange={(e) => setNewProduct({ ...newProduct, subcategory: e.target.value })} className="w-full px-6 py-4 bg-muted/50 rounded-2xl focus:bg-white border-transparent focus:border-primary border transition-all outline-none" placeholder="e.g. Lipsticks" />
+                                <input type="text" value={newProduct.subcategory} onChange={(e) => setNewProduct({ ...newProduct, subcategory: e.target.value })} className="w-full px-6 py-4 transition-all border border-transparent outline-none bg-muted/50 rounded-2xl focus:bg-white focus:border-primary" placeholder="e.g. Lipsticks" />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Brand</label>
-                                <input type="text" value={newProduct.brand} onChange={(e) => setNewProduct({ ...newProduct, brand: e.target.value })} className="w-full px-6 py-4 bg-muted/50 rounded-2xl focus:bg-white border-transparent focus:border-primary border transition-all outline-none" placeholder="e.g. Fenty Beauty" />
+                                <input type="text" value={newProduct.brand} onChange={(e) => setNewProduct({ ...newProduct, brand: e.target.value })} className="w-full px-6 py-4 transition-all border border-transparent outline-none bg-muted/50 rounded-2xl focus:bg-white focus:border-primary" placeholder="e.g. Fenty Beauty" />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Department</label>
-                                <select value={newProduct.category} onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })} className="w-full px-6 py-4 bg-muted/50 rounded-2xl outline-none appearance-none font-bold text-sm">
+                                <select value={newProduct.category} onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })} className="w-full px-6 py-4 text-sm font-bold outline-none appearance-none bg-muted/50 rounded-2xl">
                                     <option>Lips</option>
                                     <option>Face</option>
                                     <option>Eyes</option>
@@ -950,43 +950,43 @@ export const AdminDashboard = () => {
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Visual URL</label>
-                                <input type="text" required value={newProduct.images[0]} onChange={(e) => setNewProduct({ ...newProduct, images: [e.target.value] })} className="w-full px-6 py-4 bg-muted/50 rounded-2xl focus:bg-white border-transparent focus:border-primary border transition-all outline-none" />
+                                <input type="text" required value={newProduct.images[0]} onChange={(e) => setNewProduct({ ...newProduct, images: [e.target.value] })} className="w-full px-6 py-4 transition-all border border-transparent outline-none bg-muted/50 rounded-2xl focus:bg-white focus:border-primary" />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Ingredients (comma-separated)</label>
-                                <textarea rows={2} value={newProduct.ingredients} onChange={(e) => setNewProduct({ ...newProduct, ingredients: e.target.value })} className="w-full px-6 py-4 bg-muted/50 rounded-2xl focus:bg-white border-transparent focus:border-primary border transition-all outline-none resize-none" placeholder="Ingredient 1, Ingredient 2" />
+                                <textarea rows={2} value={newProduct.ingredients} onChange={(e) => setNewProduct({ ...newProduct, ingredients: e.target.value })} className="w-full px-6 py-4 transition-all border border-transparent outline-none resize-none bg-muted/50 rounded-2xl focus:bg-white focus:border-primary" placeholder="Ingredient 1, Ingredient 2" />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Usage Instructions</label>
-                                <textarea rows={2} value={newProduct.usage} onChange={(e) => setNewProduct({ ...newProduct, usage: e.target.value })} className="w-full px-6 py-4 bg-muted/50 rounded-2xl focus:bg-white border-transparent focus:border-primary border transition-all outline-none resize-none" placeholder="How to use this product" />
+                                <textarea rows={2} value={newProduct.usage} onChange={(e) => setNewProduct({ ...newProduct, usage: e.target.value })} className="w-full px-6 py-4 transition-all border border-transparent outline-none resize-none bg-muted/50 rounded-2xl focus:bg-white focus:border-primary" placeholder="How to use this product" />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Skin Types (comma-separated)</label>
-                                <input type="text" value={newProduct.skinTypes} onChange={(e) => setNewProduct({ ...newProduct, skinTypes: e.target.value })} className="w-full px-6 py-4 bg-muted/50 rounded-2xl focus:bg-white border-transparent focus:border-primary border transition-all outline-none" placeholder="Oily, Dry, Combination" />
+                                <input type="text" value={newProduct.skinTypes} onChange={(e) => setNewProduct({ ...newProduct, skinTypes: e.target.value })} className="w-full px-6 py-4 transition-all border border-transparent outline-none bg-muted/50 rounded-2xl focus:bg-white focus:border-primary" placeholder="Oily, Dry, Combination" />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Narrative</label>
-                                <textarea rows={3} value={newProduct.description} onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })} className="w-full px-6 py-4 bg-muted/50 rounded-2xl focus:bg-white border-transparent focus:border-primary border transition-all outline-none resize-none" />
+                                <textarea rows={3} value={newProduct.description} onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })} className="w-full px-6 py-4 transition-all border border-transparent outline-none resize-none bg-muted/50 rounded-2xl focus:bg-white focus:border-primary" />
                             </div>
-                            <div className="grid md:grid-cols-2 gap-6 pt-4">
+                            <div className="grid gap-6 pt-4 md:grid-cols-2">
                                 <label className="flex items-center gap-2 text-sm font-medium text-foreground">
-                                    <input type="checkbox" checked={newProduct.isNew} onChange={(e) => setNewProduct({ ...newProduct, isNew: e.target.checked })} className="w-4 h-4 text-primary rounded" />
+                                    <input type="checkbox" checked={newProduct.isNew} onChange={(e) => setNewProduct({ ...newProduct, isNew: e.target.checked })} className="w-4 h-4 rounded text-primary" />
                                     New Arrival
                                 </label>
                                 <label className="flex items-center gap-2 text-sm font-medium text-foreground">
-                                    <input type="checkbox" checked={newProduct.isBestSeller} onChange={(e) => setNewProduct({ ...newProduct, isBestSeller: e.target.checked })} className="w-4 h-4 text-primary rounded" />
+                                    <input type="checkbox" checked={newProduct.isBestSeller} onChange={(e) => setNewProduct({ ...newProduct, isBestSeller: e.target.checked })} className="w-4 h-4 rounded text-primary" />
                                     Best Seller
                                 </label>
                                 <label className="flex items-center gap-2 text-sm font-medium text-foreground">
-                                    <input type="checkbox" checked={newProduct.inStock} onChange={(e) => setNewProduct({ ...newProduct, inStock: e.target.checked })} className="w-4 h-4 text-primary rounded" />
+                                    <input type="checkbox" checked={newProduct.inStock} onChange={(e) => setNewProduct({ ...newProduct, inStock: e.target.checked })} className="w-4 h-4 rounded text-primary" />
                                     In Stock
                                 </label>
                                 <label className="flex items-center gap-2 text-sm font-medium text-foreground">
-                                    <input type="checkbox" checked={newProduct.featured} onChange={(e) => setNewProduct({ ...newProduct, featured: e.target.checked })} className="w-4 h-4 text-primary rounded" />
+                                    <input type="checkbox" checked={newProduct.featured} onChange={(e) => setNewProduct({ ...newProduct, featured: e.target.checked })} className="w-4 h-4 rounded text-primary" />
                                     Featured Product
                                 </label>
                             </div>
-                            <button disabled={isSubmitting} type="submit" className="w-full py-5 bg-primary text-white font-bold rounded-full shadow-xl flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50 transition-all">
+                            <button disabled={isSubmitting} type="submit" className="flex items-center justify-center w-full gap-3 py-5 font-bold text-white transition-all rounded-full shadow-xl bg-primary active:scale-95 disabled:opacity-50">
                                 {isSubmitting ? <Loader2 className="animate-spin" /> : <><Plus size={20} /> {editingProduct ? 'Update Product' : 'Register Luxe Item'}</>}
                             </button>
                         </form>
