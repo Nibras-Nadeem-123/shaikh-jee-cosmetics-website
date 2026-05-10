@@ -960,15 +960,15 @@ export const AdminDashboard = () => {
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Valuation (Rs.)</label>
-                                    <input type="number" required value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: parseInt(e.target.value) })} className="w-full px-6 py-4 transition-all border border-transparent outline-none bg-muted/50 rounded-2xl focus:bg-white focus:border-primary" />
+                                    <input type="number" required value={newProduct.price || ''} onChange={(e) => setNewProduct({ ...newProduct, price: parseInt(e.target.value) || 0 })} className="w-full px-6 py-4 transition-all border border-transparent outline-none bg-muted/50 rounded-2xl focus:bg-white focus:border-primary" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Original Price (Rs.)</label>
-                                    <input type="number" value={newProduct.originalPrice} onChange={(e) => setNewProduct({ ...newProduct, originalPrice: parseInt(e.target.value) })} className="w-full px-6 py-4 transition-all border border-transparent outline-none bg-muted/50 rounded-2xl focus:bg-white focus:border-primary" placeholder="0" />
+                                    <input type="number" value={newProduct.originalPrice || ''} onChange={(e) => setNewProduct({ ...newProduct, originalPrice: parseInt(e.target.value) || 0 })} className="w-full px-6 py-4 transition-all border border-transparent outline-none bg-muted/50 rounded-2xl focus:bg-white focus:border-primary" placeholder="0" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Discount (%)</label>
-                                    <input type="number" value={newProduct.discount} onChange={(e) => setNewProduct({ ...newProduct, discount: parseInt(e.target.value) })} className="w-full px-6 py-4 transition-all border border-transparent outline-none bg-muted/50 rounded-2xl focus:bg-white focus:border-primary" placeholder="0" />
+                                    <input type="number" value={newProduct.discount || ''} onChange={(e) => setNewProduct({ ...newProduct, discount: parseInt(e.target.value) || 0 })} className="w-full px-6 py-4 transition-all border border-transparent outline-none bg-muted/50 rounded-2xl focus:bg-white focus:border-primary" placeholder="0" />
                                 </div>
                             </div>
                             <div className="space-y-2">

@@ -243,12 +243,27 @@ export const apiService = {
   // Create product with image file uploads
   createProductWithImages: async (formData: FormData, token: string) => {
     try {
+      // Get CSRF token for the request
+      let csrfToken = getCurrentCSRFToken();
+      if (!csrfToken) {
+        try {
+          csrfToken = await getCSRFToken();
+        } catch (e) {
+          console.warn('Could not get CSRF token');
+        }
+      }
+
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${token}`
+        // Note: Don't set Content-Type for FormData - browser will set it with boundary
+      };
+      if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken;
+      }
+
       const response = await fetch(`${API_URL}/products/admin/new`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-          // Note: Don't set Content-Type for FormData - browser will set it with boundary
-        },
+        headers,
         credentials: 'include',
         body: formData,
       });
@@ -272,12 +287,27 @@ export const apiService = {
   // Update product with image file uploads
   updateProductWithImages: async (productId: string, formData: FormData, token: string) => {
     try {
+      // Get CSRF token for the request
+      let csrfToken = getCurrentCSRFToken();
+      if (!csrfToken) {
+        try {
+          csrfToken = await getCSRFToken();
+        } catch (e) {
+          console.warn('Could not get CSRF token');
+        }
+      }
+
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${token}`
+        // Note: Don't set Content-Type for FormData - browser will set it with boundary
+      };
+      if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken;
+      }
+
       const response = await fetch(`${API_URL}/products/admin/${productId}`, {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`
-          // Note: Don't set Content-Type for FormData - browser will set it with boundary
-        },
+        headers,
         credentials: 'include',
         body: formData,
       });

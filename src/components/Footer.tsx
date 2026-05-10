@@ -127,8 +127,8 @@ export const Footer = () => {
           <div className="flex flex-col md:flex-row justify-between items-center gap-6 text-sm text-foreground/60">
             <p>© {currentYear} <span className="font-bold text-primary">Shaikh Jee</span>. All rights reserved.</p>
             <div className="flex items-center gap-6">
-              <Image src="/visa.svg" alt="Visa" height={32} width={48} className="h-4 w-auto grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all cursor-pointer" />
-              <Image src="/mastercard.svg" alt="Mastercard" height={32} width={48} className="h-6 w-auto grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all cursor-pointer" />
+              <Image src="/visa.svg" alt="Visa" height={32} width={48} style={{ width: 'auto', height: 'auto' }} className="h-4 grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all cursor-pointer" />
+              <Image src="/mastercard.svg" alt="Mastercard" height={32} width={48} style={{ width: 'auto', height: 'auto' }} className="h-6 grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all cursor-pointer" />
               <div className="px-3 py-1 border border-border rounded text-[10px] font-bold tracking-widest uppercase">UPI</div>
             </div>
           </div>
