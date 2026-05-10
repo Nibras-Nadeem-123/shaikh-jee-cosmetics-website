@@ -240,6 +240,64 @@ export const apiService = {
     }
   },
 
+  // Create product with image file uploads
+  createProductWithImages: async (formData: FormData, token: string) => {
+    try {
+      const response = await fetch(`${API_URL}/products/admin/new`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+          // Note: Don't set Content-Type for FormData - browser will set it with boundary
+        },
+        credentials: 'include',
+        body: formData,
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create product');
+      }
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Unexpected response format. Server did not return JSON.');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server. Please check if backend is running.');
+      }
+      throw error;
+    }
+  },
+
+  // Update product with image file uploads
+  updateProductWithImages: async (productId: string, formData: FormData, token: string) => {
+    try {
+      const response = await fetch(`${API_URL}/products/admin/${productId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`
+          // Note: Don't set Content-Type for FormData - browser will set it with boundary
+        },
+        credentials: 'include',
+        body: formData,
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update product');
+      }
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Unexpected response format. Server did not return JSON.');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server. Please check if backend is running.');
+      }
+      throw error;
+    }
+  },
+
   getAllOrders: async (token: string) => {
     try {
       const response = await fetch(`${API_URL}/orders/admin/all`, {

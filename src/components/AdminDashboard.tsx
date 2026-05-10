@@ -56,7 +56,7 @@ export const AdminDashboard = () => {
         originalPrice: 0,
         discount: 0,
         description: "",
-        images: [""],
+        images: [] as string[],
         inStock: true,
         isNew: false,
         shades: [],
@@ -67,6 +67,8 @@ export const AdminDashboard = () => {
         isBestSeller: false,
         featured: false,
     });
+    const [selectedImages, setSelectedImages] = useState<File[]>([]);
+    const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
 
     const router = useRouter();
     const { showToast } = useToast();
@@ -117,7 +119,7 @@ export const AdminDashboard = () => {
             originalPrice: 0,
             discount: 0,
             description: "",
-            images: [""],
+            images: [],
             inStock: true,
             isNew: false,
             shades: [],
@@ -128,7 +130,26 @@ export const AdminDashboard = () => {
             isBestSeller: false,
             featured: false,
         });
+        setSelectedImages([]);
+        setImagePreviewUrls([]);
         setEditingProduct(null);
+    };
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length > 0) {
+            setSelectedImages(prev => [...prev, ...files]);
+            // Create preview URLs
+            const newPreviewUrls = files.map(file => URL.createObjectURL(file));
+            setImagePreviewUrls(prev => [...prev, ...newPreviewUrls]);
+        }
+    };
+
+    const removeImage = (index: number) => {
+        setSelectedImages(prev => prev.filter((_, i) => i !== index));
+        // Revoke the URL to free memory
+        URL.revokeObjectURL(imagePreviewUrls[index]);
+        setImagePreviewUrls(prev => prev.filter((_, i) => i !== index));
     };
 
     const handleSaveProduct = async (e: React.FormEvent) => {
@@ -140,13 +161,28 @@ export const AdminDashboard = () => {
                 throw new Error('No authentication token found');
             }
 
+            // Create FormData for file upload
+            const formData = new FormData();
+
+            // Add product data as JSON string
+            const productData = {
+                ...newProduct,
+                images: newProduct.images // Keep existing images for edit mode
+            };
+            formData.append('data', JSON.stringify(productData));
+
+            // Add image files
+            selectedImages.forEach((file) => {
+                formData.append('images', file);
+            });
+
             if (editingProduct) {
                 // Update existing product
-                await apiService.updateProduct(editingProduct, newProduct, token);
+                await apiService.updateProductWithImages(editingProduct, formData, token);
                 showToast("Product updated successfully!", "success");
             } else {
-                // Create new product
-                await apiService.createProduct(newProduct, token);
+                // Create new product with images
+                await apiService.createProductWithImages(formData, token);
                 showToast("Luxe item added to the vault!", "success");
             }
 
@@ -154,6 +190,7 @@ export const AdminDashboard = () => {
             fetchData();
             resetProductForm();
         } catch (error) {
+            console.error("Product save error:", error);
             showToast(editingProduct ? "Error updating product." : "Error adding product. Please verify admin privileges.", "error");
         } finally {
             setIsSubmitting(false);
@@ -221,7 +258,7 @@ export const AdminDashboard = () => {
             originalPrice: product.originalPrice || 0,
             discount: product.discount || 0,
             description: product.description,
-            images: product.images || [""],
+            images: product.images || [],
             inStock: product.inStock,
             isNew: product.isNew || false,
             shades: product.shades || [],
@@ -232,6 +269,9 @@ export const AdminDashboard = () => {
             isBestSeller: product.isBestSeller || false,
             featured: product.featured || false,
         });
+        // Set existing images as preview URLs
+        setImagePreviewUrls(product.images || []);
+        setSelectedImages([]); // Clear selected files, only show existing images
         setEditingProduct(product._id);
         setIsModalOpen(true);
     };
@@ -949,8 +989,46 @@ export const AdminDashboard = () => {
                                 </select>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Visual URL</label>
-                                <input type="text" required value={newProduct.images[0]} onChange={(e) => setNewProduct({ ...newProduct, images: [e.target.value] })} className="w-full px-6 py-4 transition-all border border-transparent outline-none bg-muted/50 rounded-2xl focus:bg-white focus:border-primary" />
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Product Images</label>
+                                <div className="p-4 border-2 border-dashed rounded-2xl border-muted-foreground/20 bg-muted/30">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        multiple
+                                        onChange={handleImageChange}
+                                        className="hidden"
+                                        id="product-images"
+                                    />
+                                    <label htmlFor="product-images" className="flex flex-col items-center justify-center gap-2 cursor-pointer py-4">
+                                        <Plus size={24} className="text-muted-foreground" />
+                                        <span className="text-sm font-medium text-muted-foreground">Click to upload images</span>
+                                        <span className="text-xs text-muted-foreground/70">PNG, JPG, WebP up to 10MB</span>
+                                    </label>
+                                </div>
+                                {/* Image Previews */}
+                                {imagePreviewUrls.length > 0 && (
+                                    <div className="flex flex-wrap gap-3 mt-4">
+                                        {imagePreviewUrls.map((url, index) => (
+                                            <div key={index} className="relative group">
+                                                <div className="relative w-20 h-20 overflow-hidden bg-white border rounded-xl border-border">
+                                                    <Image src={url} alt={`Preview ${index + 1}`} fill className="object-cover" />
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeImage(index)}
+                                                    className="absolute flex items-center justify-center w-5 h-5 text-white transition-opacity rounded-full opacity-0 -top-2 -right-2 bg-destructive group-hover:opacity-100"
+                                                >
+                                                    <X size={12} />
+                                                </button>
+                                                {index === 0 && (
+                                                    <span className="absolute px-1 text-[8px] font-bold text-white rounded bg-primary -bottom-1 left-1/2 -translate-x-1/2">
+                                                        Primary
+                                                    </span>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Ingredients (comma-separated)</label>
