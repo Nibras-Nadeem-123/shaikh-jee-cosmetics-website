@@ -1,5 +1,18 @@
 import mongoose from 'mongoose';
 
+// Cloudinary image schema for storing image metadata
+const cloudinaryImageSchema = new mongoose.Schema({
+  publicId: { type: String, required: true },
+  url: { type: String, required: true },
+  secureUrl: { type: String },
+  width: { type: Number },
+  height: { type: Number },
+  format: { type: String },
+  bytes: { type: Number },
+  alt: { type: String, default: '' },
+  isPrimary: { type: Boolean, default: false }
+}, { _id: true });
+
 const productSchema = new mongoose.Schema({
   name: { type: String, required: true },
   slug: { type: String, required: true, unique: true },
@@ -9,8 +22,11 @@ const productSchema = new mongoose.Schema({
   price: { type: Number, required: true },
   originalPrice: { type: Number },
   discount: { type: Number },
+  // Legacy string fields for backward compatibility
   image: { type: String },
   images: { type: [String] },
+  // New Cloudinary image documents
+  cloudinaryImages: [cloudinaryImageSchema],
   description: { type: String, required: true },
   ingredients: { type: [String] },
   usage: { type: String },
@@ -52,6 +68,34 @@ const productSchema = new mongoose.Schema({
 productSchema.virtual('availableQuantity').get(function() {
   if (!this.inventory.trackInventory) return Infinity;
   return Math.max(0, this.inventory.quantity - this.inventory.reservedQuantity);
+});
+
+// Virtual for primary image URL (from Cloudinary or legacy)
+productSchema.virtual('primaryImageUrl').get(function() {
+  // First try to get from cloudinaryImages
+  if (this.cloudinaryImages && this.cloudinaryImages.length > 0) {
+    const primary = this.cloudinaryImages.find(img => img.isPrimary);
+    return primary ? primary.url : this.cloudinaryImages[0].url;
+  }
+  // Fallback to legacy image field
+  return this.image || (this.images && this.images[0]) || null;
+});
+
+// Virtual for all image URLs (combining Cloudinary and legacy)
+productSchema.virtual('allImageUrls').get(function() {
+  const urls = [];
+  // Add Cloudinary images first
+  if (this.cloudinaryImages && this.cloudinaryImages.length > 0) {
+    urls.push(...this.cloudinaryImages.map(img => img.url));
+  }
+  // Add legacy images if no Cloudinary images
+  if (urls.length === 0) {
+    if (this.image) urls.push(this.image);
+    if (this.images && this.images.length > 0) {
+      urls.push(...this.images.filter(img => img !== this.image));
+    }
+  }
+  return urls;
 });
 
 // Virtual to check if low stock
@@ -128,6 +172,87 @@ productSchema.methods.releaseReservedStock = async function(quantity, shadeId = 
   this.inventory.reservedQuantity = Math.max(0, this.inventory.reservedQuantity - quantity);
   await this.save();
   return true;
+};
+
+// Method to add a Cloudinary image
+productSchema.methods.addCloudinaryImage = async function(imageData, setAsPrimary = false) {
+  const newImage = {
+    publicId: imageData.publicId,
+    url: imageData.url,
+    secureUrl: imageData.secureUrl || imageData.url,
+    width: imageData.width,
+    height: imageData.height,
+    format: imageData.format,
+    bytes: imageData.bytes,
+    alt: imageData.alt || this.name,
+    isPrimary: setAsPrimary || this.cloudinaryImages.length === 0
+  };
+
+  // If setting as primary, unset other primary images
+  if (newImage.isPrimary) {
+    this.cloudinaryImages.forEach(img => {
+      img.isPrimary = false;
+    });
+  }
+
+  this.cloudinaryImages.push(newImage);
+
+  // Also update legacy image field for backward compatibility
+  if (newImage.isPrimary) {
+    this.image = newImage.url;
+  }
+  if (!this.images) this.images = [];
+  this.images.push(newImage.url);
+
+  await this.save();
+  return newImage;
+};
+
+// Method to remove a Cloudinary image by publicId
+productSchema.methods.removeCloudinaryImage = async function(publicId) {
+  const imageIndex = this.cloudinaryImages.findIndex(img => img.publicId === publicId);
+
+  if (imageIndex === -1) return false;
+
+  const removedImage = this.cloudinaryImages[imageIndex];
+  this.cloudinaryImages.splice(imageIndex, 1);
+
+  // If removed image was primary, set new primary
+  if (removedImage.isPrimary && this.cloudinaryImages.length > 0) {
+    this.cloudinaryImages[0].isPrimary = true;
+    this.image = this.cloudinaryImages[0].url;
+  }
+
+  // Update legacy images array
+  this.images = this.images.filter(url => url !== removedImage.url);
+  if (this.image === removedImage.url) {
+    this.image = this.cloudinaryImages[0]?.url || this.images[0] || '';
+  }
+
+  await this.save();
+  return removedImage;
+};
+
+// Method to set primary image
+productSchema.methods.setPrimaryImage = async function(publicId) {
+  const image = this.cloudinaryImages.find(img => img.publicId === publicId);
+
+  if (!image) return false;
+
+  this.cloudinaryImages.forEach(img => {
+    img.isPrimary = img.publicId === publicId;
+  });
+
+  // Update legacy image field
+  this.image = image.url;
+
+  await this.save();
+  return true;
+};
+
+// Method to get all public IDs (useful for cleanup)
+productSchema.methods.getAllCloudinaryPublicIds = function() {
+  return this.cloudinaryImages.map(img => img.publicId);
 };
 
 // Pre-save hook to auto-update inStock

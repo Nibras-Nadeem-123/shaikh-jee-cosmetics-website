@@ -2,6 +2,8 @@ import Product from '../models/Product.js';
 import { catchAsyncErrors, ErrorHandler } from '../middleware/errorHandler.js';
 import { clearCache, getCache, setCache } from '../config/redis.js';
 import { parsePaginationParams, buildPaginationMeta } from '../utils/pagination.js';
+import cloudinaryService from '../services/cloudinaryService.js';
+import logger from '../utils/logger.js';
 
 // Get all products (supports Shop filtering with pagination)
 export const getProducts = catchAsyncErrors(async (req, res) => {
@@ -104,30 +106,264 @@ export const getSingleProduct = catchAsyncErrors(async (req, res, next) => {
 export const newProduct = catchAsyncErrors(async (req, res) => {
   req.body.user = req.user.id;
   const product = await Product.create(req.body);
-  
+
   // Clear product cache on creation
   await clearCache('/api/products*');
-  
+
+  res.status(201).json({ success: true, product });
+});
+
+// Admin: Create new product with images
+export const newProductWithImages = catchAsyncErrors(async (req, res) => {
+  req.body.user = req.user.id;
+
+  // Parse JSON body if it comes as string (from multipart form)
+  let productData = req.body;
+  if (typeof req.body.data === 'string') {
+    productData = JSON.parse(req.body.data);
+    productData.user = req.user.id;
+  }
+
+  // Create product first
+  const product = await Product.create(productData);
+
+  // Upload images to Cloudinary if files are provided
+  if (req.files && req.files.length > 0) {
+    const uploadPromises = req.files.map(async (file, index) => {
+      const result = await cloudinaryService.uploadImage(file.buffer, {
+        folder: `shaikhjee/products/${product._id}`,
+        public_id: `${product.slug}-${index + 1}-${Date.now()}`,
+      });
+
+      return {
+        publicId: result.publicId,
+        url: result.url,
+        secureUrl: result.url,
+        width: result.width,
+        height: result.height,
+        format: result.format,
+        bytes: result.bytes,
+        alt: product.name,
+        isPrimary: index === 0
+      };
+    });
+
+    const uploadedImages = await Promise.all(uploadPromises);
+
+    // Add images to product
+    product.cloudinaryImages = uploadedImages;
+    product.image = uploadedImages[0]?.url || '';
+    product.images = uploadedImages.map(img => img.url);
+    await product.save();
+
+    logger.info(`Product created with ${uploadedImages.length} images: ${product.name}`);
+  }
+
+  // Clear product cache on creation
+  await clearCache('/api/products*');
+
   res.status(201).json({ success: true, product });
 });
 
 // Admin: Update product
 export const updateProduct = catchAsyncErrors(async (req, res) => {
   let product = await Product.findById(req.params.id);
-  
+
   if (!product) {
     throw new ErrorHandler('Product not found', 404);
   }
-  
-  product = await Product.findByIdAndUpdate(req.params.id, req.body, { 
+
+  product = await Product.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
-    runValidators: true 
+    runValidators: true
   });
-  
+
   // Clear product cache on update
   await clearCache('/api/products*');
-  
+
   res.status(200).json({ success: true, product });
+});
+
+// Admin: Add images to existing product
+export const addProductImages = catchAsyncErrors(async (req, res) => {
+  const product = await Product.findById(req.params.id);
+
+  if (!product) {
+    throw new ErrorHandler('Product not found', 404);
+  }
+
+  if (!req.files || req.files.length === 0) {
+    throw new ErrorHandler('No image files provided', 400);
+  }
+
+  if (!cloudinaryService.isConfigured()) {
+    throw new ErrorHandler('Image upload service is not configured', 503);
+  }
+
+  const setFirstAsPrimary = product.cloudinaryImages.length === 0;
+
+  const uploadPromises = req.files.map(async (file, index) => {
+    const result = await cloudinaryService.uploadImage(file.buffer, {
+      folder: `shaikhjee/products/${product._id}`,
+      public_id: `${product.slug}-${Date.now()}-${index}`,
+    });
+
+    return {
+      publicId: result.publicId,
+      url: result.url,
+      secureUrl: result.url,
+      width: result.width,
+      height: result.height,
+      format: result.format,
+      bytes: result.bytes,
+      alt: req.body.alt || product.name,
+      isPrimary: setFirstAsPrimary && index === 0
+    };
+  });
+
+  const uploadedImages = await Promise.all(uploadPromises);
+
+  // Add to cloudinaryImages array
+  product.cloudinaryImages.push(...uploadedImages);
+
+  // Update legacy fields
+  if (setFirstAsPrimary) {
+    product.image = uploadedImages[0].url;
+  }
+  product.images = product.images || [];
+  product.images.push(...uploadedImages.map(img => img.url));
+
+  await product.save();
+
+  // Clear product cache
+  await clearCache('/api/products*');
+
+  logger.info(`Added ${uploadedImages.length} images to product: ${product.name}`);
+
+  res.status(200).json({
+    success: true,
+    message: `${uploadedImages.length} images added successfully`,
+    images: uploadedImages,
+    product
+  });
+});
+
+// Admin: Remove image from product
+export const removeProductImage = catchAsyncErrors(async (req, res) => {
+  const product = await Product.findById(req.params.id);
+
+  if (!product) {
+    throw new ErrorHandler('Product not found', 404);
+  }
+
+  const { publicId } = req.body;
+
+  if (!publicId) {
+    throw new ErrorHandler('Public ID is required', 400);
+  }
+
+  // Find the image in product
+  const imageToRemove = product.cloudinaryImages.find(img => img.publicId === publicId);
+
+  if (!imageToRemove) {
+    throw new ErrorHandler('Image not found in product', 404);
+  }
+
+  // Delete from Cloudinary
+  if (cloudinaryService.isConfigured()) {
+    await cloudinaryService.deleteImage(publicId);
+  }
+
+  // Remove from product
+  await product.removeCloudinaryImage(publicId);
+
+  // Clear product cache
+  await clearCache('/api/products*');
+
+  logger.info(`Removed image ${publicId} from product: ${product.name}`);
+
+  res.status(200).json({
+    success: true,
+    message: 'Image removed successfully',
+    product
+  });
+});
+
+// Admin: Set primary image
+export const setPrimaryProductImage = catchAsyncErrors(async (req, res) => {
+  const product = await Product.findById(req.params.id);
+
+  if (!product) {
+    throw new ErrorHandler('Product not found', 404);
+  }
+
+  const { publicId } = req.body;
+
+  if (!publicId) {
+    throw new ErrorHandler('Public ID is required', 400);
+  }
+
+  const success = await product.setPrimaryImage(publicId);
+
+  if (!success) {
+    throw new ErrorHandler('Image not found in product', 404);
+  }
+
+  // Clear product cache
+  await clearCache('/api/products*');
+
+  res.status(200).json({
+    success: true,
+    message: 'Primary image updated successfully',
+    product
+  });
+});
+
+// Admin: Reorder product images
+export const reorderProductImages = catchAsyncErrors(async (req, res) => {
+  const product = await Product.findById(req.params.id);
+
+  if (!product) {
+    throw new ErrorHandler('Product not found', 404);
+  }
+
+  const { imageOrder } = req.body; // Array of publicIds in desired order
+
+  if (!imageOrder || !Array.isArray(imageOrder)) {
+    throw new ErrorHandler('Image order array is required', 400);
+  }
+
+  // Reorder cloudinaryImages based on the order
+  const reorderedImages = [];
+  for (const publicId of imageOrder) {
+    const image = product.cloudinaryImages.find(img => img.publicId === publicId);
+    if (image) {
+      reorderedImages.push(image);
+    }
+  }
+
+  // Add any images not in the order list at the end
+  for (const image of product.cloudinaryImages) {
+    if (!imageOrder.includes(image.publicId)) {
+      reorderedImages.push(image);
+    }
+  }
+
+  product.cloudinaryImages = reorderedImages;
+
+  // Update legacy images array
+  product.images = reorderedImages.map(img => img.url);
+
+  await product.save();
+
+  // Clear product cache
+  await clearCache('/api/products*');
+
+  res.status(200).json({
+    success: true,
+    message: 'Images reordered successfully',
+    product
+  });
 });
 
 // Get search suggestions/autocomplete
