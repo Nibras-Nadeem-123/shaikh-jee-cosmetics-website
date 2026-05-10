@@ -102,26 +102,19 @@ export const getSingleProduct = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-// Admin: Create new product
+// Admin: Create new product (supports both JSON and file uploads)
 export const newProduct = catchAsyncErrors(async (req, res) => {
-  req.body.user = req.user.id;
-  const product = await Product.create(req.body);
-
-  // Clear product cache on creation
-  await clearCache('/api/products*');
-
-  res.status(201).json({ success: true, product });
-});
-
-// Admin: Create new product with images
-export const newProductWithImages = catchAsyncErrors(async (req, res) => {
-  req.body.user = req.user.id;
-
   // Parse JSON body if it comes as string (from multipart form)
   let productData = req.body;
   if (typeof req.body.data === 'string') {
     productData = JSON.parse(req.body.data);
-    productData.user = req.user.id;
+  }
+  productData.user = req.user.id;
+
+  // Remove legacy image fields if files are being uploaded
+  if (req.files && req.files.length > 0) {
+    delete productData.image;
+    delete productData.images;
   }
 
   // Create product first
@@ -129,10 +122,73 @@ export const newProductWithImages = catchAsyncErrors(async (req, res) => {
 
   // Upload images to Cloudinary if files are provided
   if (req.files && req.files.length > 0) {
+    if (!cloudinaryService.isConfigured()) {
+      logger.warn('Cloudinary not configured, skipping image upload');
+    } else {
+      const uploadPromises = req.files.map(async (file, index) => {
+        const result = await cloudinaryService.uploadImage(file.buffer, {
+          folder: `shaikhjee/products/${product._id}`,
+          public_id: `${product.slug}-${index + 1}-${Date.now()}`,
+        });
+
+        return {
+          publicId: result.publicId,
+          url: result.url,
+          secureUrl: result.url,
+          width: result.width,
+          height: result.height,
+          format: result.format,
+          bytes: result.bytes,
+          alt: product.name,
+          isPrimary: index === 0
+        };
+      });
+
+      const uploadedImages = await Promise.all(uploadPromises);
+
+      // Add images to product as Cloudinary documents
+      product.cloudinaryImages = uploadedImages;
+      // Also set legacy fields for backward compatibility
+      product.image = uploadedImages[0]?.url || '';
+      product.images = uploadedImages.map(img => img.url);
+      await product.save();
+
+      logger.info(`Product created with ${uploadedImages.length} Cloudinary images: ${product.name}`);
+    }
+  }
+
+  // Clear product cache on creation
+  await clearCache('/api/products*');
+
+  res.status(201).json({ success: true, product });
+});
+
+// Admin: Update product (supports both JSON and file uploads)
+export const updateProduct = catchAsyncErrors(async (req, res) => {
+  let product = await Product.findById(req.params.id);
+
+  if (!product) {
+    throw new ErrorHandler('Product not found', 404);
+  }
+
+  // Parse JSON body if it comes as string (from multipart form)
+  let updateData = req.body;
+  if (typeof req.body.data === 'string') {
+    updateData = JSON.parse(req.body.data);
+  }
+
+  // Update product fields
+  product = await Product.findByIdAndUpdate(req.params.id, updateData, {
+    new: true,
+    runValidators: true
+  });
+
+  // Upload new images to Cloudinary if files are provided
+  if (req.files && req.files.length > 0 && cloudinaryService.isConfigured()) {
     const uploadPromises = req.files.map(async (file, index) => {
       const result = await cloudinaryService.uploadImage(file.buffer, {
         folder: `shaikhjee/products/${product._id}`,
-        public_id: `${product.slug}-${index + 1}-${Date.now()}`,
+        public_id: `${product.slug}-${Date.now()}-${index}`,
       });
 
       return {
@@ -144,39 +200,26 @@ export const newProductWithImages = catchAsyncErrors(async (req, res) => {
         format: result.format,
         bytes: result.bytes,
         alt: product.name,
-        isPrimary: index === 0
+        isPrimary: product.cloudinaryImages.length === 0 && index === 0
       };
     });
 
     const uploadedImages = await Promise.all(uploadPromises);
 
-    // Add images to product
-    product.cloudinaryImages = uploadedImages;
-    product.image = uploadedImages[0]?.url || '';
-    product.images = uploadedImages.map(img => img.url);
+    // Add new images to existing cloudinaryImages
+    product.cloudinaryImages.push(...uploadedImages);
+
+    // Update legacy fields
+    if (!product.image && uploadedImages.length > 0) {
+      product.image = uploadedImages[0].url;
+    }
+    product.images = product.images || [];
+    product.images.push(...uploadedImages.map(img => img.url));
+
     await product.save();
 
-    logger.info(`Product created with ${uploadedImages.length} images: ${product.name}`);
+    logger.info(`Product updated with ${uploadedImages.length} new images: ${product.name}`);
   }
-
-  // Clear product cache on creation
-  await clearCache('/api/products*');
-
-  res.status(201).json({ success: true, product });
-});
-
-// Admin: Update product
-export const updateProduct = catchAsyncErrors(async (req, res) => {
-  let product = await Product.findById(req.params.id);
-
-  if (!product) {
-    throw new ErrorHandler('Product not found', 404);
-  }
-
-  product = await Product.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true
-  });
 
   // Clear product cache on update
   await clearCache('/api/products*');

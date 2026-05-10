@@ -5,7 +5,6 @@ import {
   getProducts,
   getSingleProduct,
   newProduct,
-  newProductWithImages,
   updateProduct,
   addProductImages,
   removeProductImage,
@@ -82,25 +81,20 @@ router.get('/:slug',
 );
 
 // Admin Routes with cache invalidation
+// Create product with optional image uploads (images stored as Cloudinary documents)
 router.post('/admin/new',
-  isAuthenticatedUser,
-  authorizeRoles('admin'),
-  invalidateCache({ tags: ['products', 'featured', 'bestsellers'] }),
-  newProduct
-);
-
-// Admin: Create product with image uploads
-router.post('/admin/new-with-images',
   isAuthenticatedUser,
   authorizeRoles('admin'),
   upload.array('images', 10),
   invalidateCache({ tags: ['products', 'featured', 'bestsellers'] }),
-  newProductWithImages
+  newProduct
 );
 
+// Update product with optional image uploads
 router.put('/admin/:id',
   isAuthenticatedUser,
   authorizeRoles('admin'),
+  upload.array('images', 10),
   invalidateCache({
     tags: ['products', 'featured', 'bestsellers'],
     custom: async (req, res, data, cacheService) => {
