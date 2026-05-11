@@ -1,7 +1,7 @@
 import { Product, Review } from "@/types";
 import { siteConfig, getFullAddress } from "@/config/siteConfig";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://shaikhjee.com';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://shaikh-jee-cosmetics-website.vercel.app';
 const SITE_NAME = siteConfig.name;
 
 interface JsonLdProps {

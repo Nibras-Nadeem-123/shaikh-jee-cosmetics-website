@@ -1,15 +1,55 @@
 "use client"
-import React from 'react';
-import { ChevronRight, Sparkles, TruckIcon, ShieldCheck, HeadphonesIcon, PlayCircle } from 'lucide-react';
-import { products } from '@/data/products';
-import { categories } from '@/data/mockData';
+import React, { useState, useEffect } from 'react';
+import { ChevronRight, Sparkles, TruckIcon, ShieldCheck, HeadphonesIcon, PlayCircle, Star } from 'lucide-react';
 import { ProductCard } from '@/components/ProductCard';
+import { Product } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
-import { reviews } from '@/data/products';
+import { apiService } from '@/services/api';
+
+// Categories with images
+const categories = [
+  { id: 1, name: 'Lips', slug: 'lips', image: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=400&h=500&fit=crop' },
+  { id: 2, name: 'Face', slug: 'face', image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=500&fit=crop' },
+  { id: 3, name: 'Eyes', slug: 'eyes', image: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=400&h=500&fit=crop' },
+  { id: 4, name: 'Skincare', slug: 'skincare', image: 'https://images.unsplash.com/photo-1570194065650-d99fb4b38b15?w=400&h=500&fit=crop' },
+  { id: 5, name: 'Hair', slug: 'hair', image: 'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?w=400&h=500&fit=crop' },
+  { id: 6, name: 'Nails', slug: 'nails', image: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=500&fit=crop' },
+];
 
 export default function HomePage() {
-  const bestSellers = products.filter((p) => p.isBestSeller);
+  const [bestSellers, setBestSellers] = useState<Product[]>([]);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        // Fetch best sellers
+        const bestSellersData = await apiService.getBestSellers();
+        setBestSellers(bestSellersData.products || []);
+
+        // Fetch featured products
+        const featuredData = await apiService.getFeaturedProducts();
+        setFeaturedProducts(featuredData.products || []);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        // Fallback to regular products if specific endpoints fail
+        try {
+          const allProducts = await apiService.getProducts();
+          const products = allProducts.products || [];
+          setBestSellers(products.filter((p: Product) => p.isBestSeller).slice(0, 4));
+          setFeaturedProducts(products.filter((p: Product) => p.featured).slice(0, 4));
+        } catch (e) {
+          console.error('Error fetching fallback products:', e);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   return (
     <div className="min-h-screen bg-white">
@@ -25,7 +65,7 @@ export default function HomePage() {
             <div className="space-y-10 duration-700 animate-in fade-in slide-in-from-left">
               <div className="inline-flex items-center gap-3 px-5 py-2.5 bg-white border border-primary/20 rounded-full shadow-sm">
                 <Sparkles size={18} className="text-primary" />
-                <span className="text-sm font-bold tracking-wider uppercase text-primary">New Year Beauty Sale</span>
+                <span className="text-sm font-bold tracking-wider uppercase text-primary">Premium Beauty Collection</span>
               </div>
 
               <div className="z-30 space-y-6">
@@ -39,13 +79,13 @@ export default function HomePage() {
               </div>
 
               <div className="flex flex-wrap gap-5">
-                {/* <Link
+                <Link
                   href="/shop"
                   className="flex items-center gap-3 px-10 py-5 font-bold text-white transition-all rounded-full shadow-xl bg-primary hover:bg-primary/90 shadow-primary/20 active:scale-95"
                 >
                   Shop the Collection
                   <ChevronRight size={20} />
-                </Link> */}
+                </Link>
                 <Link
                   href="/about"
                   className="flex items-center gap-3 px-10 py-5 font-bold transition-all border-2 rounded-full border-foreground text-foreground hover:bg-foreground hover:text-white active:scale-95"
@@ -71,11 +111,12 @@ export default function HomePage() {
             <div className="relative duration-700 delay-200 animate-in fade-in slide-in-from-right">
               <div className="relative z-10 rounded-[2.5rem] overflow-hidden shadow-2xl transition-transform hover:scale-[1.02] duration-500">
                 <Image
-                  src="https://images.unsplash.com/photo-1523634118614-82b2685ee3df?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBjb3NtZXRpY3MlMjBtYWtldXB8ZW58MXx8fHwxNzY3MzU4MjEzfDA&ixlib=rb-4.1.0&q=80&w=1080"
+                  src="https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=800&h=1000&fit=crop"
                   alt="Beauty Products"
-                  width={1080}
-                  height={800}
+                  width={800}
+                  height={1000}
                   className="object-cover w-full h-auto aspect-4/5"
+                  priority
                 />
               </div>
               {/* Decorative elements */}
@@ -118,44 +159,28 @@ export default function HomePage() {
               <h2 className="text-4xl font-bold tracking-tight text-foreground">Shop by Category</h2>
               <p className="text-lg italic text-muted-foreground">Curated essentials for every beauty routine</p>
             </div>
-            {/* <Link href="/shop" className="flex items-center gap-2 font-bold transition-colors group text-primary hover:text-primary/80">
+            <Link href="/shop" className="flex items-center gap-2 font-bold transition-colors group text-primary hover:text-primary/80">
               Browse Everything
               <ChevronRight size={20} className="transition-transform group-hover:translate-x-1" />
-            </Link> */}
+            </Link>
           </div>
           <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-6">
             {categories.map((category) => (
-              // <Link
-              //   key={category.id}
-              //   href={`/shop?category=${category.slug}`}
-              //   className="relative h-48 overflow-hidden transition-all shadow-sm group rounded-3xl hover:shadow-xl"
-              // >
-              //   <Image
-              //     src={
-              //       category.image ||
-              //       'https://via.placeholder.com/300x400?text=Category+Image'}
-              //     alt={category.name}
-              //     fill
-              //     className="object-cover transition-transform duration-500 group-hover:scale-110"
-              //   />
-              //   <div className="absolute inset-0 flex flex-col justify-end p-5 bg-linear-to-t from-black/80 via-black/20 to-transparent">
-              //      <h3 className="text-lg font-bold leading-tight text-white transition-colors group-hover:text-primary">{category.name}</h3>
-              //      {/* <p className="mt-1 text-xs transition-all transform translate-y-4 opacity-0 text-white/60 group-hover:translate-y-0 group-hover:opacity-100">{category.description}</p> */}
-              //   </div>
-              // </Link>
-              <div key={category.id} className="relative h-48 overflow-hidden transition-all shadow-sm group rounded-3xl hover:shadow-xl">
+              <Link
+                key={category.id}
+                href={`/shop?category=${category.slug}`}
+                className="relative h-48 overflow-hidden transition-all shadow-sm group rounded-3xl hover:shadow-xl"
+              >
                 <Image
-                  src={
-                    category.image ||
-                    'https://via.placeholder.com/300x400?text=Category+Image'}
+                  src={category.image}
                   alt={category.name}
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-110"
                 />
-                <div className="absolute inset-0 flex flex-col justify-end p-5 bg-linear-to-t from-black/80 via-black/20 to-transparent">
+                <div className="absolute inset-0 flex flex-col justify-end p-5 bg-gradient-to-t from-black/80 via-black/20 to-transparent">
                    <h3 className="text-lg font-bold leading-tight text-white transition-colors group-hover:text-primary">{category.name}</h3>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
@@ -169,20 +194,65 @@ export default function HomePage() {
               <h2 className="text-4xl font-bold text-foreground">Best Sellers</h2>
               <div className="w-20 h-1 rounded-full bg-primary" />
             </div>
-            {/* <Link
-              href="/shop?filter=bestsellers"
+            <Link
+              href="/shop?sort=bestsellers"
               className="px-8 py-3 text-sm font-bold tracking-wide transition-all border-2 rounded-full border-foreground hover:bg-foreground hover:text-white"
             >
               View All Favorites
-            </Link> */}
+            </Link>
           </div>
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {bestSellers.slice(0, 4).map((product) => (
-              <ProductCard key={product._id} product={product} />
-            ))}
-          </div>
+
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : bestSellers.length > 0 ? (
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+              {bestSellers.slice(0, 4).map((product) => (
+                <ProductCard
+                  key={product._id}
+                  product={product}
+                                  />
+              ))}
+            </div>
+          ) : (
+            <div className="py-12 text-center text-muted-foreground">
+              <p>No best sellers available yet. Check back soon!</p>
+              <Link href="/shop" className="inline-block mt-4 text-primary hover:underline">
+                Browse all products
+              </Link>
+            </div>
+          )}
         </div>
       </section>
+
+      {/* Featured Products */}
+      {featuredProducts.length > 0 && (
+        <section className="py-24 bg-muted/30">
+          <div className="container px-4 mx-auto lg:px-8">
+            <div className="flex items-center justify-between mb-16">
+              <div className="space-y-2">
+                <h2 className="text-4xl font-bold text-foreground">Featured Products</h2>
+                <div className="w-20 h-1 rounded-full bg-primary" />
+              </div>
+              <Link
+                href="/shop?featured=true"
+                className="px-8 py-3 text-sm font-bold tracking-wide transition-all border-2 rounded-full border-foreground hover:bg-foreground hover:text-white"
+              >
+                View All Featured
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+              {featuredProducts.slice(0, 4).map((product) => (
+                <ProductCard
+                  key={product._id}
+                  product={product}
+                                  />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Promotional Banner */}
       <section className="container px-4 py-10 mx-auto lg:px-8">
@@ -198,12 +268,12 @@ export default function HomePage() {
               Join thousands of happy customers who trust Shaikh Jee for their premium beauty needs. Experience the luxury of pure radiance today.
             </p>
             <div className="flex flex-col justify-center gap-5 pt-4 sm:flex-row">
-              {/* <Link
+              <Link
                 href="/shop"
                 className="px-12 py-5 font-bold transition-all bg-white rounded-full shadow-xl text-primary hover:bg-secondary shadow-black/10 active:scale-95"
               >
                 Start Shopping Now
-              </Link> */}
+              </Link>
               <Link
                  href="/contact"
                  className="px-12 py-5 font-bold text-white transition-all border-2 rounded-full border-white/40 hover:bg-white/10 backdrop-blur-sm active:scale-95"
@@ -222,15 +292,18 @@ export default function HomePage() {
             <h2 className="text-4xl font-bold text-foreground">What Our Customers Say</h2>
             <p className="text-lg text-muted-foreground">Real reviews from our beautiful community</p>
           </div>
-          
 
           <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
-            {reviews.map((review, index) => (
-              <div key={review._id} className="p-10 bg-secondary/30 rounded-[2.5rem] border border-accent/50 hover:bg-white hover:border-primary/20 hover:shadow-2xl hover:shadow-primary/5 transition-all group flex flex-col justify-between">
+            {[
+              { id: '1', userName: 'Ayesha Khan', rating: 5, comment: 'Amazing products! The quality is exceptional and delivery was super fast. Highly recommend Shaikh Jee for all your beauty needs.' },
+              { id: '2', userName: 'Fatima Ali', rating: 5, comment: 'Best cosmetics store in Pakistan. Authentic products at reasonable prices. Customer service is also very helpful!' },
+              { id: '3', userName: 'Sana Malik', rating: 5, comment: 'I love the skincare range! My skin has never looked better. Will definitely be ordering again.' },
+            ].map((review) => (
+              <div key={review.id} className="p-10 bg-secondary/30 rounded-[2.5rem] border border-accent/50 hover:bg-white hover:border-primary/20 hover:shadow-2xl hover:shadow-primary/5 transition-all group flex flex-col justify-between">
                 <div className="space-y-6">
                     <div className="flex gap-1.5">
                     {[...Array(review.rating)].map((_, i) => (
-                        <Sparkles key={i} size={16} className="text-primary fill-primary" />
+                        <Star key={i} size={16} className="text-primary fill-primary" />
                     ))}
                     </div>
                     <p className="text-lg italic leading-relaxed text-foreground/90">&quot;{review.comment}&quot;</p>
@@ -241,7 +314,7 @@ export default function HomePage() {
                   </div>
                   <div>
                     <div className="font-bold text-foreground">{review.userName}</div>
-                    <div className="text-xs font-bold tracking-widest uppercase text-muted-foreground">Customer</div>
+                    <div className="text-xs font-bold tracking-widest uppercase text-muted-foreground">Verified Customer</div>
                   </div>
                 </div>
               </div>
@@ -249,7 +322,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
     </div>
   );
 }
-

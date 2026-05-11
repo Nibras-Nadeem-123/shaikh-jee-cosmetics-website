@@ -29,7 +29,7 @@ export async function generateStaticParams() {
 // Generate metadata for SEO
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://shaikhjee.com';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://shaikh-jee-cosmetics-website.vercel.app';
 
   try {
     const res = await fetch(`${API_URL}/products/${slug}`, {
@@ -140,7 +140,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://shaikhjee.com';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://shaikh-jee-cosmetics-website.vercel.app';
 
   // Fetch product for JSON-LD (server-side)
   let product: Product | null = null;

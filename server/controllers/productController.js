@@ -7,7 +7,7 @@ import logger from '../utils/logger.js';
 
 // Get all products (supports Shop filtering with pagination)
 export const getProducts = catchAsyncErrors(async (req, res) => {
-  const { category, subcategory, minPrice, maxPrice, sort, search, inStock } = req.query;
+  const { category, subcategory, minPrice, maxPrice, sort, search, inStock, featured, isBestSeller, isNew } = req.query;
 
   // Parse pagination parameters
   const { page, limit, skip } = parsePaginationParams(req.query);
@@ -17,6 +17,9 @@ export const getProducts = catchAsyncErrors(async (req, res) => {
   if (category) query.category = new RegExp(category, 'i');
   if (subcategory) query.subcategory = new RegExp(subcategory, 'i');
   if (inStock !== undefined) query.inStock = inStock === 'true';
+  if (featured !== undefined) query.featured = featured === 'true';
+  if (isBestSeller !== undefined) query.isBestSeller = isBestSeller === 'true';
+  if (isNew !== undefined) query.isNew = isNew === 'true';
 
   // Use full-text search if search query provided
   if (search) {
@@ -82,12 +85,18 @@ export const getSingleProduct = catchAsyncErrors(async (req, res, next) => {
     });
   }
 
-  // Fetch from database
+  // Fetch from database - try by slug first
   console.log(`Searching for product with slug: ${slug}`);
-  const product = await Product.findOne({ slug });
+  let product = await Product.findOne({ slug });
+
+  // If not found by slug, try by MongoDB ID as fallback
+  if (!product && slug.match(/^[0-9a-fA-F]{24}$/)) {
+    console.log(`Slug not found, trying to find by ID: ${slug}`);
+    product = await Product.findById(slug);
+  }
 
   if (!product) {
-    console.error(`Product not found for slug: ${slug}`); // Log the slug for debugging
+    console.error(`Product not found for slug/id: ${slug}`);
     const error = new ErrorHandler('Product not found', 404);
     return next(error);
   }

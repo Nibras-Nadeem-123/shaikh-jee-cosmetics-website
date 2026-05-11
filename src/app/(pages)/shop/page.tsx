@@ -4,7 +4,7 @@ import { Metadata } from 'next'
 import { CollectionJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://shaikhjee.com';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://shaikh-jee-cosmetics-website.vercel.app';
 
 // Force dynamic rendering for shop page (needs fresh product data)
 export const dynamic = 'force-dynamic';

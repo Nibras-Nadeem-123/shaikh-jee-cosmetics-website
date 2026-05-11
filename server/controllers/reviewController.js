@@ -4,9 +4,12 @@ import { catchAsyncErrors, ErrorHandler } from '../middleware/errorHandler.js';
 import { clearCache } from '../config/redis.js';
 import mongoose from 'mongoose'; // Hoisted from inside function
 
-// Corrected function declaration
+// Get reviews for a product
 export const getProductReviews = catchAsyncErrors(async (req, res, next) => {
-  const { productId, page = 1, limit = 10, sort = '-createdAt' } = req.query; // Validate productId
+  // Get productId from URL params (route: /product/:productId)
+  const { productId } = req.params;
+  const { page = 1, limit = 10, sort = '-createdAt' } = req.query;
+
   if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
     return next(new ErrorHandler('Invalid product ID', 400));
   }

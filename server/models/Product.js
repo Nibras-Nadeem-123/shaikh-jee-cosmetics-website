@@ -255,8 +255,20 @@ productSchema.methods.getAllCloudinaryPublicIds = function() {
   return this.cloudinaryImages.map(img => img.publicId);
 };
 
-// Pre-save hook to auto-update inStock
+// Pre-save hook to auto-generate slug and update inStock
 productSchema.pre('save', function(next) {
+  // Auto-generate slug from name if not provided or empty
+  if (!this.slug && this.name) {
+    this.slug = this.name
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with dashes
+      .replace(/-+/g, '-') // Replace multiple dashes with single dash
+      .replace(/^-+|-+$/g, ''); // Remove leading/trailing dashes
+  }
+
+  // Auto-update inStock based on inventory
   if (this.inventory.trackInventory) {
     this.inStock = this.inventory.quantity > 0 || this.inventory.allowBackorder;
   }

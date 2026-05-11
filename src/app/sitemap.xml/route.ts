@@ -19,7 +19,7 @@ interface SitemapPage {
 }
 
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://shaikhjee.com';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://shaikh-jee-cosmetics-website.vercel.app';
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
   // Static pages

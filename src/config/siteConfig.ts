@@ -42,7 +42,7 @@ export const siteConfig = {
 
   // URLs
   urls: {
-    site: process.env.NEXT_PUBLIC_SITE_URL || 'https://shaikhjee.com',
+    site: process.env.NEXT_PUBLIC_SITE_URL || 'https://shaikh-jee-cosmetics-website.vercel.app',
     api: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
   },
 

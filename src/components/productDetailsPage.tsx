@@ -4,6 +4,7 @@ import { ShoppingCart, Heart, Star, Truck, RefreshCw, Shield, Loader2, ThumbsUp,
 import { Product, Shade, Review } from '../types';
 import { useApp } from '@/contexts/AppContext';
 import { apiService } from '@/services/api';
+import { getCSRFToken } from '@/utils/csrf';
 import Image from 'next/image';
 import { useToast } from '@/hooks/useToast';
 import { useRouter, usePathname } from 'next/navigation';
@@ -22,7 +23,7 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
   const router = useRouter();
   const pathname = usePathname();
   const { addToCart, addToWishlist, isInWishlist, removeFromWishlist, user } = useApp();
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://shaikhjee.com';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://shaikh-jee-cosmetics-website.vercel.app';
   const productUrl = `${siteUrl}${pathname}`;
   const [selectedImage, setSelectedImage] = useState(0);
   const { showToast } = useToast();
@@ -241,12 +242,17 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
 
       console.log('Submitting review to:', endpoint);
 
+      // Get CSRF token for the request
+      const csrfToken = await getCSRFToken();
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          ...(csrfToken && { 'X-CSRF-Token': csrfToken })
         },
+        credentials: 'include',
         body: JSON.stringify({
           productId: product._id,
           rating: reviewForm.rating,

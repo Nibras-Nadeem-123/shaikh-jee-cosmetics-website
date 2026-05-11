@@ -160,6 +160,46 @@ export const apiService = {
     }
   },
 
+  getBestSellers: async (limit: number = 8) => {
+    try {
+      const response = await fetch(`${API_URL}/products?isBestSeller=true&limit=${limit}`, { credentials: 'include' });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to fetch best sellers');
+      }
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Unexpected response format. Server did not return JSON.');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server. Please check if backend is running.');
+      }
+      throw error;
+    }
+  },
+
+  getFeaturedProducts: async (limit: number = 8) => {
+    try {
+      const response = await fetch(`${API_URL}/products?featured=true&limit=${limit}`, { credentials: 'include' });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to fetch featured products');
+      }
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Unexpected response format. Server did not return JSON.');
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to server. Please check if backend is running.');
+      }
+      throw error;
+    }
+  },
+
   // Orders
   createOrder: async (orderData: any, token: string) => {
     try {
@@ -427,11 +467,22 @@ export const apiService = {
   // Reviews
   createReview: async (data: { productId: string; rating: number; comment: string; userName?: string }, token?: string) => {
     try {
+      // Get CSRF token for the request
+      let csrfToken = getCurrentCSRFToken();
+      if (!csrfToken) {
+        try {
+          csrfToken = await getCSRFToken();
+        } catch {
+          console.warn('Could not get CSRF token for review');
+        }
+      }
+
       const response = await fetch(`${API_URL}/reviews/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` })
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+          ...(csrfToken && { 'X-CSRF-Token': csrfToken })
         },
         credentials: 'include',
         body: JSON.stringify(data),

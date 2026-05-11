@@ -956,7 +956,18 @@ export const AdminDashboard = () => {
                             <div className="grid gap-6 md:grid-cols-2">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Luxe Name</label>
-                                    <input type="text" required value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value, slug: e.target.value.toLowerCase().replace(/ /g, '-') })} className="w-full px-6 py-4 transition-all border border-transparent outline-none bg-muted/50 rounded-2xl focus:bg-white focus:border-primary" />
+                                    <input type="text" required value={newProduct.name} onChange={(e) => {
+                                                    const name = e.target.value;
+                                                    // Generate URL-safe slug from name
+                                                    const slug = name
+                                                        .toLowerCase()
+                                                        .trim()
+                                                        .replace(/[^\w\s-]/g, '') // Remove special characters
+                                                        .replace(/\s+/g, '-') // Replace spaces with dashes
+                                                        .replace(/-+/g, '-') // Replace multiple dashes with single dash
+                                                        .replace(/^-+|-+$/g, ''); // Remove leading/trailing dashes
+                                                    setNewProduct({ ...newProduct, name, slug });
+                                                }} className="w-full px-6 py-4 transition-all border border-transparent outline-none bg-muted/50 rounded-2xl focus:bg-white focus:border-primary" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Valuation (Rs.)</label>
