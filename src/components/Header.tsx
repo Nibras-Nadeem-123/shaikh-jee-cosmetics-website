@@ -97,7 +97,7 @@ export const Header = () => {
     router.push('/');
   };
 
-  const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const cartTotal = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
 
   return (
     <>

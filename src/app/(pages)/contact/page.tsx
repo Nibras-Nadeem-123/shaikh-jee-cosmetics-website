@@ -1,7 +1,7 @@
 "use client"
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Clock, Send, Sparkles, Loader2, CheckCircle, MessageCircle, ChevronRight, Instagram, Facebook, Twitter, HeadphonesIcon, HelpCircle } from 'lucide-react';
-import { siteConfig, getShortAddress } from '@/config/siteConfig';
+import { siteConfig, getShortAddress, getFullAddress } from '@/config/siteConfig';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -422,7 +422,7 @@ const ContactPage = () => {
                             Visit Our
                             <span className="bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent"> Store</span>
                         </h2>
-                        <p className="text-gray-600">{siteConfig.contact.address}</p>
+                        <p className="text-gray-600">{getFullAddress()}</p>
                     </div>
 
                     <div className="relative rounded-3xl overflow-hidden shadow-xl h-[400px] bg-gradient-to-br from-pink-100 to-purple-100">
@@ -434,7 +434,7 @@ const ContactPage = () => {
                                 </div>
                                 <p className="text-gray-600 font-medium">{getShortAddress()}</p>
                                 <a
-                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(siteConfig.contact.address)}`}
+                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(getFullAddress())}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="inline-flex items-center gap-2 mt-4 px-6 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white font-semibold rounded-full hover:shadow-lg transition-all"

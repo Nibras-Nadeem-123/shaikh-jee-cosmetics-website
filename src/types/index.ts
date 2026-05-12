@@ -35,6 +35,7 @@ export interface Product {
 export interface Shade {
   _id: string;
   name: string;
+  hex?: string;
   color: string;
   image?: string;
   stock?: number;
@@ -72,11 +73,13 @@ export interface Order {
   userId: string;
   items: CartItem[];
   total: number;
+  totalPrice: number;
   subtotal: number;
   discount: number;
   shipping: number;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   paymentMethod: string;
+  paymentStatus: 'paid' | 'unpaid' | 'refunded';
   shippingAddress: Address;
   createdAt: string;
   updatedAt: string;
