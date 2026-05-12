@@ -363,7 +363,7 @@ export const Header = () => {
                             <ArrowRight size={16} />
                           </Link>
                           <Link
-                            href="/signup"
+                            href="/login?signup=true"
                             onClick={() => setShowUserMenu(false)}
                             className="flex items-center justify-center gap-2 w-full px-4 py-3 mt-2 border-2 border-gray-200 text-foreground font-medium rounded-xl hover:bg-muted transition-colors"
                           >

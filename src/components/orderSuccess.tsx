@@ -64,11 +64,11 @@ const OrderSuccessPage = () => {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <div>
                     <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">Order Number</p>
-                    <p className="text-2xl font-bold tracking-tight">#{latestOrder._id || latestOrder.id}</p>
+                    <p className="text-2xl font-bold tracking-tight">#{latestOrder?._id || latestOrder?.id}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">Total Amount</p>
-                    <p className="text-3xl font-bold tracking-tight">Rs.{latestOrder.total || latestOrder.totalPrice}</p>
+                    <p className="text-3xl font-bold tracking-tight">Rs.{latestOrder?.total || latestOrder?.totalPrice}</p>
                   </div>
                 </div>
               </div>

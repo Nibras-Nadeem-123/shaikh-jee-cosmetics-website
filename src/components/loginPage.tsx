@@ -44,9 +44,15 @@ export const LoginPage = () => {
   });
   const router = useRouter();
 
-  // Check for referral code in URL
+  // Check for referral code or signup mode in URL
   useEffect(() => {
     const refCode = searchParams.get('ref');
+    const signupMode = searchParams.get('signup');
+    
+    if (signupMode === 'true') {
+      setIsSignup(true);
+    }
+    
     if (refCode) {
       setReferralCode(refCode);
       setIsSignup(true);
