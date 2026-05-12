@@ -9,6 +9,7 @@ export const siteConfig = {
   // Contact Information
   contact: {
     phone: process.env.NEXT_PUBLIC_CONTACT_PHONE || '+92 321 1234567',
+    whatsapp: process.env.NEXT_PUBLIC_WHATSAPP || '+92 321 1234567',
     email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'support@shaikhjee.com',
     supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@shaikhjee.com',
     salesEmail: process.env.NEXT_PUBLIC_SALES_EMAIL || 'sales@shaikhjee.com',
