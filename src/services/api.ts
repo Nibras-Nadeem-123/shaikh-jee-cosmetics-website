@@ -254,12 +254,27 @@ export const apiService = {
   // Admin Actions
   createProduct: async (productData: any, token: string) => {
     try {
+      // Get CSRF token for the request
+      let csrfToken = getCurrentCSRFToken();
+      if (!csrfToken) {
+        try {
+          csrfToken = await getCSRFToken();
+        } catch (e) {
+          console.warn('Could not get CSRF token');
+        }
+      }
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      };
+      if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken;
+      }
+
       const response = await fetch(`${API_URL}/products/admin/new`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers,
         credentials: 'include',
         body: JSON.stringify(productData),
       });
@@ -669,9 +684,26 @@ export const apiService = {
 
   deleteSharedWishlist: async (shareId: string, token: string) => {
     try {
+      // Get CSRF token for the request
+      let csrfToken = getCurrentCSRFToken();
+      if (!csrfToken) {
+        try {
+          csrfToken = await getCSRFToken();
+        } catch (e) {
+          console.warn('Could not get CSRF token');
+        }
+      }
+
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${token}`
+      };
+      if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken;
+      }
+
       const response = await fetch(`${API_URL}/wishlist/shared/${shareId}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers,
         credentials: 'include'
       });
       if (!response.ok) {
@@ -797,12 +829,27 @@ export const apiService = {
   // Admin
   updateOrderStatus: async (orderId: string, newStatus: string, token: string) => {
     try {
+      // Get CSRF token for the request
+      let csrfToken = getCurrentCSRFToken();
+      if (!csrfToken) {
+        try {
+          csrfToken = await getCSRFToken();
+        } catch (e) {
+          console.warn('Could not get CSRF token');
+        }
+      }
+
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      };
+      if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken;
+      }
+
       const response = await fetch(`${API_URL}/orders/admin/${orderId}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
         credentials: 'include',
         body: JSON.stringify({ status: newStatus }),
       });
