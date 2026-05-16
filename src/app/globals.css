@@ -474,6 +474,29 @@
     backdrop-filter: blur(12px);
   }
 
+  /* Custom scrollbar for dark sidebar */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thumb-stone-700::-webkit-scrollbar-thumb {
+    background-color: rgb(68 64 60 / 0.5);
+    border-radius: 9999px;
+  }
+
+  .scrollbar-thumb-stone-700::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(68 64 60 / 0.8);
+  }
+
+  .scrollbar-track-stone-800\/50::-webkit-scrollbar-track {
+    background-color: rgb(41 37 36 / 0.3);
+    border-radius: 9999px;
+  }
+
   /* Gradient borders */
   .border-gradient {
     position: relative;

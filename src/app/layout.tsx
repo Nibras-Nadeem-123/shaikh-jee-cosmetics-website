@@ -2,11 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AppProvider } from "@/contexts/AppContext";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
 import { ToastProvider, ToastContainer } from "@/hooks/useToast";
-import { MobileNav } from "@/components/MobileNav";
-import { PWAInstall } from "@/components/PWAInstall";
 import { OrganizationJsonLd, WebsiteJsonLd } from "@/components/seo/JsonLd";
 
 const inter = Inter({
@@ -95,15 +91,11 @@ export default function RootLayout({
         className={`${inter.variable} antialiased`}
       >
         <ToastProvider>
-          <AppProvider >
-            <Header />
-              {children}
-              <Footer />
-              <MobileNav />
-              <PWAInstall />
-            </AppProvider>
-            <ToastContainer />
-          </ToastProvider>
+          <AppProvider>
+            {children}
+          </AppProvider>
+          <ToastContainer />
+        </ToastProvider>
       </body>
     </html>
   );
