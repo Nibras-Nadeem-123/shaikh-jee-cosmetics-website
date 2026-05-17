@@ -68,12 +68,30 @@ export const validateCSRFToken = (req, res, next) => {
   const cookieToken = req.cookies[CSRF_COOKIE_NAME];
   const headerToken = req.headers[CSRF_HEADER_NAME] || req.headers['csrf-token'];
 
+  // Debug logging (remove in production after fixing)
+  if (!cookieToken || !headerToken) {
+    console.log('CSRF Validation Failed:', {
+      path: req.path,
+      method: req.method,
+      cookieToken: cookieToken ? 'present' : 'missing',
+      headerToken: headerToken ? 'present' : 'missing',
+      cookies: Object.keys(req.cookies),
+      headers: Object.keys(req.headers).filter(h => h.toLowerCase().includes('csrf') || h.toLowerCase().includes('token')),
+      origin: req.headers.origin
+    });
+  }
+
   // Check if both tokens exist
   if (!cookieToken || !headerToken) {
     return res.status(403).json({
       success: false,
       message: 'CSRF token missing. Please refresh the page and try again.',
-      code: 'CSRF_MISSING'
+      code: 'CSRF_MISSING',
+      debug: {
+        cookiePresent: !!cookieToken,
+        headerPresent: !!headerToken,
+        hint: !cookieToken ? 'CSRF cookie not found. Ensure cookies are enabled and the page was loaded from the API domain.' : 'CSRF header not sent. Ensure X-CSRF-Token header is included in the request.'
+      }
     });
   }
 
@@ -83,6 +101,12 @@ export const validateCSRFToken = (req, res, next) => {
 
   if (cookieBuffer.length !== headerBuffer.length ||
       !crypto.timingSafeEqual(cookieBuffer, headerBuffer)) {
+    console.log('CSRF Token Mismatch:', {
+      path: req.path,
+      cookieLength: cookieBuffer.length,
+      headerLength: headerBuffer.length
+    });
+
     return res.status(403).json({
       success: false,
       message: 'Invalid CSRF token. Please refresh the page and try again.',

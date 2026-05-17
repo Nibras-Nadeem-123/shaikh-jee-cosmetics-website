@@ -120,6 +120,17 @@ app.use(handleCSRFError);
 // Route to get CSRF token
 app.get('/api/csrf-token', getCSRFToken);
 
+// Debug endpoint to test CSRF (remove after fixing)
+app.post('/api/csrf-test', (req, res) => {
+  res.json({
+    success: true,
+    message: 'CSRF validation passed!',
+    receivedCookie: !!req.cookies['csrf-token'],
+    receivedHeader: !!req.headers['x-csrf-token'],
+    origin: req.headers.origin
+  });
+});
+
 // Apply global rate limiting middleware BEFORE routes
 app.use(limiter);
 

@@ -55,6 +55,18 @@ const nextConfig = {
   // Transpile packages
   transpilePackages: ['geist'],
 
+  // API Proxy to avoid CORS and third-party cookie issues
+  async rewrites() {
+    const apiUrl = process.env.RAILWAY_API_URL || 'https://shaikh-jee-cosmetics-website-production.up.railway.app';
+
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${apiUrl}/api/:path*`,
+      },
+    ];
+  },
+
   // Headers for security and caching
   async headers() {
     return [
