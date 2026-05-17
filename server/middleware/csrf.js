@@ -23,13 +23,18 @@ const generateToken = () => {
 };
 
 // Cookie options
-const getCookieOptions = () => ({
-  httpOnly: false, // Must be readable by JavaScript
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-  maxAge: 24 * 60 * 60 * 1000, // 24 hours
-  path: '/'
-});
+const getCookieOptions = () => {
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  return {
+    httpOnly: false, // Must be readable by JavaScript
+    secure: isProduction, // HTTPS only in production
+    sameSite: isProduction ? 'none' : 'lax', // 'none' allows cross-origin in production
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    path: '/',
+    // Note: domain is NOT set, allowing cookie to work across subdomains
+  };
+};
 
 /**
  * Middleware to set CSRF token cookie on every request

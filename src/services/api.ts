@@ -12,17 +12,22 @@ const getHeaders = async (includeAuth = false, contentType = 'application/json')
     headers['Content-Type'] = contentType;
   }
 
-  // Add CSRF token
+  // Add CSRF token - Always fetch if not available
   let csrfToken = getCurrentCSRFToken();
   if (!csrfToken) {
     try {
+      // Wait for CSRF token - critical for security
       csrfToken = await getCSRFToken();
     } catch (e) {
-      console.warn('Could not get CSRF token');
+      console.error('Failed to get CSRF token:', e);
+      // Throw error instead of continuing without token
+      throw new Error('CSRF token missing. Please refresh the page and try again.');
     }
   }
+
   if (csrfToken) {
     headers['X-CSRF-Token'] = csrfToken;
+    headers['csrf-token'] = csrfToken; // Also add lowercase version for compatibility
   }
 
   // Add auth token if needed

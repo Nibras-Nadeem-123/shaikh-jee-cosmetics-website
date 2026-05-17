@@ -34,8 +34,9 @@ export function getCSRFTokenFromCookie(): string | null {
 
 /**
  * Get CSRF token - fetches from server if not in cookie
+ * Includes retry logic for better reliability
  */
-export async function getCSRFToken(): Promise<string> {
+export async function getCSRFToken(retries = 2): Promise<string> {
   // Try to get from cookie first
   let token = getCSRFTokenFromCookie();
 
@@ -44,27 +45,41 @@ export async function getCSRFToken(): Promise<string> {
   }
 
   // Fetch from server if not available
-  try {
-    const response = await fetch(`${API_URL}/csrf-token`, {
-      method: 'GET',
-      credentials: 'include',
-    });
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(`${API_URL}/csrf-token`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
 
-    if (!response.ok) {
-      throw new Error('Failed to get CSRF token');
+      if (!response.ok) {
+        throw new Error(`Failed to get CSRF token: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.csrfToken) {
+        cachedToken = data.csrfToken;
+        return data.csrfToken;
+      }
+
+      throw new Error('No CSRF token in response');
+    } catch (error) {
+      console.error(`CSRF token fetch attempt ${attempt + 1} failed:`, error);
+
+      // If this was the last attempt, throw the error
+      if (attempt === retries) {
+        throw new Error('Failed to obtain CSRF token after multiple attempts. Please refresh the page.');
+      }
+
+      // Wait before retrying (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
     }
-
-    const data = await response.json();
-    if (data.csrfToken) {
-      cachedToken = data.csrfToken;
-      return data.csrfToken;
-    }
-
-    throw new Error('No CSRF token received');
-  } catch (error) {
-    console.error('CSRF token error:', error);
-    throw error;
   }
+
+  throw new Error('Failed to get CSRF token');
 }
 
 /**
