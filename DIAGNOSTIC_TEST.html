@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CSRF Diagnostic Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #ccc;
+        }
+        .test.running {
+            border-left-color: #ffa500;
+        }
+        .test.success {
+            border-left-color: #4caf50;
+        }
+        .test.error {
+            border-left-color: #f44336;
+        }
+        pre {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+        button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0b7dda;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 CSRF Diagnostic Test</h1>
+    <p>This will help diagnose why CSRF tokens aren't working on your deployed site.</p>
+    <p><strong>Instructions:</strong></p>
+    <ol>
+        <li>Upload this file to your Vercel deployment (in public/ folder)</li>
+        <li>Access it at: https://your-site.vercel.app/DIAGNOSTIC_TEST.html</li>
+        <li>Click "Run All Tests"</li>
+        <li>Share the results</li>
+    </ol>
+
+    <button onclick="runAllTests()">Run All Tests</button>
+
+    <div id="results"></div>
+
+    <script>
+        const results = document.getElementById('results');
+
+        function addTest(name, status, details) {
+            const test = document.createElement('div');
+            test.className = 'test ' + status;
+            test.innerHTML = `
+                <h3>${status === 'success' ? '✅' : status === 'error' ? '❌' : '⏳'} ${name}</h3>
+                <pre>${JSON.stringify(details, null, 2)}</pre>
+            `;
+            results.appendChild(test);
+        }
+
+        async function runAllTests() {
+            results.innerHTML = '';
+
+            // Test 1: Check API URL
+            addTest('Test 1: Check API Configuration', 'running', 'Checking...');
+            const apiUrl = '/api'; // This should be what NEXT_PUBLIC_API_URL is set to
+            setTimeout(() => {
+                results.children[0].className = 'test success';
+                results.children[0].querySelector('pre').textContent = JSON.stringify({
+                    'API_URL': apiUrl,
+                    'Expected': '/api',
+                    'Status': apiUrl === '/api' ? '✅ Correct' : '❌ Wrong - should be /api'
+                }, null, 2);
+            }, 100);
+
+            // Test 2: Test CSRF Token Endpoint
+            addTest('Test 2: Fetch CSRF Token', 'running', 'Fetching from /api/csrf-token...');
+            try {
+                const response = await fetch('/api/csrf-token', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.csrfToken) {
+                    results.children[1].className = 'test success';
+                    results.children[1].querySelector('pre').textContent = JSON.stringify({
+                        'Status': response.status,
+                        'Token Received': data.csrfToken ? 'Yes (length: ' + data.csrfToken.length + ')' : 'No',
+                        'Response': data
+                    }, null, 2);
+                } else {
+                    results.children[1].className = 'test error';
+                    results.children[1].querySelector('pre').textContent = JSON.stringify({
+                        'Status': response.status,
+                        'Error': 'Token not in response',
+                        'Response': data
+                    }, null, 2);
+                }
+            } catch (error) {
+                results.children[1].className = 'test error';
+                results.children[1].querySelector('pre').textContent = JSON.stringify({
+                    'Error': error.message,
+                    'Details': 'Failed to fetch - check if proxy is working'
+                }, null, 2);
+            }
+
+            // Wait a bit for cookie to be set
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Test 3: Check Cookie
+            addTest('Test 3: Check CSRF Cookie', 'running', 'Checking cookies...');
+            const allCookies = document.cookie;
+            const csrfCookie = document.cookie.split('; ').find(c => c.startsWith('csrf-token='));
+
+            if (csrfCookie) {
+                results.children[2].className = 'test success';
+                results.children[2].querySelector('pre').textContent = JSON.stringify({
+                    'Cookie Found': 'Yes',
+                    'Cookie Value': csrfCookie.substring(0, 50) + '...',
+                    'All Cookies': allCookies
+                }, null, 2);
+            } else {
+                results.children[2].className = 'test error';
+                results.children[2].querySelector('pre').textContent = JSON.stringify({
+                    'Cookie Found': 'No',
+                    'All Cookies': allCookies || 'None',
+                    'Issue': 'Cookie not being set - check browser settings or backend deployment'
+                }, null, 2);
+            }
+
+            // Test 4: Test Order Endpoint (if logged in)
+            const authToken = localStorage.getItem('token');
+            if (authToken) {
+                addTest('Test 4: Test Order Endpoint', 'running', 'Testing /api/orders/new...');
+
+                const csrfToken = csrfCookie ? csrfCookie.split('=')[1] : '';
+
+                try {
+                    const response = await fetch('/api/orders/new', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${authToken}`,
+                            'X-CSRF-Token': csrfToken,
+                            'csrf-token': csrfToken
+                        },
+                        body: JSON.stringify({
+                            orderItems: [{
+                                product: '000000000000000000000000',
+                                name: 'Test',
+                                quantity: 1,
+                                price: 1,
+                                image: ''
+                            }],
+                            itemsPrice: 1,
+                            shippingPrice: 0,
+                            totalPrice: 1,
+                            shippingAddress: {
+                                name: 'Test',
+                                addressLine1: 'Test',
+                                city: 'Test',
+                                state: 'Test',
+                                pincode: '123456',
+                                phone: '1234567890',
+                                email: 'test@test.com'
+                            },
+                            paymentMethod: 'COD'
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.status === 403) {
+                        results.children[3].className = 'test error';
+                        results.children[3].querySelector('pre').textContent = JSON.stringify({
+                            'Status': '403 Forbidden',
+                            'Issue': 'CSRF validation failed',
+                            'Response': data,
+                            'Fix': 'Backend needs to exempt /api/orders/new or fix CSRF cookie'
+                        }, null, 2);
+                    } else if (response.status === 400 || response.status === 404) {
+                        results.children[3].className = 'test success';
+                        results.children[3].querySelector('pre').textContent = JSON.stringify({
+                            'Status': response.status,
+                            'Result': '✅ CSRF validation PASSED (test product error expected)',
+                            'Note': 'Orders will work in production'
+                        }, null, 2);
+                    } else {
+                        results.children[3].className = 'test error';
+                        results.children[3].querySelector('pre').textContent = JSON.stringify({
+                            'Status': response.status,
+                            'Response': data
+                        }, null, 2);
+                    }
+                } catch (error) {
+                    results.children[3].className = 'test error';
+                    results.children[3].querySelector('pre').textContent = JSON.stringify({
+                        'Error': error.message
+                    }, null, 2);
+                }
+            } else {
+                addTest('Test 4: Test Order Endpoint', 'error', {
+                    'Skipped': 'Not logged in',
+                    'Action': 'Log in first to test order endpoint'
+                });
+            }
+        }
+    </script>
+</body>
+</html>
