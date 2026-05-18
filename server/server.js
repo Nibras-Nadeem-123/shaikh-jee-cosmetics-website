@@ -22,8 +22,8 @@ initSentry(app);
 
 // Import error handling middleware
 import { errorMiddleware } from './middleware/errorHandler.js';
-// CSRF Protection - Removed for JWT-only authentication
-// import { csrfProtection, getCSRFToken, handleCSRFError } from './middleware/csrf.js';
+// Selective CSRF Protection (only for non-API routes)
+import { selectiveCSRFProtection, getCSRFToken } from './middleware/csrf.js';
 
 // Security Middleware
 app.use(helmet()); // Set security HTTP headers
@@ -111,12 +111,13 @@ app.options('*', cors(corsOptions));
 // Apply CORS to all routes
 app.use(cors(corsOptions));
 
-// CSRF Protection - Removed for JWT-only authentication
-// Modern SPAs with JWT in Authorization headers don't need CSRF protection
-// CSRF attacks require cookies, but we use JWT tokens in headers
-// app.use(csrfProtection);
-// app.use(handleCSRFError);
-// app.get('/api/csrf-token', getCSRFToken);
+// Selective CSRF Protection
+// API routes are protected by JWT (Authorization header)
+// Form submissions still use CSRF tokens
+app.use(selectiveCSRFProtection);
+
+// Route to get CSRF token (for form submissions)
+app.get('/api/csrf-token', getCSRFToken);
 
 // Debug endpoint removed - CSRF not needed for JWT-based API
 

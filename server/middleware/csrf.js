@@ -68,30 +68,12 @@ export const validateCSRFToken = (req, res, next) => {
   const cookieToken = req.cookies[CSRF_COOKIE_NAME];
   const headerToken = req.headers[CSRF_HEADER_NAME] || req.headers['csrf-token'];
 
-  // Debug logging (remove in production after fixing)
-  if (!cookieToken || !headerToken) {
-    console.log('CSRF Validation Failed:', {
-      path: req.path,
-      method: req.method,
-      cookieToken: cookieToken ? 'present' : 'missing',
-      headerToken: headerToken ? 'present' : 'missing',
-      cookies: Object.keys(req.cookies),
-      headers: Object.keys(req.headers).filter(h => h.toLowerCase().includes('csrf') || h.toLowerCase().includes('token')),
-      origin: req.headers.origin
-    });
-  }
-
   // Check if both tokens exist
   if (!cookieToken || !headerToken) {
     return res.status(403).json({
       success: false,
       message: 'CSRF token missing. Please refresh the page and try again.',
-      code: 'CSRF_MISSING',
-      debug: {
-        cookiePresent: !!cookieToken,
-        headerPresent: !!headerToken,
-        hint: !cookieToken ? 'CSRF cookie not found. Ensure cookies are enabled and the page was loaded from the API domain.' : 'CSRF header not sent. Ensure X-CSRF-Token header is included in the request.'
-      }
+      code: 'CSRF_MISSING'
     });
   }
 
@@ -101,12 +83,6 @@ export const validateCSRFToken = (req, res, next) => {
 
   if (cookieBuffer.length !== headerBuffer.length ||
       !crypto.timingSafeEqual(cookieBuffer, headerBuffer)) {
-    console.log('CSRF Token Mismatch:', {
-      path: req.path,
-      cookieLength: cookieBuffer.length,
-      headerLength: headerBuffer.length
-    });
-
     return res.status(403).json({
       success: false,
       message: 'Invalid CSRF token. Please refresh the page and try again.',
@@ -132,9 +108,7 @@ const CSRF_EXEMPT_PATHS = [
   '/api/payment/mock-confirm',
   '/api/newsletter/subscribe',
   '/api/stock-alerts/subscribe',
-  '/api/contact',
-  '/api/orders/new', // TEMPORARY: Exempted due to CSRF token fetch issues - Orders still protected by JWT auth
-  '/api/orders/me'   // TEMPORARY: Also exempt order fetching
+  '/api/contact'
 ];
 
 /**
@@ -196,10 +170,46 @@ export const handleCSRFError = (err, req, res, next) => {
   next(err);
 };
 
+/**
+ * Selective CSRF Protection
+ * Skips CSRF validation for API routes protected by JWT
+ * Applies CSRF protection to form submissions and other non-API routes
+ */
+export const selectiveCSRFProtection = (req, res, next) => {
+  // List of API routes that are protected by JWT (Authorization header)
+  // These don't need CSRF protection
+  const JWT_PROTECTED_ROUTES = [
+    '/api/orders',
+    '/api/products',
+    '/api/users',
+    '/api/wishlist',
+    '/api/cart',
+    '/api/reviews',
+    '/api/loyalty',
+    '/api/referrals',
+    '/api/images'
+  ];
+
+  // Check if this is a JWT-protected API route
+  const isJWTRoute = JWT_PROTECTED_ROUTES.some(route =>
+    req.path.startsWith(route)
+  );
+
+  if (isJWTRoute) {
+    // Skip CSRF for JWT-protected routes
+    console.log(`[CSRF] Skipping for JWT route: ${req.path}`);
+    return next();
+  }
+
+  // Apply CSRF protection for everything else
+  csrfProtection(req, res, next);
+};
+
 export default {
   setCSRFToken,
   validateCSRFToken,
   csrfProtection,
+  selectiveCSRFProtection,
   getCSRFToken,
   handleCSRFError
 };
