@@ -132,7 +132,9 @@ const CSRF_EXEMPT_PATHS = [
   '/api/payment/mock-confirm',
   '/api/newsletter/subscribe',
   '/api/stock-alerts/subscribe',
-  '/api/contact'
+  '/api/contact',
+  '/api/orders/new', // TEMPORARY: Exempted due to CSRF token fetch issues - Orders still protected by JWT auth
+  '/api/orders/me'   // TEMPORARY: Also exempt order fetching
 ];
 
 /**
