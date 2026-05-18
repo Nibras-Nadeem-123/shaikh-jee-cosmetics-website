@@ -1,9 +1,8 @@
-import { getCurrentCSRFToken, getCSRFToken } from '@/utils/csrf';
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 /**
- * Get headers with CSRF token for state-changing requests
+ * Get headers for API requests
+ * Using JWT-only authentication - no CSRF token needed
  */
 const getHeaders = async (includeAuth = false, contentType = 'application/json'): Promise<Record<string, string>> => {
   const headers: Record<string, string> = {};
@@ -12,25 +11,7 @@ const getHeaders = async (includeAuth = false, contentType = 'application/json')
     headers['Content-Type'] = contentType;
   }
 
-  // Add CSRF token - Always fetch if not available
-  let csrfToken = getCurrentCSRFToken();
-  if (!csrfToken) {
-    try {
-      // Wait for CSRF token - critical for security
-      csrfToken = await getCSRFToken();
-    } catch (e) {
-      console.error('Failed to get CSRF token:', e);
-      // Throw error instead of continuing without token
-      throw new Error('CSRF token missing. Please refresh the page and try again.');
-    }
-  }
-
-  if (csrfToken) {
-    headers['X-CSRF-Token'] = csrfToken;
-    headers['csrf-token'] = csrfToken; // Also add lowercase version for compatibility
-  }
-
-  // Add auth token if needed
+  // Add JWT auth token if needed
   if (includeAuth) {
     const token = localStorage.getItem('token');
     if (token) {

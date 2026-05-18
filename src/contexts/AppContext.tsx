@@ -5,7 +5,8 @@ import { CartItem, User, Address, Order, Product, Shade } from '@/types';
 import { apiService } from '@/services/api';
 import { v4 as uuidv4 } from 'uuid';
 import { requestDedup, REQUEST_KEYS } from '@/utils/requestDedup';
-import { initializeCSRF, clearCSRFToken } from '@/utils/csrf';
+// CSRF removed - using JWT-only authentication
+// import { initializeCSRF, clearCSRFToken } from '@/utils/csrf';
 import { setUser as setSentryUser, trackAction } from '@/utils/sentry';
 
 
@@ -82,8 +83,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, [token]);
 
   useEffect(() => {
-    // Initialize CSRF token on app load
-    initializeCSRF().catch(console.warn);
+    // CSRF initialization removed - using JWT-only authentication
+    // initializeCSRF().catch(console.warn);
 
     const savedToken = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
@@ -173,8 +174,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setOrders([]);
     // Clear request cache on logout
     requestDedup.reset();
-    // Clear CSRF token
-    clearCSRFToken();
+    // CSRF cleanup removed - using JWT-only authentication
+    // clearCSRFToken();
     // Clear Sentry user context
     setSentryUser(null);
   }, []);
