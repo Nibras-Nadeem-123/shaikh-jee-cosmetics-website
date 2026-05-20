@@ -177,22 +177,23 @@ export const RateLimitDashboard = () => {
     const maxHourlyRequests = Math.max(...hourlyStats.map(h => h.requests), 1);
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-4 sm:space-y-6 lg:space-y-8">
             {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-                        <Shield className="text-primary" size={24} />
-                        API Rate Limit Dashboard
+                    <h2 className="text-lg sm:text-xl lg:text-2xl font-bold tracking-tight flex items-center gap-2">
+                        <Shield className="text-primary" size={20} />
+                        <span className="hidden sm:inline">API Rate Limit Dashboard</span>
+                        <span className="sm:hidden">API Monitor</span>
                     </h2>
-                    <p className="text-muted-foreground text-sm mt-1">Monitor API usage patterns and rate limiting</p>
+                    <p className="text-muted-foreground text-xs sm:text-sm mt-0.5 sm:mt-1">Monitor API usage patterns and rate limiting</p>
                 </div>
                 <button
                     onClick={handleRefresh}
                     disabled={isRefreshing}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-bold hover:bg-primary/20 transition-colors disabled:opacity-50"
+                    className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-primary/10 text-primary rounded-full text-xs sm:text-sm font-bold hover:bg-primary/20 transition-colors disabled:opacity-50"
                 >
-                    <RefreshCw className={`${isRefreshing ? 'animate-spin' : ''}`} size={16} />
+                    <RefreshCw className={`${isRefreshing ? 'animate-spin' : ''}`} size={14} />
                     Refresh
                 </button>
             </div>
@@ -225,115 +226,115 @@ export const RateLimitDashboard = () => {
                 <div className="space-y-6">
                     {/* Real-time Stats */}
                     {realtimeData && (
-                        <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-2xl p-6 border border-primary/20">
-                            <div className="flex items-center gap-2 mb-4">
-                                <Activity className="text-primary animate-pulse" size={20} />
-                                <span className="text-xs font-bold uppercase tracking-wider text-primary">Live Stats (Last 5 min)</span>
+                        <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-primary/20">
+                            <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                                <Activity className="text-primary animate-pulse" size={16} />
+                                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-primary">Live Stats (Last 5 min)</span>
                             </div>
-                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-4">
                                 <div className="text-center">
-                                    <p className="text-2xl font-bold text-primary">{realtimeData.requestsPerSecond}</p>
-                                    <p className="text-xs text-muted-foreground">req/sec</p>
+                                    <p className="text-lg sm:text-2xl font-bold text-primary">{realtimeData.requestsPerSecond}</p>
+                                    <p className="text-[10px] sm:text-xs text-muted-foreground">req/sec</p>
                                 </div>
                                 <div className="text-center">
-                                    <p className="text-2xl font-bold">{realtimeData.totalRequests}</p>
-                                    <p className="text-xs text-muted-foreground">requests</p>
+                                    <p className="text-lg sm:text-2xl font-bold">{realtimeData.totalRequests}</p>
+                                    <p className="text-[10px] sm:text-xs text-muted-foreground">requests</p>
                                 </div>
                                 <div className="text-center">
-                                    <p className="text-2xl font-bold text-amber-600">{realtimeData.rateLimited}</p>
-                                    <p className="text-xs text-muted-foreground">rate limited</p>
+                                    <p className="text-lg sm:text-2xl font-bold text-amber-600">{realtimeData.rateLimited}</p>
+                                    <p className="text-[10px] sm:text-xs text-muted-foreground">limited</p>
                                 </div>
-                                <div className="text-center">
-                                    <p className="text-2xl font-bold">{realtimeData.avgResponseTime}ms</p>
-                                    <p className="text-xs text-muted-foreground">avg response</p>
+                                <div className="text-center hidden sm:block">
+                                    <p className="text-lg sm:text-2xl font-bold">{realtimeData.avgResponseTime}ms</p>
+                                    <p className="text-[10px] sm:text-xs text-muted-foreground">avg response</p>
                                 </div>
-                                <div className="text-center">
-                                    <p className="text-2xl font-bold text-green-600">{realtimeData.activeConnections}</p>
-                                    <p className="text-xs text-muted-foreground">active IPs</p>
+                                <div className="text-center hidden sm:block">
+                                    <p className="text-lg sm:text-2xl font-bold text-green-600">{realtimeData.activeConnections}</p>
+                                    <p className="text-[10px] sm:text-xs text-muted-foreground">active IPs</p>
                                 </div>
                             </div>
                         </div>
                     )}
 
                     {/* Summary Cards */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="bg-white rounded-2xl p-6 border border-border shadow-sm">
-                            <div className="flex items-center justify-between mb-2">
-                                <Server className="text-blue-500" size={20} />
-                                <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+                        <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-6 border border-border shadow-sm">
+                            <div className="flex items-center justify-between mb-1 sm:mb-2">
+                                <Server className="text-blue-500" size={18} />
+                                <span className={`text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full ${
                                     (summary?.requestChange || 0) >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                                 }`}>
                                     {(summary?.requestChange || 0) >= 0 ? '+' : ''}{summary?.requestChange || 0}%
                                 </span>
                             </div>
-                            <p className="text-3xl font-bold">{summary?.totalRequests?.toLocaleString() || 0}</p>
-                            <p className="text-xs text-muted-foreground">Total Requests Today</p>
+                            <p className="text-xl sm:text-3xl font-bold">{summary?.totalRequests?.toLocaleString() || 0}</p>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground">Total Requests</p>
                         </div>
 
-                        <div className="bg-white rounded-2xl p-6 border border-border shadow-sm">
-                            <div className="flex items-center justify-between mb-2">
-                                <AlertTriangle className="text-amber-500" size={20} />
-                                <span className="text-xs font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-700">
+                        <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-6 border border-border shadow-sm">
+                            <div className="flex items-center justify-between mb-1 sm:mb-2">
+                                <AlertTriangle className="text-amber-500" size={18} />
+                                <span className="text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full bg-amber-100 text-amber-700">
                                     {summary?.rateLimitRate || 0}%
                                 </span>
                             </div>
-                            <p className="text-3xl font-bold text-amber-600">{summary?.totalRateLimited || 0}</p>
-                            <p className="text-xs text-muted-foreground">Rate Limited</p>
+                            <p className="text-xl sm:text-3xl font-bold text-amber-600">{summary?.totalRateLimited || 0}</p>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground">Rate Limited</p>
                         </div>
 
-                        <div className="bg-white rounded-2xl p-6 border border-border shadow-sm">
-                            <div className="flex items-center justify-between mb-2">
-                                <Users className="text-green-500" size={20} />
-                                <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                        <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-6 border border-border shadow-sm">
+                            <div className="flex items-center justify-between mb-1 sm:mb-2">
+                                <Users className="text-green-500" size={18} />
+                                <span className={`text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full ${
                                     (summary?.visitorChange || 0) >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                                 }`}>
                                     {(summary?.visitorChange || 0) >= 0 ? '+' : ''}{summary?.visitorChange || 0}%
                                 </span>
                             </div>
-                            <p className="text-3xl font-bold">{summary?.uniqueVisitors || 0}</p>
-                            <p className="text-xs text-muted-foreground">Unique Visitors</p>
+                            <p className="text-xl sm:text-3xl font-bold">{summary?.uniqueVisitors || 0}</p>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground">Unique Visitors</p>
                         </div>
 
-                        <div className="bg-white rounded-2xl p-6 border border-border shadow-sm">
-                            <div className="flex items-center justify-between mb-2">
-                                <Clock className="text-purple-500" size={20} />
+                        <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-6 border border-border shadow-sm">
+                            <div className="flex items-center justify-between mb-1 sm:mb-2">
+                                <Clock className="text-purple-500" size={18} />
                             </div>
-                            <p className="text-3xl font-bold">{summary?.avgResponseTime || 0}ms</p>
-                            <p className="text-xs text-muted-foreground">Avg Response Time</p>
+                            <p className="text-xl sm:text-3xl font-bold">{summary?.avgResponseTime || 0}ms</p>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground">Avg Response</p>
                         </div>
                     </div>
 
                     {/* Status Code Breakdown */}
-                    <div className="bg-white rounded-2xl p-6 border border-border shadow-sm">
-                        <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4">Status Code Distribution</h3>
-                        <div className="grid grid-cols-4 gap-4">
-                            <div className="text-center p-4 bg-green-50 rounded-xl">
-                                <CheckCircle className="mx-auto mb-2 text-green-600" size={24} />
-                                <p className="text-2xl font-bold text-green-600">{statusCodes['2xx'] || 0}</p>
-                                <p className="text-xs text-muted-foreground">2xx Success</p>
+                    <div className="bg-white rounded-2xl p-4 sm:p-6 border border-border shadow-sm">
+                        <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3 sm:mb-4">Status Code Distribution</h3>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+                            <div className="text-center p-3 sm:p-4 bg-green-50 rounded-xl">
+                                <CheckCircle className="mx-auto mb-1 sm:mb-2 text-green-600" size={20} />
+                                <p className="text-xl sm:text-2xl font-bold text-green-600">{statusCodes['2xx'] || 0}</p>
+                                <p className="text-[10px] sm:text-xs text-muted-foreground">2xx Success</p>
                             </div>
-                            <div className="text-center p-4 bg-blue-50 rounded-xl">
-                                <TrendingUp className="mx-auto mb-2 text-blue-600" size={24} />
-                                <p className="text-2xl font-bold text-blue-600">{statusCodes['3xx'] || 0}</p>
-                                <p className="text-xs text-muted-foreground">3xx Redirect</p>
+                            <div className="text-center p-3 sm:p-4 bg-blue-50 rounded-xl">
+                                <TrendingUp className="mx-auto mb-1 sm:mb-2 text-blue-600" size={20} />
+                                <p className="text-xl sm:text-2xl font-bold text-blue-600">{statusCodes['3xx'] || 0}</p>
+                                <p className="text-[10px] sm:text-xs text-muted-foreground">3xx Redirect</p>
                             </div>
-                            <div className="text-center p-4 bg-amber-50 rounded-xl">
-                                <AlertCircle className="mx-auto mb-2 text-amber-600" size={24} />
-                                <p className="text-2xl font-bold text-amber-600">{statusCodes['4xx'] || 0}</p>
-                                <p className="text-xs text-muted-foreground">4xx Client Error</p>
+                            <div className="text-center p-3 sm:p-4 bg-amber-50 rounded-xl">
+                                <AlertCircle className="mx-auto mb-1 sm:mb-2 text-amber-600" size={20} />
+                                <p className="text-xl sm:text-2xl font-bold text-amber-600">{statusCodes['4xx'] || 0}</p>
+                                <p className="text-[10px] sm:text-xs text-muted-foreground">4xx Client Error</p>
                             </div>
-                            <div className="text-center p-4 bg-red-50 rounded-xl">
-                                <XCircle className="mx-auto mb-2 text-red-600" size={24} />
-                                <p className="text-2xl font-bold text-red-600">{statusCodes['5xx'] || 0}</p>
-                                <p className="text-xs text-muted-foreground">5xx Server Error</p>
+                            <div className="text-center p-3 sm:p-4 bg-red-50 rounded-xl">
+                                <XCircle className="mx-auto mb-1 sm:mb-2 text-red-600" size={20} />
+                                <p className="text-xl sm:text-2xl font-bold text-red-600">{statusCodes['5xx'] || 0}</p>
+                                <p className="text-[10px] sm:text-xs text-muted-foreground">5xx Server Error</p>
                             </div>
                         </div>
                     </div>
 
                     {/* Hourly Traffic Chart */}
-                    <div className="bg-white rounded-2xl p-6 border border-border shadow-sm">
-                        <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4">Traffic (Last 24 Hours)</h3>
-                        <div className="flex items-end gap-1 h-40">
+                    <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-border shadow-sm">
+                        <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3 sm:mb-4">Traffic (Last 24 Hours)</h3>
+                        <div className="flex items-end gap-0.5 sm:gap-1 h-28 sm:h-40 overflow-x-auto">
                             {hourlyStats.map((stat, idx) => (
                                 <div key={idx} className="flex-1 flex flex-col items-center gap-1">
                                     <div
@@ -355,9 +356,9 @@ export const RateLimitDashboard = () => {
 
             {/* Endpoints View */}
             {activeView === 'endpoints' && (
-                <div className="bg-white rounded-2xl p-6 border border-border shadow-sm">
-                    <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4">Endpoint Statistics (24h)</h3>
-                    <div className="overflow-x-auto">
+                <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-border shadow-sm">
+                    <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3 sm:mb-4">Endpoint Statistics (24h)</h3>
+                    <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="text-xs font-bold text-muted-foreground uppercase tracking-wider border-b">
@@ -404,9 +405,9 @@ export const RateLimitDashboard = () => {
 
             {/* Configuration View */}
             {activeView === 'config' && (
-                <div className="bg-white rounded-2xl p-6 border border-border shadow-sm">
-                    <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4">Rate Limit Configuration</h3>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-border shadow-sm">
+                    <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3 sm:mb-4">Rate Limit Configuration</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                         {rateLimitConfig.map((config) => (
                             <div key={config.id} className="bg-muted/30 rounded-xl p-4 hover:bg-muted/50 transition-colors">
                                 <div className="flex items-center justify-between mb-2">
@@ -426,35 +427,35 @@ export const RateLimitDashboard = () => {
 
             {/* Security View */}
             {activeView === 'security' && (
-                <div className="space-y-6">
-                    <div className="bg-white rounded-2xl p-6 border border-border shadow-sm">
-                        <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2">
+                <div className="space-y-4 sm:space-y-6">
+                    <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-border shadow-sm">
+                        <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3 sm:mb-4 flex items-center gap-2">
                             <AlertTriangle className="text-amber-500" size={16} />
                             Suspicious Activity (24h)
                         </h3>
                         {suspiciousIPs.length === 0 ? (
-                            <div className="text-center py-8 text-muted-foreground">
-                                <CheckCircle className="mx-auto mb-2 text-green-500" size={32} />
-                                <p className="font-medium">No suspicious activity detected</p>
+                            <div className="text-center py-6 sm:py-8 text-muted-foreground">
+                                <CheckCircle className="mx-auto mb-2 text-green-500" size={28} />
+                                <p className="font-medium text-sm">No suspicious activity detected</p>
                             </div>
                         ) : (
-                            <div className="space-y-3">
+                            <div className="space-y-2 sm:space-y-3">
                                 {suspiciousIPs.map((ip, idx) => (
-                                    <div key={idx} className="flex items-center justify-between p-4 bg-muted/30 rounded-xl hover:bg-muted/50 transition-colors">
-                                        <div className="flex items-center gap-4">
-                                            <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase border ${getSeverityColor(ip.severity)}`}>
+                                    <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 p-3 sm:p-4 bg-muted/30 rounded-xl hover:bg-muted/50 transition-colors">
+                                        <div className="flex items-center gap-3 sm:gap-4">
+                                            <div className={`px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase border ${getSeverityColor(ip.severity)}`}>
                                                 {ip.severity}
                                             </div>
-                                            <div>
-                                                <p className="font-mono font-bold">{ip.ip}</p>
-                                                <p className="text-xs text-muted-foreground">
+                                            <div className="min-w-0">
+                                                <p className="font-mono font-bold text-sm truncate">{ip.ip}</p>
+                                                <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
                                                     Endpoints: {ip.endpoints.join(', ')}
                                                 </p>
                                             </div>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="font-bold">{ip.totalRequests.toLocaleString()} requests</p>
-                                            <p className="text-xs text-amber-600">{ip.rateLimited} rate limited</p>
+                                        <div className="text-left sm:text-right pl-12 sm:pl-0">
+                                            <p className="font-bold text-sm">{ip.totalRequests.toLocaleString()} requests</p>
+                                            <p className="text-[10px] sm:text-xs text-amber-600">{ip.rateLimited} rate limited</p>
                                         </div>
                                     </div>
                                 ))}

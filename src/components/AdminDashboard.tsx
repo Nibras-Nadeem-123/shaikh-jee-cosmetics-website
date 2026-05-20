@@ -40,7 +40,8 @@ import {
     Store,
     FileText,
     ChevronDown,
-    LogOut
+    LogOut,
+    Menu
 } from "lucide-react";
 import { RateLimitDashboard } from "./RateLimitDashboard";
 import { useApp } from "../contexts/AppContext";
@@ -63,6 +64,7 @@ export const AdminDashboard = () => {
     const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string; name: string; type: 'product' | 'user' } | null>(null);
     const [selectedOrder, setSelectedOrder] = useState<any>(null);
     const [isQuickLinksOpen, setIsQuickLinksOpen] = useState(false);
+    const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
     const [newProduct, setNewProduct] = useState({
         name: "",
@@ -393,24 +395,42 @@ export const AdminDashboard = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-stone-100 via-amber-50/20 to-stone-100">
+            {/* Mobile Sidebar Overlay */}
+            {isMobileSidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+                    onClick={() => setIsMobileSidebarOpen(false)}
+                />
+            )}
+
             {/* Luxury Sidebar */}
-            <aside className="fixed left-0 top-0 bottom-0 w-72 bg-gradient-to-b from-stone-900 via-stone-900 to-stone-950 z-50 shadow-2xl shadow-stone-900/50 flex flex-col">
+            <aside className={`fixed left-0 top-0 bottom-0 w-72 bg-gradient-to-b from-stone-900 via-stone-900 to-stone-950 z-50 shadow-2xl shadow-stone-900/50 flex flex-col transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 {/* Gold accent line at top */}
                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400"></div>
 
                 {/* Brand Section */}
-                <div className="px-8 py-8 border-b border-white/5 flex-shrink-0">
-                    <div className="flex items-center gap-4">
-                        <div className="relative">
-                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-300 via-amber-400 to-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
-                                <Sparkles size={22} className="text-stone-900" />
+                <div className="px-6 lg:px-8 py-6 lg:py-8 border-b border-white/5 flex-shrink-0">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 lg:gap-4">
+                            <div className="relative">
+                                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-gradient-to-br from-amber-300 via-amber-400 to-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                                    <Sparkles size={20} className="text-stone-900 lg:hidden" />
+                                    <Sparkles size={22} className="text-stone-900 hidden lg:block" />
+                                </div>
+                                <div className="absolute -bottom-1 -right-1 w-3 h-3 lg:w-4 lg:h-4 bg-emerald-400 rounded-full border-2 border-stone-900"></div>
                             </div>
-                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full border-2 border-stone-900"></div>
+                            <div>
+                                <h1 className="text-base lg:text-lg font-semibold text-white tracking-tight">Shaikh Jee</h1>
+                                <p className="text-[10px] lg:text-xs text-amber-400/80 font-medium tracking-widest uppercase">Cosmetics</p>
+                            </div>
                         </div>
-                        <div>
-                            <h1 className="text-lg font-semibold text-white tracking-tight">Shaikh Jee</h1>
-                            <p className="text-xs text-amber-400/80 font-medium tracking-widest uppercase">Cosmetics</p>
-                        </div>
+                        {/* Mobile Close Button */}
+                        <button
+                            onClick={() => setIsMobileSidebarOpen(false)}
+                            className="lg:hidden p-2 rounded-lg hover:bg-white/10 text-stone-400 hover:text-white transition-colors"
+                        >
+                            <X size={20} />
+                        </button>
                     </div>
                 </div>
 
@@ -423,8 +443,11 @@ export const AdminDashboard = () => {
                         {navItems.map((item) => (
                             <button
                                 key={item.id}
-                                onClick={() => setActiveTab(item.id as any)}
-                                className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-300 group relative overflow-hidden ${
+                                onClick={() => {
+                                    setActiveTab(item.id as any);
+                                    setIsMobileSidebarOpen(false);
+                                }}
+                                className={`w-full flex items-center gap-3 lg:gap-4 px-3 lg:px-4 py-3 lg:py-3.5 rounded-xl text-sm font-medium transition-all duration-300 group relative overflow-hidden ${
                                     activeTab === item.id
                                         ? "bg-gradient-to-r from-amber-500/20 via-amber-400/10 to-transparent text-white"
                                         : "text-stone-400 hover:text-white hover:bg-white/5"
@@ -475,7 +498,10 @@ export const AdminDashboard = () => {
                             ].map((link) => (
                                 <button
                                     key={link.href}
-                                    onClick={() => router.push(link.href)}
+                                    onClick={() => {
+                                        router.push(link.href);
+                                        setIsMobileSidebarOpen(false);
+                                    }}
                                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-stone-400 hover:text-amber-400 hover:bg-white/5 transition-all group"
                                 >
                                     <link.icon size={16} className="text-stone-500 group-hover:text-amber-400 transition-colors" />
@@ -538,36 +564,44 @@ export const AdminDashboard = () => {
             </aside>
 
             {/* Main Content */}
-            <main className="ml-72 min-h-screen">
+            <main className="lg:ml-72 min-h-screen">
                 {/* Top Header */}
                 <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-stone-200/50">
-                    <div className="px-8 h-20 flex items-center justify-between">
-                        <div>
-                            <h1 className="text-2xl font-semibold text-stone-800 tracking-tight">
-                                {activeTab === 'overview' && 'Dashboard Overview'}
-                                {activeTab === 'products' && 'Product Management'}
-                                {activeTab === 'orders' && 'Order Management'}
-                                {activeTab === 'users' && 'Customer Management'}
-                                {activeTab === 'ratelimits' && 'API Rate Limits'}
+                    <div className="px-4 sm:px-6 lg:px-8 h-16 lg:h-20 flex items-center justify-between gap-4">
+                        {/* Mobile Menu Button */}
+                        <button
+                            onClick={() => setIsMobileSidebarOpen(true)}
+                            className="lg:hidden p-2.5 rounded-xl bg-white border border-stone-200 text-stone-600 hover:text-stone-800 hover:border-stone-300 transition-all"
+                        >
+                            <Menu size={20} />
+                        </button>
+
+                        <div className="flex-1 min-w-0">
+                            <h1 className="text-lg sm:text-xl lg:text-2xl font-semibold text-stone-800 tracking-tight truncate">
+                                {activeTab === 'overview' && 'Dashboard'}
+                                {activeTab === 'products' && 'Products'}
+                                {activeTab === 'orders' && 'Orders'}
+                                {activeTab === 'users' && 'Customers'}
+                                {activeTab === 'ratelimits' && 'API Monitor'}
                             </h1>
-                            <p className="text-stone-400 text-sm mt-1">
+                            <p className="text-stone-400 text-xs sm:text-sm mt-0.5 hidden sm:block">
                                 {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                             </p>
                         </div>
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 sm:gap-4">
                             <button
                                 onClick={() => fetchData()}
-                                className="p-3 rounded-xl bg-white border border-stone-200 text-stone-500 hover:text-stone-700 hover:border-stone-300 hover:shadow-lg hover:shadow-stone-200/50 transition-all duration-300"
+                                className="p-2.5 lg:p-3 rounded-xl bg-white border border-stone-200 text-stone-500 hover:text-stone-700 hover:border-stone-300 hover:shadow-lg hover:shadow-stone-200/50 transition-all duration-300"
                             >
                                 <RefreshCw size={18} />
                             </button>
                             {(activeTab === 'products' || activeTab === 'overview') && (
                                 <button
                                     onClick={() => { resetProductForm(); setIsModalOpen(true); }}
-                                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-stone-800 via-stone-900 to-stone-800 text-white text-sm font-medium rounded-xl hover:shadow-xl hover:shadow-stone-300/30 transition-all duration-300 hover:-translate-y-0.5"
+                                    className="flex items-center gap-2 px-3 sm:px-4 lg:px-6 py-2.5 lg:py-3 bg-gradient-to-r from-stone-800 via-stone-900 to-stone-800 text-white text-sm font-medium rounded-xl hover:shadow-xl hover:shadow-stone-300/30 transition-all duration-300 hover:-translate-y-0.5"
                                 >
                                     <Plus size={18} />
-                                    Add Product
+                                    <span className="hidden sm:inline">Add Product</span>
                                 </button>
                             )}
                         </div>
@@ -575,7 +609,7 @@ export const AdminDashboard = () => {
                 </header>
 
                 {/* Content Area */}
-                <div className="p-8">
+                <div className="p-4 sm:p-6 lg:p-8">
                     {/* Overview Tab */}
                     {activeTab === "overview" && (
                         <div className="space-y-8">
@@ -701,23 +735,106 @@ export const AdminDashboard = () => {
                     {/* Products Tab */}
                     {activeTab === "products" && (
                         <div className="bg-white rounded-2xl border border-stone-100 overflow-hidden shadow-sm">
-                            <div className="px-6 py-5 border-b border-stone-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-stone-50 to-white">
+                            <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-stone-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-gradient-to-r from-stone-50 to-white">
                                 <div>
-                                    <h2 className="text-lg font-semibold text-stone-800">All Products</h2>
-                                    <p className="text-sm text-stone-400 mt-0.5">{products.length} items in catalog</p>
+                                    <h2 className="text-base sm:text-lg font-semibold text-stone-800">All Products</h2>
+                                    <p className="text-xs sm:text-sm text-stone-400 mt-0.5">{products.length} items in catalog</p>
                                 </div>
-                                <div className="relative">
+                                <div className="relative w-full sm:w-auto">
                                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={18} />
                                     <input
                                         type="text"
                                         placeholder="Search products..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-72 pl-12 pr-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-all"
+                                        className="w-full sm:w-64 lg:w-72 pl-12 pr-4 py-2.5 sm:py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-all"
                                     />
                                 </div>
                             </div>
-                            <div className="overflow-x-auto">
+                            {/* Mobile Card View */}
+                            <div className="lg:hidden p-3 sm:p-4 space-y-3">
+                                {products
+                                    .filter(p => p?.name?.toLowerCase().includes(searchQuery.toLowerCase()))
+                                    .map((product) => (
+                                    <div key={product._id} className="bg-stone-50/50 rounded-xl p-3 sm:p-4 border border-stone-100">
+                                        <div className="flex gap-3">
+                                            {/* Product Image */}
+                                            <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-stone-100 flex-shrink-0 ring-2 ring-stone-100">
+                                                {product.images?.[0] ? (
+                                                    <Image src={product.images[0]} alt={product.name} fill className="object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center">
+                                                        <Package size={24} className="text-stone-300" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {/* Product Info */}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div className="min-w-0">
+                                                        <p className="font-semibold text-stone-800 text-sm sm:text-base truncate">{product.name}</p>
+                                                        <p className="text-[10px] sm:text-xs text-stone-400">{product._id.slice(-8).toUpperCase()}</p>
+                                                    </div>
+                                                    {/* Actions */}
+                                                    <div className="flex items-center gap-1 flex-shrink-0">
+                                                        <button
+                                                            onClick={() => handleEditProduct(product)}
+                                                            className="p-2 rounded-lg text-stone-400 hover:text-amber-600 hover:bg-amber-50 transition-all"
+                                                        >
+                                                            <Edit size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteProduct(product._id, product.name)}
+                                                            className="p-2 rounded-lg text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition-all"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                {/* Category & Price Row */}
+                                                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                                    <span className="inline-flex px-2 py-1 rounded-md text-[10px] sm:text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-100">
+                                                        {product.category}
+                                                    </span>
+                                                    <span className="font-bold text-stone-800 text-sm">Rs.{product.price?.toLocaleString()}</span>
+                                                    {product.originalPrice > product.price && (
+                                                        <span className="text-[10px] sm:text-xs text-stone-400 line-through">Rs.{product.originalPrice}</span>
+                                                    )}
+                                                </div>
+                                                {/* Status */}
+                                                <div className="mt-2">
+                                                    <select
+                                                        value={product.status || 'active'}
+                                                        onChange={(e) => handleUpdateProductStatus(product._id, e.target.value)}
+                                                        disabled={isSubmitting}
+                                                        className={`px-2 py-1 rounded-md text-[10px] sm:text-xs font-semibold cursor-pointer transition-all disabled:opacity-50 border ${
+                                                            product.status === 'active' || !product.status
+                                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                                : product.status === 'inactive'
+                                                                ? 'bg-stone-100 text-stone-600 border-stone-200'
+                                                                : 'bg-amber-50 text-amber-700 border-amber-200'
+                                                        }`}
+                                                    >
+                                                        <option value="active">Active</option>
+                                                        <option value="inactive">Inactive</option>
+                                                        <option value="archived">Archived</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {products.filter(p => p?.name?.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
+                                    <div className="py-12 text-center">
+                                        <Package size={40} className="mx-auto text-stone-200 mb-3" />
+                                        <p className="text-stone-500 font-medium text-sm">No products found</p>
+                                        <p className="text-stone-400 text-xs mt-1">Add your first product to get started</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Desktop Table View */}
+                            <div className="hidden lg:block overflow-x-auto">
                                 <table className="w-full">
                                     <thead>
                                         <tr className="bg-stone-50/50">
@@ -813,19 +930,19 @@ export const AdminDashboard = () => {
                     {/* Orders Tab */}
                     {activeTab === "orders" && (
                         <div className="bg-white rounded-2xl border border-stone-100 overflow-hidden shadow-sm">
-                            <div className="px-6 py-5 border-b border-stone-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-stone-50 to-white">
+                            <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-stone-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-gradient-to-r from-stone-50 to-white">
                                 <div>
-                                    <h2 className="text-lg font-semibold text-stone-800">All Orders</h2>
-                                    <p className="text-sm text-stone-400 mt-0.5">{orders.length} total orders</p>
+                                    <h2 className="text-base sm:text-lg font-semibold text-stone-800">All Orders</h2>
+                                    <p className="text-xs sm:text-sm text-stone-400 mt-0.5">{orders.length} total orders</p>
                                 </div>
-                                <div className="relative">
+                                <div className="relative w-full sm:w-auto">
                                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={18} />
                                     <input
                                         type="text"
                                         placeholder="Search orders..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-72 pl-12 pr-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-all"
+                                        className="w-full sm:w-64 lg:w-72 pl-12 pr-4 py-2.5 sm:py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-all"
                                     />
                                 </div>
                             </div>
@@ -907,19 +1024,19 @@ export const AdminDashboard = () => {
                     {/* Users Tab */}
                     {activeTab === "users" && (
                         <div className="bg-white rounded-2xl border border-stone-100 overflow-hidden shadow-sm">
-                            <div className="px-6 py-5 border-b border-stone-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-stone-50 to-white">
+                            <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-stone-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-gradient-to-r from-stone-50 to-white">
                                 <div>
-                                    <h2 className="text-lg font-semibold text-stone-800">All Customers</h2>
-                                    <p className="text-sm text-stone-400 mt-0.5">{users.length} registered users</p>
+                                    <h2 className="text-base sm:text-lg font-semibold text-stone-800">All Customers</h2>
+                                    <p className="text-xs sm:text-sm text-stone-400 mt-0.5">{users.length} registered users</p>
                                 </div>
-                                <div className="relative">
+                                <div className="relative w-full sm:w-auto">
                                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={18} />
                                     <input
                                         type="text"
                                         placeholder="Search users..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-72 pl-12 pr-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-all"
+                                        className="w-full sm:w-64 lg:w-72 pl-12 pr-4 py-2.5 sm:py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-all"
                                     />
                                 </div>
                             </div>
@@ -1008,26 +1125,27 @@ export const AdminDashboard = () => {
 
             {/* Delete Confirmation Modal */}
             {deleteConfirmation && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm">
-                    <div className="bg-white w-full max-w-md rounded-3xl p-8 text-center shadow-2xl">
-                        <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-rose-100 to-rose-200 flex items-center justify-center">
-                            <AlertCircle size={32} className="text-rose-500" />
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-stone-900/60 backdrop-blur-sm">
+                    <div className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 sm:p-8 text-center shadow-2xl">
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-4 sm:mb-6 rounded-2xl bg-gradient-to-br from-rose-100 to-rose-200 flex items-center justify-center">
+                            <AlertCircle size={28} className="text-rose-500 sm:hidden" />
+                            <AlertCircle size={32} className="text-rose-500 hidden sm:block" />
                         </div>
-                        <h2 className="text-xl font-semibold text-stone-800 mb-2">Delete {deleteConfirmation.type}?</h2>
-                        <p className="text-stone-500 mb-8">
+                        <h2 className="text-lg sm:text-xl font-semibold text-stone-800 mb-2">Delete {deleteConfirmation.type}?</h2>
+                        <p className="text-sm sm:text-base text-stone-500 mb-6 sm:mb-8">
                             Are you sure you want to delete &quot;{deleteConfirmation.name}&quot;? This action cannot be undone.
                         </p>
-                        <div className="flex gap-4">
+                        <div className="flex gap-3 sm:gap-4">
                             <button
                                 onClick={() => setDeleteConfirmation(null)}
-                                className="flex-1 py-3.5 text-sm font-semibold text-stone-700 bg-stone-100 rounded-xl hover:bg-stone-200 transition-colors"
+                                className="flex-1 py-3 sm:py-3.5 text-sm font-semibold text-stone-700 bg-stone-100 rounded-xl hover:bg-stone-200 transition-colors"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={confirmDelete}
                                 disabled={isSubmitting}
-                                className="flex-1 py-3.5 text-sm font-semibold text-white bg-gradient-to-r from-rose-500 to-rose-600 rounded-xl hover:shadow-lg hover:shadow-rose-200 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                className="flex-1 py-3 sm:py-3.5 text-sm font-semibold text-white bg-gradient-to-r from-rose-500 to-rose-600 rounded-xl hover:shadow-lg hover:shadow-rose-200 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                             >
                                 {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
                                 Delete
@@ -1039,19 +1157,19 @@ export const AdminDashboard = () => {
 
             {/* Order Details Modal */}
             {selectedOrder && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm">
-                    <div className="bg-white w-full max-w-2xl rounded-3xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
-                        <div className="px-8 py-6 border-b border-stone-100 flex items-center justify-between bg-gradient-to-r from-stone-50 to-white">
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-stone-900/60 backdrop-blur-sm">
+                    <div className="bg-white w-full sm:max-w-2xl rounded-t-3xl sm:rounded-3xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+                        <div className="px-4 sm:px-8 py-4 sm:py-6 border-b border-stone-100 flex items-center justify-between bg-gradient-to-r from-stone-50 to-white">
                             <div>
-                                <h2 className="text-xl font-semibold text-stone-800">Order Details</h2>
-                                <p className="text-sm text-stone-400 mt-1">{selectedOrder.orderNumber || `ORD-${selectedOrder._id.slice(-8).toUpperCase()}`}</p>
+                                <h2 className="text-lg sm:text-xl font-semibold text-stone-800">Order Details</h2>
+                                <p className="text-xs sm:text-sm text-stone-400 mt-0.5 sm:mt-1">{selectedOrder.orderNumber || `ORD-${selectedOrder._id.slice(-8).toUpperCase()}`}</p>
                             </div>
-                            <button onClick={() => setSelectedOrder(null)} className="p-3 rounded-xl hover:bg-stone-100 transition-colors">
+                            <button onClick={() => setSelectedOrder(null)} className="p-2 sm:p-3 rounded-xl hover:bg-stone-100 transition-colors">
                                 <X size={20} className="text-stone-400" />
                             </button>
                         </div>
 
-                        <div className="p-8 overflow-y-auto space-y-6">
+                        <div className="p-4 sm:p-8 overflow-y-auto space-y-4 sm:space-y-6">
                             <div className="flex items-center justify-between">
                                 {(() => {
                                     const statusConfig = getStatusConfig(selectedOrder.orderStatus);
@@ -1067,25 +1185,25 @@ export const AdminDashboard = () => {
                                 </span>
                             </div>
 
-                            <div className="grid md:grid-cols-2 gap-4">
-                                <div className="p-5 bg-gradient-to-br from-stone-50 to-stone-100/50 rounded-2xl border border-stone-100">
-                                    <div className="flex items-center gap-2 text-xs font-semibold text-stone-500 mb-3 uppercase tracking-wider">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <div className="p-4 sm:p-5 bg-gradient-to-br from-stone-50 to-stone-100/50 rounded-xl sm:rounded-2xl border border-stone-100">
+                                    <div className="flex items-center gap-2 text-[10px] sm:text-xs font-semibold text-stone-500 mb-2 sm:mb-3 uppercase tracking-wider">
                                         <Users size={14} />
                                         Customer
                                     </div>
-                                    <p className="font-semibold text-stone-800 mb-2">{selectedOrder.shippingAddress?.name}</p>
-                                    <div className="space-y-1 text-sm text-stone-600">
-                                        <p className="flex items-center gap-2"><Mail size={14} className="text-stone-400" /> {selectedOrder.shippingAddress?.email}</p>
-                                        <p className="flex items-center gap-2"><Phone size={14} className="text-stone-400" /> {selectedOrder.shippingAddress?.phone}</p>
+                                    <p className="font-semibold text-stone-800 mb-1 sm:mb-2 text-sm sm:text-base">{selectedOrder.shippingAddress?.name}</p>
+                                    <div className="space-y-1 text-xs sm:text-sm text-stone-600">
+                                        <p className="flex items-center gap-2 truncate"><Mail size={14} className="text-stone-400 flex-shrink-0" /> <span className="truncate">{selectedOrder.shippingAddress?.email}</span></p>
+                                        <p className="flex items-center gap-2"><Phone size={14} className="text-stone-400 flex-shrink-0" /> {selectedOrder.shippingAddress?.phone}</p>
                                     </div>
                                 </div>
 
-                                <div className="p-5 bg-gradient-to-br from-stone-50 to-stone-100/50 rounded-2xl border border-stone-100">
-                                    <div className="flex items-center gap-2 text-xs font-semibold text-stone-500 mb-3 uppercase tracking-wider">
+                                <div className="p-4 sm:p-5 bg-gradient-to-br from-stone-50 to-stone-100/50 rounded-xl sm:rounded-2xl border border-stone-100">
+                                    <div className="flex items-center gap-2 text-[10px] sm:text-xs font-semibold text-stone-500 mb-2 sm:mb-3 uppercase tracking-wider">
                                         <MapPin size={14} />
                                         Shipping Address
                                     </div>
-                                    <div className="text-sm text-stone-600 space-y-1">
+                                    <div className="text-xs sm:text-sm text-stone-600 space-y-1">
                                         <p>{selectedOrder.shippingAddress?.addressLine1}</p>
                                         {selectedOrder.shippingAddress?.addressLine2 && <p>{selectedOrder.shippingAddress?.addressLine2}</p>}
                                         <p>{selectedOrder.shippingAddress?.city}, {selectedOrder.shippingAddress?.state}</p>
@@ -1176,20 +1294,20 @@ export const AdminDashboard = () => {
 
             {/* Product Modal */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm">
-                    <div className="bg-white w-full max-w-xl rounded-3xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
-                        <div className="px-8 py-6 border-b border-stone-100 flex items-center justify-between bg-gradient-to-r from-stone-50 to-white">
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-stone-900/60 backdrop-blur-sm">
+                    <div className="bg-white w-full sm:max-w-xl rounded-t-3xl sm:rounded-3xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+                        <div className="px-4 sm:px-8 py-4 sm:py-6 border-b border-stone-100 flex items-center justify-between bg-gradient-to-r from-stone-50 to-white">
                             <div>
-                                <h2 className="text-xl font-semibold text-stone-800">{editingProduct ? 'Edit Product' : 'Add Product'}</h2>
-                                <p className="text-sm text-stone-400 mt-1">{editingProduct ? 'Update product details' : 'Create a new product'}</p>
+                                <h2 className="text-lg sm:text-xl font-semibold text-stone-800">{editingProduct ? 'Edit Product' : 'Add Product'}</h2>
+                                <p className="text-xs sm:text-sm text-stone-400 mt-0.5 sm:mt-1">{editingProduct ? 'Update product details' : 'Create a new product'}</p>
                             </div>
-                            <button onClick={() => { setIsModalOpen(false); resetProductForm(); }} className="p-3 rounded-xl hover:bg-stone-100 transition-colors">
+                            <button onClick={() => { setIsModalOpen(false); resetProductForm(); }} className="p-2 sm:p-3 rounded-xl hover:bg-stone-100 transition-colors">
                                 <X size={20} className="text-stone-400" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleSaveProduct} className="p-8 overflow-y-auto space-y-5">
-                            <div className="grid md:grid-cols-2 gap-4">
+                        <form onSubmit={handleSaveProduct} className="p-4 sm:p-8 overflow-y-auto space-y-4 sm:space-y-5">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 <div>
                                     <label className="block text-sm font-semibold text-stone-700 mb-2">Product Name *</label>
                                     <input
@@ -1218,13 +1336,13 @@ export const AdminDashboard = () => {
                                 </div>
                             </div>
 
-                            <div className="grid md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 <div>
-                                    <label className="block text-sm font-semibold text-stone-700 mb-2">Category</label>
+                                    <label className="block text-xs sm:text-sm font-semibold text-stone-700 mb-1.5 sm:mb-2">Category</label>
                                     <select
                                         value={newProduct.category}
                                         onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
-                                        className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-all"
+                                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-all"
                                     >
                                         <option value="">Select category</option>
                                         <option value="Lips">Lips</option>
@@ -1234,12 +1352,12 @@ export const AdminDashboard = () => {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-stone-700 mb-2">Brand</label>
+                                    <label className="block text-xs sm:text-sm font-semibold text-stone-700 mb-1.5 sm:mb-2">Brand</label>
                                     <input
                                         type="text"
                                         value={newProduct.brand}
                                         onChange={(e) => setNewProduct({ ...newProduct, brand: e.target.value })}
-                                        className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-all"
+                                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-all"
                                         placeholder="Brand name"
                                     />
                                 </div>
@@ -1295,21 +1413,21 @@ export const AdminDashboard = () => {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
                                 {[
                                     { key: 'isNew', label: 'New', icon: Star },
                                     { key: 'isBestSeller', label: 'Best Seller', icon: TrendingUp },
                                     { key: 'inStock', label: 'In Stock', icon: CheckCircle2 },
                                     { key: 'featured', label: 'Featured', icon: Sparkles },
                                 ].map((flag) => (
-                                    <label key={flag.key} className={`flex items-center justify-center gap-2 p-3 rounded-xl cursor-pointer transition-all text-sm ${(newProduct as any)[flag.key] ? 'bg-gradient-to-br from-amber-50 to-amber-100 border-2 border-amber-400 text-amber-700 shadow-lg shadow-amber-100' : 'bg-stone-50 border-2 border-transparent text-stone-500 hover:border-stone-200'}`}>
+                                    <label key={flag.key} className={`flex items-center justify-center gap-1.5 sm:gap-2 p-2.5 sm:p-3 rounded-xl cursor-pointer transition-all text-xs sm:text-sm ${(newProduct as any)[flag.key] ? 'bg-gradient-to-br from-amber-50 to-amber-100 border-2 border-amber-400 text-amber-700 shadow-lg shadow-amber-100' : 'bg-stone-50 border-2 border-transparent text-stone-500 hover:border-stone-200'}`}>
                                         <input
                                             type="checkbox"
                                             checked={(newProduct as any)[flag.key]}
                                             onChange={(e) => setNewProduct({ ...newProduct, [flag.key]: e.target.checked })}
                                             className="hidden"
                                         />
-                                        <flag.icon size={16} />
+                                        <flag.icon size={14} className="sm:w-4 sm:h-4" />
                                         <span className="font-semibold">{flag.label}</span>
                                     </label>
                                 ))}

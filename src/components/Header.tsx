@@ -245,14 +245,14 @@ export const Header = () => {
 
             {/* Right Actions */}
             <div className="flex items-center gap-1 md:gap-2">
-              {/* Admin Link */}
+              {/* Admin Link - visible on all screen sizes */}
               <ShowForAdmin>
                 <Link
                   href="/adminDashboard"
-                  className="hidden md:flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary bg-primary/10 rounded-full hover:bg-primary hover:text-white transition-all"
+                  className="flex items-center gap-1.5 sm:gap-2 p-2 sm:px-3 sm:py-2 text-sm font-medium text-primary bg-primary/10 rounded-full hover:bg-primary hover:text-white transition-all"
                 >
                   <Shield size={18} />
-                  <span className="hidden lg:inline">Admin</span>
+                  <span className="hidden sm:inline">Admin</span>
                 </Link>
               </ShowForAdmin>
 
@@ -519,6 +519,19 @@ export const Header = () => {
 
               {user && (
                 <>
+                  {/* Admin Dashboard Link */}
+                  <ShowForAdmin>
+                    <p className="px-3 py-2 mt-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Admin</p>
+                    <Link
+                      href="/adminDashboard"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-primary/10 to-pink-500/10 text-primary font-medium rounded-xl transition-colors"
+                    >
+                      <Shield size={20} />
+                      Admin Dashboard
+                    </Link>
+                  </ShowForAdmin>
+
                   <p className="px-3 py-2 mt-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Account</p>
                   <Link
                     href="/account"
