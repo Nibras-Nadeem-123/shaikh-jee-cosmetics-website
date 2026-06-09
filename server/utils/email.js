@@ -313,7 +313,7 @@ import axios from "axios";
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
 
-const SENDER_EMAIL = "nibrasnadeem621@gmail.com";
+const SENDER_EMAIL = "ovaissheikh84@gmail.com";
 const SENDER_NAME = "Shaikh Jee Cosmetics";
 
 if (!BREVO_API_KEY) {
